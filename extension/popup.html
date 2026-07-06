@@ -119,6 +119,16 @@
       box-shadow: 0 4px 15px rgba(102, 252, 241, 0.4);
     }
 
+    .btn-action {
+      background: linear-gradient(135deg, #2ed573, #7bed9f);
+      color: #0b0c10;
+      margin-top: 10px;
+    }
+
+    .btn-action:hover {
+      box-shadow: 0 4px 15px rgba(46, 213, 115, 0.4);
+    }
+
     .btn-secondary {
       background: rgba(255, 255, 255, 0.08);
       color: var(--text-bright);
@@ -169,6 +179,41 @@
       display: none;
     }
 
+    /* Kullanıcı Listesi Alanı */
+    .user-list-container {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: left;
+    }
+    .user-list-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--secondary);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .user-list-items {
+      font-size: 0.8rem;
+      color: var(--text);
+      max-height: 80px;
+      overflow-y: auto;
+      padding-left: 5px;
+    }
+    .user-list-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .user-online-dot {
+      width: 6px;
+      height: 6px;
+      background-color: #2ed573;
+      border-radius: 50%;
+    }
+
     .status-indicator {
       display: flex;
       align-items: center;
@@ -209,13 +254,16 @@
       <div>Şu an bağlı olduğunuz oda:</div>
       <div id="roomIdDisplay" class="room-id-display" title="Kopyalamak için tıklayın">-----</div>
       <div class="copied-toast" id="copiedToast">Oda adı kopyalandı!</div>
-      <div style="font-size: 0.8rem; margin-top: 5px;">
-        Kullanıcı: <strong id="activeUsername" style="color: var(--text-bright);">---</strong>
+      
+      <!-- Film Sayfasına Git Butonu (Farklı URL tespit edilirse görünecek) -->
+      <button id="btnGoToMovie" class="btn-action hidden">Film Sayfasına Git 🎬</button>
+
+      <!-- Aktif Kullanıcı Listesi -->
+      <div class="user-list-container">
+        <div class="user-list-title" id="userCountTitle">Aktif Üyeler (0)</div>
+        <div class="user-list-items" id="activeUsersList"></div>
       </div>
-      <div class="status-indicator">
-        <span class="status-dot active"></span>
-        <span>Firebase Bulut Bağlantısı Aktif</span>
-      </div>
+
       <button id="btnRetrySync" class="btn-primary" style="margin-top: 12px;">Senkronizasyonu Yenile</button>
       <button id="btnCopyInvite" class="btn-secondary">Davet Linkini Kopyala</button>
       <button id="btnLeaveRoom" class="btn-danger">Odan Ayrıl</button>
