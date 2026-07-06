@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "FilmSync Watch Party",
+  "name": "FilmSync İzleme Partisi",
   "version": "1.0.0",
   "description": "Arkadaşlarınızla her web sitesindeki filmleri eşzamanlı olarak izleyin.",
   "permissions": [

@@ -1,4 +1,4 @@
-// FilmSync Popup Logic
+// FilmSync Partisi 🍿
 const firebaseConfig = {
   apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
   authDomain: "movieparty-af87f.firebaseapp.com",

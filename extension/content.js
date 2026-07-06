@@ -1290,7 +1290,7 @@ function createChatUI() {
     <div id="filmsync-chat-panel">
       <div class="filmsync-header">
         <div class="filmsync-header-top">
-          <div class="filmsync-header-title">FilmSync <span>Party</span> 🍿</div>
+          <div class="filmsync-header-title">FilmSync <span>Partisi</span> 🍿</div>
           <button class="filmsync-close-btn" id="filmsyncCloseBtn">×</button>
         </div>
         <div class="filmsync-users" id="filmsyncUserList">Üyeler yükleniyor...</div>
@@ -2082,7 +2082,7 @@ function showNamePromptModal(roomName, callback) {
 
   modal.innerHTML = `
     <div style="width: 320px; background: rgba(31, 40, 51, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; color: #fff;">
-      <div style="font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; color: #fff;">FilmSync <span>Party</span> 🍿</div>
+      <div style="font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; color: #fff;">FilmSync <span>Partisi</span> 🍿</div>
       <div style="font-size: 0.85rem; color: #66fcf1; margin-bottom: 20px;">"${roomName}" odasına katılacaksınız.</div>
       
       <div style="text-align: left; margin-bottom: 15px;">
