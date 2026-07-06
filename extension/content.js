@@ -712,9 +712,9 @@ function createChatUI() {
       right: -330px !important;
       width: 320px;
       height: 100vh;
-      background: rgba(11, 12, 16, 0.92);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
+      background: rgba(11, 12, 16, 0.6) !important; /* Yarı saydam cam panel */
+      backdrop-filter: blur(25px) !important; /* Derin cam buğusu */
+      -webkit-backdrop-filter: blur(25px) !important;
       border-left: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
       flex-direction: column;
@@ -730,7 +730,7 @@ function createChatUI() {
     .filmsync-header {
       padding: 18px 15px;
       background: rgba(255, 255, 255, 0.02);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -815,23 +815,25 @@ function createChatUI() {
     }
 
     .filmsync-msg-bubble {
-      padding: 8px 12px;
-      border-radius: 12px;
+      padding: 9px 13px;
+      border-radius: 14px;
       font-size: 0.85rem;
       line-height: 1.35;
       word-break: break-word;
     }
     .filmsync-msg-row.self .filmsync-msg-bubble {
-      background: rgba(69, 243, 255, 0.15);
+      background: rgba(69, 243, 255, 0.1) !important; /* Cam mesaj */
       border: 1px solid rgba(69, 243, 255, 0.25);
       color: #fff;
       border-bottom-right-radius: 2px;
+      box-shadow: 0 4px 12px rgba(69, 243, 255, 0.1);
     }
     .filmsync-msg-row.other .filmsync-msg-bubble {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03) !important; /* Cam mesaj */
+      border: 1px solid rgba(255, 255, 255, 0.06);
       color: #fff;
       border-bottom-left-radius: 2px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
     .filmsync-msg-row.system .filmsync-msg-bubble {
       background: transparent;
@@ -844,36 +846,41 @@ function createChatUI() {
 
     .filmsync-input-area {
       padding: 12px 15px;
-      background: rgba(255, 255, 255, 0.02);
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.01);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
       gap: 10px;
     }
     .filmsync-input-area input {
       flex: 1;
       padding: 10px 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03) !important; /* Cam input */
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
       color: #fff;
       font-size: 0.85rem;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .filmsync-input-area input:focus {
       outline: none;
       border-color: #45f3ff;
-      background: rgba(255, 255, 255, 0.08);
-      box-shadow: 0 0 10px rgba(69, 243, 255, 0.15);
+      background: rgba(255, 255, 255, 0.06) !important;
+      box-shadow: 0 0 12px rgba(69, 243, 255, 0.2);
     }
     .filmsync-send-btn {
       padding: 10px 16px;
-      background: linear-gradient(135deg, #45f3ff, #66fcf1);
-      border: none;
-      border-radius: 8px;
-      color: #0b0c10;
+      background: linear-gradient(135deg, rgba(69, 243, 255, 0.2), rgba(102, 252, 241, 0.2));
+      border: 1px solid rgba(69, 243, 255, 0.4);
+      border-radius: 10px;
+      color: #45f3ff;
       font-size: 0.85rem;
       font-weight: 700;
       cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filmsync-send-btn:hover {
+      background: linear-gradient(135deg, rgba(69, 243, 255, 0.3), rgba(102, 252, 241, 0.3));
+      box-shadow: 0 0 10px rgba(69, 243, 255, 0.3);
     }
 
     .filmsync-toast {
@@ -881,13 +888,13 @@ function createChatUI() {
       top: 20px !important;
       right: -320px !important;
       width: 280px;
-      background: rgba(31, 40, 51, 0.8);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      background: rgba(11, 12, 16, 0.6) !important; /* Cam bildirim */
+      backdrop-filter: blur(20px) !important;
+      -webkit-backdrop-filter: blur(20px) !important;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 14px;
-      padding: 12px 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border-radius: 16px;
+      padding: 14px 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       display: flex;
       flex-direction: column;
       gap: 4px;
