@@ -268,6 +268,30 @@ function setupFirebaseListeners() {
       playReactionAnim(reaction);
     });
   }
+
+  // 6. Ambiyans Temasını Dinle
+  db.ref(`rooms/${roomId}/lastState/theme`).on('value', (snapshot) => {
+    const theme = snapshot.val() || 'none';
+    updateMoodTheme(theme);
+  });
+
+  // 7. Ortak Yer İşaretlerini Dinle
+  if (window === window.top) {
+    db.ref(`rooms/${roomId}/bookmarks`).on('value', (snapshot) => {
+      const bookmarksData = snapshot.val();
+      updateBookmarksUI(bookmarksData);
+    });
+  }
+
+  // 8. Gizli Çift Reaksiyonlarını Dinle
+  if (window === window.top) {
+    db.ref(`rooms/${roomId}/secretReactions`).limitToLast(5).on('child_added', (snapshot) => {
+      const reaction = snapshot.val();
+      if (!reaction || !reactionsEnabled) return;
+      if (Date.now() - reaction.timestamp > 5000) return;
+      playSecretReactionAnim(reaction);
+    });
+  }
 }
 
 // Zorla Senkronize Et
@@ -321,7 +345,11 @@ function cleanupFirebase() {
       db.ref(`rooms/${roomId}/messages`).off();
       db.ref(`rooms/${roomId}/users`).off();
       db.ref(`rooms/${roomId}/calls`).off();
+      db.ref(`rooms/${roomId}/reactions`).off();
+      db.ref(`rooms/${roomId}/bookmarks`).off();
+      db.ref(`rooms/${roomId}/secretReactions`).off();
     }
+    db.ref(`rooms/${roomId}/lastState/theme`).off();
   }
 }
 
@@ -901,9 +929,187 @@ function createChatUI() {
       background: rgba(69, 243, 255, 0.2);
       border-color: rgba(69, 243, 255, 0.4);
     }
+
+    /* AMBİYANS IŞIĞI CORTEX */
+    #filmsync-mood-light {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      pointer-events: none !important;
+      z-index: 2147483640 !important; /* Sohbet panelinin hemen arkası */
+      transition: all 1s ease;
+      mix-blend-mode: screen;
+    }
+    #filmsync-mood-light.mood-romance {
+      box-shadow: inset 0 0 100px rgba(255, 105, 180, 0.4), inset 0 0 200px rgba(186, 85, 211, 0.3);
+      animation: pulseRomance 8s infinite alternate;
+    }
+    #filmsync-mood-light.mood-horror {
+      box-shadow: inset 0 0 120px rgba(139, 0, 0, 0.6), inset 0 0 220px rgba(0, 0, 0, 0.9);
+      animation: pulseHorror 6s infinite alternate;
+    }
+    #filmsync-mood-light.mood-cozy {
+      box-shadow: inset 0 0 100px rgba(255, 165, 0, 0.35), inset 0 0 200px rgba(210, 105, 30, 0.2);
+      animation: pulseCozy 10s infinite alternate;
+    }
+    #filmsync-mood-light.mood-cinema {
+      box-shadow: inset 0 0 150px rgba(212, 175, 55, 0.15), inset 0 0 300px rgba(0, 0, 0, 0.85);
+    }
+
+    @keyframes pulseRomance {
+      0% { opacity: 0.7; box-shadow: inset 0 0 80px rgba(255, 105, 180, 0.3), inset 0 0 150px rgba(186, 85, 211, 0.2); }
+      100% { opacity: 1; box-shadow: inset 0 0 140px rgba(255, 105, 180, 0.5), inset 0 0 250px rgba(186, 85, 211, 0.4); }
+    }
+    @keyframes pulseHorror {
+      0% { opacity: 0.6; }
+      100% { opacity: 0.9; }
+    }
+    @keyframes pulseCozy {
+      0% { opacity: 0.8; }
+      100% { opacity: 1; }
+    }
+
+    /* GİZLİ REAKSİYON EFFECT'LERİ */
+    .filmsync-hug-overlay {
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) scale(0.8);
+      font-size: 8rem;
+      pointer-events: none;
+      z-index: 2147483647 !important;
+      opacity: 0;
+      animation: scaleFadeHug 3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes scaleFadeHug {
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+      20% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.95; }
+      80% { transform: translate(-50%, -50%) scale(1); opacity: 0.95; }
+      100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
+    }
+
+    .filmsync-hands-overlay {
+      position: fixed !important;
+      bottom: -100px !important;
+      left: 50% !important;
+      transform: translateX(-50%);
+      font-size: 7rem;
+      pointer-events: none;
+      z-index: 2147483647 !important;
+      animation: slideUpHands 4s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+    }
+    @keyframes slideUpHands {
+      0% { bottom: -120px; opacity: 0; }
+      15% { bottom: 20px; opacity: 1; }
+      85% { bottom: 20px; opacity: 1; }
+      100% { bottom: -120px; opacity: 0; }
+    }
+
+    /* BOOKMARKS PANEL */
+    .filmsync-bookmarks-section {
+      background: rgba(255, 255, 255, 0.02);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 10px 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .filmsync-bookmarks-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #66fcf1;
+      cursor: pointer;
+    }
+    .filmsync-bookmarks-list {
+      max-height: 100px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 5px;
+    }
+    .filmsync-bookmark-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .filmsync-bookmark-item:hover {
+      background: rgba(69, 243, 255, 0.15);
+      border-color: rgba(69, 243, 255, 0.3);
+    }
+    .filmsync-bookmark-time {
+      font-weight: bold;
+      color: #45f3ff;
+    }
+    .filmsync-add-bookmark-btn {
+      width: 100%;
+      padding: 6px;
+      background: rgba(69, 243, 255, 0.1);
+      border: 1px dashed rgba(69, 243, 255, 0.3);
+      border-radius: 6px;
+      color: #45f3ff;
+      font-size: 0.75rem;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .filmsync-add-bookmark-btn:hover {
+      background: rgba(69, 243, 255, 0.2);
+    }
+
+    /* GİZLİ REAKSİYON MENÜSÜ */
+    .filmsync-secret-menu {
+      position: absolute;
+      bottom: 120px;
+      right: 20px;
+      background: rgba(11, 12, 16, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 10px;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 2147483647 !important;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      width: 150px;
+    }
+    .filmsync-secret-option {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: #fff;
+      font-size: 0.75rem;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.2s;
+    }
+    .filmsync-secret-option:hover {
+      background: rgba(255, 105, 180, 0.2);
+      border-color: rgba(255, 105, 180, 0.4);
+    }
   `;
 
   root.innerHTML = `
+    <!-- Ambiyans Işığı Katmanı -->
+    <div id="filmsync-mood-light"></div>
+
     <div id="filmsync-chat-bubble" title="Sohbeti Aç">
       <svg viewBox="0 0 24 24">
         <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
@@ -919,14 +1125,37 @@ function createChatUI() {
         <div class="filmsync-users" id="filmsyncUserList">Üyeler yükleniyor...</div>
         <button class="filmsync-voice-btn" id="filmsyncVoiceBtn">🎙️ Mikrofonu Aç</button>
       </div>
+
+      <!-- Ortak Yer İşaretleri (Bookmarks) Bölümü -->
+      <div class="filmsync-bookmarks-section">
+        <div class="filmsync-bookmarks-header" id="filmsyncBookmarksHeader">
+          <span>Ortak Yer İşaretleri 📌</span>
+          <span style="font-size: 0.6rem;">▼</span>
+        </div>
+        <div class="filmsync-bookmarks-list" id="filmsyncBookmarksList" style="display: none;"></div>
+        <button class="filmsync-add-bookmark-btn" id="filmsyncAddBookmarkBtn">+ Bu Sahneyi İşaretle</button>
+      </div>
+
       <div id="filmsync-messages"></div>
+      
+      <!-- Hızlı Reaksiyon Barı ve Gizli Reaksiyon Butonu -->
       <div class="filmsync-reaction-bar" id="filmsyncReactionBar">
         <button class="filmsync-reaction-btn" data-emoji="❤️">❤️</button>
         <button class="filmsync-reaction-btn" data-emoji="😂">😂</button>
         <button class="filmsync-reaction-btn" data-emoji="🍿">🍿</button>
         <button class="filmsync-reaction-btn" data-emoji="😱">😱</button>
         <button class="filmsync-reaction-btn" data-emoji="🥺">🥺</button>
+        <button class="filmsync-reaction-btn" id="filmsyncSecretHeartBtn" style="background: rgba(255, 105, 180, 0.15); border-color: rgba(255, 105, 180, 0.3);">💖</button>
       </div>
+
+      <!-- Gizli Çift Reaksiyonları Menüsü -->
+      <div class="filmsync-secret-menu" id="filmsyncSecretMenu">
+        <div class="filmsync-secret-option" data-reaction="hug">Sana Sarıldım 🤗</div>
+        <div class="filmsync-secret-option" data-reaction="hands">Elini Tuttum 🤝</div>
+        <div class="filmsync-secret-option" data-reaction="here">Yanındayım 🥺</div>
+        <div class="filmsync-secret-option" data-reaction="us">Tıpkı Biz 💕</div>
+      </div>
+
       <div class="filmsync-input-area">
         <input type="text" id="filmsyncMsgInput" placeholder="Mesaj yazın..." autocomplete="off">
         <button class="filmsync-send-btn" id="filmsyncSendBtn">Gönder</button>
@@ -943,6 +1172,44 @@ function createChatUI() {
   messageList = document.getElementById('filmsync-messages');
   userListDisplay = document.getElementById('filmsyncUserList');
   voiceBtn = document.getElementById('filmsyncVoiceBtn');
+
+  // Bookmarks & Secret Reactions elementleri tanımlanıyor
+  const bookmarksHeader = document.getElementById('filmsyncBookmarksHeader');
+  const bookmarksList = document.getElementById('filmsyncBookmarksList');
+  const addBookmarkBtn = document.getElementById('filmsyncAddBookmarkBtn');
+  const secretHeartBtn = document.getElementById('filmsyncSecretHeartBtn');
+  const secretMenu = document.getElementById('filmsyncSecretMenu');
+
+  // Ortak yer işaretleri panel daraltma/açma
+  bookmarksHeader.addEventListener('click', () => {
+    const isHidden = bookmarksList.style.display === 'none';
+    bookmarksList.style.display = isHidden ? 'flex' : 'none';
+    bookmarksHeader.querySelector('span:last-child').textContent = isHidden ? '▲' : '▼';
+  });
+
+  // Yer işareti ekleme
+  addBookmarkBtn.addEventListener('click', addBookmark);
+
+  // Gizli reaksiyon menü açma/kapama
+  secretHeartBtn.addEventListener('click', (e) => {
+    const isHidden = secretMenu.style.display === 'none' || secretMenu.style.display === '';
+    secretMenu.style.display = isHidden ? 'flex' : 'none';
+    e.stopPropagation();
+  });
+
+  // Gizli reaksiyon seçeneklerine tıklama
+  document.querySelectorAll('.filmsync-secret-option').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      const type = e.currentTarget.getAttribute('data-reaction');
+      sendSecretReaction(type);
+      secretMenu.style.display = 'none';
+    });
+  });
+
+  // Menü dışına tıklanınca gizli menüyü kapat
+  document.addEventListener('click', () => {
+    if (secretMenu) secretMenu.style.display = 'none';
+  });
 
   chatBubble.addEventListener('click', toggleChatPanel);
   document.getElementById('filmsyncCloseBtn').addEventListener('click', () => {
@@ -1137,6 +1404,142 @@ function playReactionAnim(reaction) {
   setTimeout(() => {
     el.remove();
   }, 2600);
+}
+
+// --- 📌 BİRLİKTE YER İŞARETİ MOTORU ---
+function addBookmark() {
+  if (!db || !roomId || !videoElement) {
+    alert('Video oynatıcısı bulunamadı.');
+    return;
+  }
+
+  const time = videoElement.currentTime;
+  const note = prompt('Sahne için bir not girin (Örn: Çok komik, Duygusal, Önemli an):', 'İşaretli Sahne');
+  if (note === null) return; // İptal edildi
+
+  db.ref(`rooms/${roomId}/bookmarks`).push({
+    time,
+    note: note.trim() || 'İşaretli Sahne',
+    creator: username,
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  }).then(() => {
+    sendSystemMessage(`${username} bir yer işareti ekledi: "${note || 'İşaretli Sahne'}" (Süre: ${formatTime(time)})`);
+  });
+}
+
+function updateBookmarksUI(bookmarksData) {
+  const listEl = document.getElementById('filmsyncBookmarksList');
+  if (!listEl) return;
+
+  listEl.innerHTML = '';
+  if (!bookmarksData) {
+    listEl.innerHTML = '<div style="font-size: 0.7rem; color: #888; text-align: center; padding: 5px 0;">Henüz yer işareti eklenmemiş.</div>';
+    return;
+  }
+
+  Object.values(bookmarksData).forEach(b => {
+    const item = document.createElement('div');
+    item.classList.add('filmsync-bookmark-item');
+    item.innerHTML = `
+      <div>
+        <span class="filmsync-bookmark-time">[${formatTime(b.time)}]</span>
+        <span style="font-weight: 500;">${b.note}</span>
+      </div>
+      <div style="font-size: 0.65rem; color: #888;">${b.creator}</div>
+    `;
+
+    // Tıklanınca o sahneye atlat
+    item.addEventListener('click', () => {
+      if (hostOnly && hostId !== userId) {
+        showNotificationToast('Sistem', 'Oda kilitli olduğu için sahneye atlayamazsınız. 🔒');
+        return;
+      }
+      if (videoElement) {
+        isSyncing = true;
+        videoElement.currentTime = b.time;
+        sendMediaEvent(!videoElement.paused, b.time);
+        setTimeout(() => { isSyncing = false; }, 300);
+        showNotificationToast('Yer İşareti', `Ortak sahneye atlanıldı: ${formatTime(b.time)} 🎬`);
+      }
+    });
+
+    listEl.appendChild(item);
+  });
+}
+
+// --- 🌌 AMBİYANS IŞIĞI GÜNCELLEME ---
+function updateMoodTheme(theme) {
+  const lightEl = document.getElementById('filmsync-mood-light');
+  if (!lightEl) return;
+
+  // Sınıfları temizle
+  lightEl.className = '';
+  
+  if (theme && theme !== 'none') {
+    lightEl.classList.add(`mood-${theme}`);
+    console.log(`[FilmSync Ambiyans] Tema aktif edildi: ${theme}`);
+  }
+}
+
+// --- 💖 GİZLİ ÇİFT REAKSİYONLARI SİNYALİZASYONU ---
+function sendSecretReaction(type) {
+  if (!db || !roomId) return;
+  db.ref(`rooms/${roomId}/secretReactions`).push({
+    type,
+    sender: username,
+    senderId: userId,
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  });
+}
+
+function playSecretReactionAnim(reaction) {
+  let root = document.getElementById('filmsync-root');
+  const container = root ? root : document.body;
+
+  const el = document.createElement('div');
+  
+  if (reaction.type === 'hug') {
+    el.classList.add('filmsync-hug-overlay');
+    el.innerHTML = '🤗';
+    container.appendChild(el);
+    showNotificationToast(reaction.sender, 'Sana kocaman sarıldı! 🤗💖');
+  } else if (reaction.type === 'hands') {
+    el.classList.add('filmsync-hands-overlay');
+    el.innerHTML = '🤝💕';
+    container.appendChild(el);
+    showNotificationToast(reaction.sender, 'Elini sımsıkı tutuyor! 🤝❤️');
+  } else if (reaction.type === 'here') {
+    el.classList.add('filmsync-hug-overlay');
+    el.innerHTML = '🥺💖';
+    container.appendChild(el);
+    showNotificationToast(reaction.sender, 'Seninle yan yana olduğunu hissettiriyor! 🥺💞');
+  } else if (reaction.type === 'us') {
+    el.classList.add('filmsync-hug-overlay');
+    el.style.fontSize = '6rem';
+    el.innerHTML = '👩‍❤️‍👨✨';
+    container.appendChild(el);
+    showNotificationToast(reaction.sender, 'Bu sahneyi size benzetti! 💕🎬');
+  }
+
+  // Animasyon bitince temizle
+  setTimeout(() => {
+    el.remove();
+  }, 4100);
+}
+
+function formatTime(seconds) {
+  if (isNaN(seconds)) return '00:00';
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  
+  const paddedMins = mins.toString().padStart(2, '0');
+  const paddedSecs = secs.toString().padStart(2, '0');
+
+  if (hrs > 0) {
+    return `${hrs.toString().padStart(2, '0')}:${paddedMins}:${paddedSecs}`;
+  }
+  return `${paddedMins}:${paddedSecs}`;
 }
 
 // --- 🔔 APPLE TARZI BİLDİRİM TOAST MOTORU ---

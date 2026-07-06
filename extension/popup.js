@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const hostLockSwitch = document.getElementById('hostLockSwitch');
   const reactionsSwitch = document.getElementById('reactionsSwitch');
+  const moodThemeSelect = document.getElementById('moodThemeSelect');
   const skipIntroInput = document.getElementById('skipIntroInput');
   
   const userCountTitle = document.getElementById('userCountTitle');
@@ -138,6 +139,17 @@ document.addEventListener('DOMContentLoaded', () => {
   reactionsSwitch.addEventListener('change', () => {
     chrome.storage.local.set({ reactionsEnabled: reactionsSwitch.checked }, () => {
       notifyContentScript();
+    });
+  });
+
+  // Ambiyans Işığı Değiştiğinde
+  moodThemeSelect.addEventListener('change', () => {
+    if (!db || !currentRoomId) return;
+    
+    db.ref(`rooms/${currentRoomId}/lastState`).update({
+      theme: moodThemeSelect.value
+    }).then(() => {
+      showToast('Tema güncellendi!');
     });
   });
 
@@ -313,6 +325,12 @@ document.addEventListener('DOMContentLoaded', () => {
         hostLockSwitch.checked = isLocked;
       });
 
+      // 4. Ambiyans Işığını Dinle
+      db.ref(`rooms/${roomId}/lastState/theme`).on('value', (snapshot) => {
+        const activeTheme = snapshot.val() || 'none';
+        moodThemeSelect.value = activeTheme;
+      });
+
     } catch (e) {
       console.error(e);
     }
@@ -323,6 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
       db.ref(`rooms/${currentRoomId}/users`).off();
       db.ref(`rooms/${currentRoomId}/lastState/url`).off();
       db.ref(`rooms/${currentRoomId}/lastState/hostOnly`).off();
+      db.ref(`rooms/${currentRoomId}/lastState/theme`).off();
     }
     currentRoomId = null;
   }
