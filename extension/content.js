@@ -13,6 +13,13 @@ let hostOnly = false;
 let hostId = null;
 let introSkipped = false;
 let reactionsEnabled = true;
+let loveMeterEnabled = true;
+let drawingEnabled = true;
+let isDrawingMode = false;
+let canvasElement = null;
+let ctx = null;
+let currentDrawingPath = [];
+let localDrawings = [];
 
 // UI Bileşenleri
 let chatBubble = null;
@@ -80,7 +87,7 @@ function init() {
   }
 
   // Normal Başlatma
-  chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'skipIntroTime', 'reactionsEnabled'], (result) => {
+  chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'skipIntroTime', 'reactionsEnabled', 'loveMeterEnabled', 'drawingEnabled'], (result) => {
     if (result.roomId) {
       roomId = result.roomId;
       username = result.username || 'Anonim';
@@ -88,6 +95,8 @@ function init() {
       skipIntroTime = parseInt(result.skipIntroTime) || 0;
       introSkipped = false;
       reactionsEnabled = result.reactionsEnabled !== false;
+      loveMeterEnabled = result.loveMeterEnabled !== false;
+      drawingEnabled = result.drawingEnabled !== false;
       
       if (result.userId) {
         userId = result.userId;
@@ -292,6 +301,26 @@ function setupFirebaseListeners() {
       playSecretReactionAnim(reaction);
     });
   }
+
+  // 9. Love Meter Durumunu Dinle
+  if (window === window.top) {
+    db.ref(`rooms/${roomId}/loveMeter`).on('value', (snapshot) => {
+      const score = snapshot.val() || 0;
+      updateLoveMeterUI(score);
+    });
+  }
+
+  // 10. Ortak Çizimleri Dinle
+  db.ref(`rooms/${roomId}/drawings`).limitToLast(10).on('child_added', (snapshot) => {
+    const drawing = snapshot.val();
+    if (!drawing || !drawingEnabled) return;
+    if (drawing.senderId === userId) return; // Kendi çizimimiz zaten yerel olarak çizildi
+    
+    // Çok eski çizimleri yoksay
+    if (Date.now() - drawing.timestamp > 15000) return;
+
+    drawRemotePath(drawing.points, drawing.color);
+  });
 }
 
 // Zorla Senkronize Et
@@ -348,6 +377,8 @@ function cleanupFirebase() {
       db.ref(`rooms/${roomId}/reactions`).off();
       db.ref(`rooms/${roomId}/bookmarks`).off();
       db.ref(`rooms/${roomId}/secretReactions`).off();
+      db.ref(`rooms/${roomId}/drawings`).off();
+      db.ref(`rooms/${roomId}/loveMeter`).off();
     }
     db.ref(`rooms/${roomId}/lastState/theme`).off();
   }
@@ -1104,11 +1135,144 @@ function createChatUI() {
       background: rgba(255, 105, 180, 0.2);
       border-color: rgba(255, 105, 180, 0.4);
     }
+
+    /* UYUM ÖLÇER (LOVE METER) */
+    #filmsync-love-meter {
+      position: fixed !important;
+      top: 20px !important;
+      right: 20px !important;
+      width: 140px;
+      height: 28px;
+      background: rgba(11, 12, 16, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 3px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 2147483645 !important;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 0.75rem;
+      color: #fff;
+      font-weight: bold;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    #filmsync-love-meter-fill {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      height: calc(100% - 6px);
+      background: linear-gradient(90deg, #ff4757, #ff6b81);
+      border-radius: 18px;
+      width: 0%;
+      z-index: -1;
+      transition: width 0.4s ease;
+    }
+    #filmsync-love-meter-heart {
+      font-size: 0.95rem;
+      animation: heartbeat 1.2s infinite;
+    }
+    @keyframes heartbeat {
+      0% { transform: scale(1); }
+      30% { transform: scale(1.25); }
+      42% { transform: scale(1.1); }
+      60% { transform: scale(1.35); }
+      100% { transform: scale(1); }
+    }
+
+    /* ORTAK ÇİZİM MODU */
+    #filmsync-canvas {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 2147483641 !important; /* Video üstü, chat panel arkası */
+      pointer-events: none; /* Varsayılan kapalı */
+      cursor: crosshair;
+    }
+    #filmsync-canvas.active {
+      pointer-events: auto;
+    }
+    #filmsync-canvas-exit {
+      position: fixed !important;
+      top: 20px !important;
+      left: 50% !important;
+      transform: translateX(-50%);
+      padding: 8px 16px;
+      background: rgba(255, 71, 87, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 2147483643 !important;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      display: none;
+      transition: background 0.2s;
+    }
+    #filmsync-canvas-exit:hover {
+      background: #ff4757;
+    }
+
+    /* SÜRPRİZ HEDİYE KUTUSU */
+    .filmsync-gift-box-overlay {
+      position: fixed !important;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(11, 12, 16, 0.4);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2147483647 !important;
+    }
+    .filmsync-gift-box {
+      font-size: 8rem;
+      cursor: pointer;
+      animation: wobbleGift 1.5s infinite;
+      transition: transform 0.3s;
+    }
+    .filmsync-gift-box:hover {
+      transform: scale(1.15);
+    }
+    @keyframes wobbleGift {
+      0%, 100% { transform: rotate(0deg); }
+      15% { transform: rotate(-10deg) scale(1.05); }
+      30% { transform: rotate(10deg) scale(1.05); }
+      45% { transform: rotate(-5deg); }
+      60% { transform: rotate(5deg); }
+    }
+    .filmsync-gift-surprise {
+      font-size: 10rem;
+      animation: popGiftOut 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      pointer-events: none;
+    }
+    @keyframes popGiftOut {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
   `;
 
   root.innerHTML = `
     <!-- Ambiyans Işığı Katmanı -->
     <div id="filmsync-mood-light"></div>
+
+    <!-- Ortak Çizim Canvas Katmanı -->
+    <canvas id="filmsync-canvas"></canvas>
+    <button id="filmsync-canvas-exit">Çizim Modundan Çık ❌</button>
+
+    <!-- Uyum Ölçer (Love Meter) -->
+    <div id="filmsync-love-meter" style="display: none;">
+      <span id="filmsync-love-meter-heart">❤️</span>
+      <span id="filmsync-love-meter-text">%0 Uyum</span>
+      <div id="filmsync-love-meter-fill"></div>
+    </div>
 
     <div id="filmsync-chat-bubble" title="Sohbeti Aç">
       <svg viewBox="0 0 24 24">
@@ -1124,6 +1288,7 @@ function createChatUI() {
         </div>
         <div class="filmsync-users" id="filmsyncUserList">Üyeler yükleniyor...</div>
         <button class="filmsync-voice-btn" id="filmsyncVoiceBtn">🎙️ Mikrofonu Aç</button>
+        <button class="filmsync-voice-btn" id="filmsyncDrawBtn" style="background: rgba(69, 243, 255, 0.15); border-color: rgba(69, 243, 255, 0.3); margin-top: 5px; display: none;">🎨 Birlikte Çiz Modu</button>
       </div>
 
       <!-- Ortak Yer İşaretleri (Bookmarks) Bölümü -->
@@ -1154,6 +1319,7 @@ function createChatUI() {
         <div class="filmsync-secret-option" data-reaction="hands">Elini Tuttum 🤝</div>
         <div class="filmsync-secret-option" data-reaction="here">Yanındayım 🥺</div>
         <div class="filmsync-secret-option" data-reaction="us">Tıpkı Biz 💕</div>
+        <div class="filmsync-secret-option" data-reaction="gift" style="color: #ffb86c; font-weight: bold; border-top: 1px dashed rgba(255,255,255,0.1);">Sürpriz Hediye 🎁</div>
       </div>
 
       <div class="filmsync-input-area">
@@ -1179,6 +1345,38 @@ function createChatUI() {
   const addBookmarkBtn = document.getElementById('filmsyncAddBookmarkBtn');
   const secretHeartBtn = document.getElementById('filmsyncSecretHeartBtn');
   const secretMenu = document.getElementById('filmsyncSecretMenu');
+  const drawBtn = document.getElementById('filmsyncDrawBtn');
+  const loveMeter = document.getElementById('filmsync-love-meter');
+
+  // Uyum Ölçer ve Çizim Modu buton görünürlüğü
+  if (loveMeter) loveMeter.style.display = loveMeterEnabled ? 'flex' : 'none';
+  if (drawBtn) drawBtn.style.display = drawingEnabled ? 'block' : 'none';
+
+  // Çizim Butonu dinleme
+  if (drawBtn) {
+    drawBtn.addEventListener('click', toggleDrawingMode);
+  }
+
+  const canvasExit = document.getElementById('filmsync-canvas-exit');
+  if (canvasExit) {
+    canvasExit.addEventListener('click', () => {
+      if (isDrawingMode) toggleDrawingMode();
+    });
+  }
+
+  // Canvas elementini alıp ilklendir
+  canvasElement = document.getElementById('filmsync-canvas');
+  if (canvasElement) {
+    ctx = canvasElement.getContext('2d');
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    // Canvas fare olayları
+    canvasElement.addEventListener('mousedown', startDrawing);
+    canvasElement.addEventListener('mousemove', draw);
+    canvasElement.addEventListener('mouseup', stopDrawing);
+    canvasElement.addEventListener('mouseleave', stopDrawing);
+  }
 
   // Ortak yer işaretleri panel daraltma/açma
   bookmarksHeader.addEventListener('click', () => {
@@ -1376,6 +1574,7 @@ function sendReaction(type, emoji, x = 0, y = 0) {
     senderId: userId,
     timestamp: firebase.database.ServerValue.TIMESTAMP
   });
+  increaseLoveScore(5);
 }
 
 function playReactionAnim(reaction) {
@@ -1490,6 +1689,7 @@ function sendSecretReaction(type) {
     senderId: userId,
     timestamp: firebase.database.ServerValue.TIMESTAMP
   });
+  increaseLoveScore(15);
 }
 
 function playSecretReactionAnim(reaction) {
@@ -1519,11 +1719,42 @@ function playSecretReactionAnim(reaction) {
     el.innerHTML = '👩‍❤️‍👨✨';
     container.appendChild(el);
     showNotificationToast(reaction.sender, 'Bu sahneyi size benzetti! 💕🎬');
+  } else if (reaction.type === 'gift') {
+    // Sürpriz hediye animasyonu
+    const giftOverlay = document.createElement('div');
+    giftOverlay.className = 'filmsync-gift-box-overlay';
+    giftOverlay.innerHTML = `<div class="filmsync-gift-box">🎁</div>`;
+    document.body.appendChild(giftOverlay);
+
+    const giftBox = giftOverlay.querySelector('.filmsync-gift-box');
+    giftBox.addEventListener('click', () => {
+      const items = ['🧸', '🌹', '🍩', '👑', '💄', '💋', '🍫', '💌'];
+      const giftItem = items[Math.floor(Math.random() * items.length)];
+
+      giftBox.className = 'filmsync-gift-surprise';
+      giftBox.innerHTML = giftItem;
+
+      // Konfeti kalpler
+      for (let i = 0; i < 20; i++) {
+        const heart = document.createElement('div');
+        heart.textContent = '❤️';
+        heart.classList.add('filmsync-reaction-click');
+        heart.style.left = (window.innerWidth / 2 + (Math.random() * 200 - 100)) + 'px';
+        heart.style.top = (window.innerHeight / 2 + (Math.random() * 200 - 100)) + 'px';
+        document.body.appendChild(heart);
+        setTimeout(() => heart.remove(), 1000);
+      }
+
+      showNotificationToast(reaction.sender, `Sürpriz hediyeyi açtın: ${giftItem} 🎉`);
+      setTimeout(() => {
+        giftOverlay.remove();
+      }, 2000);
+    });
   }
 
   // Animasyon bitince temizle
   setTimeout(() => {
-    el.remove();
+    if (el.parentNode) el.remove();
   }, 4100);
 }
 
@@ -1540,6 +1771,199 @@ function formatTime(seconds) {
     return `${hrs.toString().padStart(2, '0')}:${paddedMins}:${paddedSecs}`;
   }
   return `${paddedMins}:${paddedSecs}`;
+}
+
+// --- 🎨 ORTAK ÇİZİM CANVASI YARDIMCI METODLARI ---
+function toggleDrawingMode() {
+  if (!drawingEnabled || !canvasElement) return;
+
+  isDrawingMode = !isDrawingMode;
+  const drawBtn = document.getElementById('filmsyncDrawBtn');
+  const canvasExit = document.getElementById('filmsync-canvas-exit');
+
+  if (isDrawingMode) {
+    canvasElement.classList.add('active');
+    if (drawBtn) drawBtn.textContent = '🎨 Çizim Modunu Kapat';
+    if (canvasExit) canvasExit.style.display = 'block';
+    showNotificationToast('Çizim Modu', 'Ekranın üstüne çizim yapabilirsiniz! 🎨');
+  } else {
+    canvasElement.classList.remove('active');
+    if (drawBtn) drawBtn.textContent = '🎨 Birlikte Çiz Modu';
+    if (canvasExit) canvasExit.style.display = 'none';
+    clearLocalCanvas();
+  }
+}
+
+function resizeCanvas() {
+  if (canvasElement) {
+    canvasElement.width = window.innerWidth;
+    canvasElement.height = window.innerHeight;
+    redrawPaths();
+  }
+}
+
+let isDrawing = false;
+function startDrawing(e) {
+  if (!isDrawingMode || !ctx) return;
+  isDrawing = true;
+  const x = e.clientX;
+  const y = e.clientY;
+  
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  currentDrawingPath = [{ x: (x / window.innerWidth).toFixed(3), y: (y / window.innerHeight).toFixed(3) }];
+}
+
+function draw(e) {
+  if (!isDrawing || !isDrawingMode || !ctx) return;
+  const x = e.clientX;
+  const y = e.clientY;
+
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#ff4757'; // Premium kırmızı/pembe
+  ctx.lineTo(x, y);
+  ctx.stroke();
+
+  currentDrawingPath.push({ x: (x / window.innerWidth).toFixed(3), y: (y / window.innerHeight).toFixed(3) });
+}
+
+function stopDrawing() {
+  if (!isDrawing) return;
+  isDrawing = false;
+
+  if (currentDrawingPath.length > 1) {
+    // Çizimi Firebase'e gönder
+    const color = '#ff4757';
+    db.ref(`rooms/${roomId}/drawings`).push({
+      points: currentDrawingPath,
+      color,
+      senderId: userId,
+      timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    // Çizilen yolu yerel olarak sakla (solarak silinme efekti için)
+    const localPath = {
+      points: currentDrawingPath,
+      color,
+      opacity: 1,
+      createdAt: Date.now()
+    };
+    localDrawings.push(localPath);
+    fadeAndRemoveDrawing(localPath);
+    increaseLoveScore(10);
+  }
+  currentDrawingPath = [];
+}
+
+function drawRemotePath(points, color) {
+  if (!canvasElement || !ctx) return;
+
+  const localPath = {
+    points,
+    color,
+    opacity: 1,
+    createdAt: Date.now()
+  };
+  localDrawings.push(localPath);
+  fadeAndRemoveDrawing(localPath);
+}
+
+function fadeAndRemoveDrawing(path) {
+  const duration = 8000; // 8 saniye sonra silinsin
+  const intervalTime = 100;
+  const steps = duration / intervalTime;
+  let currentStep = 0;
+
+  const interval = setInterval(() => {
+    currentStep++;
+    path.opacity = 1 - (currentStep / steps);
+
+    if (path.opacity <= 0) {
+      clearInterval(interval);
+      localDrawings = localDrawings.filter(p => p !== path);
+    }
+    redrawPaths();
+  }, intervalTime);
+}
+
+function redrawPaths() {
+  if (!canvasElement || !ctx) return;
+  ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+  localDrawings.forEach(path => {
+    if (path.points.length < 2) return;
+    
+    ctx.beginPath();
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    
+    // Hex rengine şeffaflık uygula (RGBA formatına çevirerek)
+    ctx.strokeStyle = `rgba(255, 71, 87, ${path.opacity})`;
+    
+    const startX = path.points[0].x * window.innerWidth;
+    const startY = path.points[0].y * window.innerHeight;
+    ctx.moveTo(startX, startY);
+
+    for (let i = 1; i < path.points.length; i++) {
+      const x = path.points[i].x * window.innerWidth;
+      const y = path.points[i].y * window.innerHeight;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  });
+}
+
+function clearLocalCanvas() {
+  localDrawings = [];
+  if (canvasElement && ctx) {
+    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+  }
+}
+
+// --- ❤️ UYUM ÖLÇER (LOVE METER) GÜNCELLEME METODLARI ---
+function increaseLoveScore(amount) {
+  if (!db || !roomId || !loveMeterEnabled) return;
+  db.ref(`rooms/${roomId}/loveMeter`).transaction((currentValue) => {
+    let score = (currentValue || 0) + amount;
+    if (score >= 100) {
+      // 100 olunca sıfırlansın ve özel bir efekt tetiklensin
+      setTimeout(() => triggerPerfectSyncMatch(), 100);
+      return 0;
+    }
+    return score;
+  });
+}
+
+function updateLoveMeterUI(score) {
+  const loveMeter = document.getElementById('filmsync-love-meter');
+  const loveMeterText = document.getElementById('filmsync-love-meter-text');
+  const loveMeterFill = document.getElementById('filmsync-love-meter-fill');
+
+  if (!loveMeter || !loveMeterText || !loveMeterFill) return;
+
+  loveScore = score;
+  loveMeterText.textContent = `%${score} Uyum`;
+  loveMeterFill.style.width = `${score}%`;
+}
+
+function triggerPerfectSyncMatch() {
+  showNotificationToast('Perfect Match', 'Tebrikler! %100 Uyum yakalandı! 💕🎉');
+  
+  // Ekranın her yerinden süzülen kalpler fırlat
+  for (let i = 0; i < 30; i++) {
+    setTimeout(() => {
+      const heart = document.createElement('div');
+      heart.textContent = '❤️';
+      heart.classList.add('filmsync-reaction-float');
+      
+      // Ekranın altından rastgele bir x koordinatından yükselsin
+      heart.style.left = Math.floor(Math.random() * window.innerWidth) + 'px';
+      // content.js'deki CSS floatUp animasyonunu tetiklemek için float class'ı verdik
+      document.body.appendChild(heart);
+      setTimeout(() => heart.remove(), 2600);
+    }, i * 150);
+  }
 }
 
 // --- 🔔 APPLE TARZI BİLDİRİM TOAST MOTORU ---

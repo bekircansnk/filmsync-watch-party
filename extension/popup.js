@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const hostLockSwitch = document.getElementById('hostLockSwitch');
   const reactionsSwitch = document.getElementById('reactionsSwitch');
+  const loveMeterSwitch = document.getElementById('loveMeterSwitch');
+  const drawingSwitch = document.getElementById('drawingSwitch');
   const moodThemeSelect = document.getElementById('moodThemeSelect');
   const skipIntroInput = document.getElementById('skipIntroInput');
   
@@ -142,6 +144,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Uyum Ölçer Değiştiğinde
+  loveMeterSwitch.addEventListener('change', () => {
+    chrome.storage.local.set({ loveMeterEnabled: loveMeterSwitch.checked }, () => {
+      notifyContentScript();
+    });
+  });
+
+  // Çizim Modu Değiştiğinde
+  drawingSwitch.addEventListener('change', () => {
+    chrome.storage.local.set({ drawingEnabled: drawingSwitch.checked }, () => {
+      notifyContentScript();
+    });
+  });
+
   // Ambiyans Işığı Değiştiğinde
   moodThemeSelect.addEventListener('change', () => {
     if (!db || !currentRoomId) return;
@@ -238,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Arayüz ve Canlı Firebase Dinleyicileri
   function updateUI() {
-    chrome.storage.local.get(['roomId', 'username', 'password', 'skipIntroTime', 'reactionsEnabled'], (result) => {
+    chrome.storage.local.get(['roomId', 'username', 'password', 'skipIntroTime', 'reactionsEnabled', 'loveMeterEnabled', 'drawingEnabled'], (result) => {
       if (result.roomId) {
         joinFormContainer.classList.add('hidden');
         activeRoomContainer.classList.remove('hidden');
@@ -254,6 +270,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Reaksiyon Anahtarı Yansıt (Varsayılan true kabul et)
         reactionsSwitch.checked = result.reactionsEnabled !== false;
+        loveMeterSwitch.checked = result.loveMeterEnabled !== false;
+        drawingSwitch.checked = result.drawingEnabled !== false;
       } else {
         joinFormContainer.classList.remove('hidden');
         activeRoomContainer.classList.add('hidden');
