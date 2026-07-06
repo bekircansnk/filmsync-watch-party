@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnGoToMovie = document.getElementById('btnGoToMovie');
   
   const hostLockSwitch = document.getElementById('hostLockSwitch');
+  const reactionsSwitch = document.getElementById('reactionsSwitch');
   const skipIntroInput = document.getElementById('skipIntroInput');
   
   const userCountTitle = document.getElementById('userCountTitle');
@@ -133,6 +134,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Eğlenceli Reaksiyonlar Değiştiğinde
+  reactionsSwitch.addEventListener('change', () => {
+    chrome.storage.local.set({ reactionsEnabled: reactionsSwitch.checked }, () => {
+      notifyContentScript();
+    });
+  });
+
   // Skip Intro Saniye Değiştiğinde
   skipIntroInput.addEventListener('input', () => {
     const val = parseInt(skipIntroInput.value) || 0;
@@ -218,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Arayüz ve Canlı Firebase Dinleyicileri
   function updateUI() {
-    chrome.storage.local.get(['roomId', 'username', 'password', 'skipIntroTime'], (result) => {
+    chrome.storage.local.get(['roomId', 'username', 'password', 'skipIntroTime', 'reactionsEnabled'], (result) => {
       if (result.roomId) {
         joinFormContainer.classList.add('hidden');
         activeRoomContainer.classList.remove('hidden');
@@ -231,6 +239,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.skipIntroTime) {
           skipIntroInput.value = result.skipIntroTime;
         }
+
+        // Reaksiyon Anahtarı Yansıt (Varsayılan true kabul et)
+        reactionsSwitch.checked = result.reactionsEnabled !== false;
       } else {
         joinFormContainer.classList.remove('hidden');
         activeRoomContainer.classList.add('hidden');

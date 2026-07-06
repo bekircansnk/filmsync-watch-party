@@ -12,6 +12,7 @@ let skipIntroTime = 0;
 let hostOnly = false;
 let hostId = null;
 let introSkipped = false;
+let reactionsEnabled = true;
 
 // UI Bileşenleri
 let chatBubble = null;
@@ -79,13 +80,14 @@ function init() {
   }
 
   // Normal Başlatma
-  chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'skipIntroTime'], (result) => {
+  chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'skipIntroTime', 'reactionsEnabled'], (result) => {
     if (result.roomId) {
       roomId = result.roomId;
       username = result.username || 'Anonim';
       password = result.password || '';
       skipIntroTime = parseInt(result.skipIntroTime) || 0;
       introSkipped = false;
+      reactionsEnabled = result.reactionsEnabled !== false;
       
       if (result.userId) {
         userId = result.userId;
@@ -252,6 +254,19 @@ function setupFirebaseListeners() {
   // 4. WebRTC Sinyalleşme Dinleyicisi
   if (window === window.top) {
     setupVoiceSignaling();
+  }
+
+  // 5. Eğlenceli Reaksiyonları Dinle (Canlı Animasyonlar)
+  if (window === window.top) {
+    db.ref(`rooms/${roomId}/reactions`).limitToLast(10).on('child_added', (snapshot) => {
+      const reaction = snapshot.val();
+      if (!reaction || !reactionsEnabled) return;
+      
+      // Çok eski reaksiyonları canlandırma (son 5 saniye)
+      if (Date.now() - reaction.timestamp > 5000) return;
+
+      playReactionAnim(reaction);
+    });
   }
 }
 
@@ -833,6 +848,59 @@ function createChatUI() {
       font-size: 0.85rem;
       color: #fff;
     }
+
+    /* REAKSİYON ANİMASYONLARI */
+    @keyframes filmsyncFloatUp {
+      0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+      50% { transform: translateY(-150px) scale(1.3) rotate(15deg); opacity: 0.9; }
+      100% { transform: translateY(-300px) scale(0.8) rotate(-15deg); opacity: 0; }
+    }
+    @keyframes filmsyncClickBurst {
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+      50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.8; }
+      100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+    }
+    .filmsync-reaction-float {
+      position: fixed;
+      bottom: 80px;
+      font-size: 2.2rem;
+      pointer-events: none;
+      z-index: 2147483647 !important;
+      animation: filmsyncFloatUp 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+    .filmsync-reaction-click {
+      position: fixed;
+      font-size: 2.5rem;
+      pointer-events: none;
+      z-index: 2147483647 !important;
+      animation: filmsyncClickBurst 1s ease-out forwards;
+    }
+    .filmsync-reaction-bar {
+      display: flex;
+      gap: 12px;
+      padding: 10px 15px;
+      background: rgba(255, 255, 255, 0.02);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      justify-content: center;
+    }
+    .filmsync-reaction-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .filmsync-reaction-btn:hover {
+      transform: scale(1.2) translateY(-2px);
+      background: rgba(69, 243, 255, 0.2);
+      border-color: rgba(69, 243, 255, 0.4);
+    }
   `;
 
   root.innerHTML = `
@@ -852,6 +920,13 @@ function createChatUI() {
         <button class="filmsync-voice-btn" id="filmsyncVoiceBtn">🎙️ Mikrofonu Aç</button>
       </div>
       <div id="filmsync-messages"></div>
+      <div class="filmsync-reaction-bar" id="filmsyncReactionBar">
+        <button class="filmsync-reaction-btn" data-emoji="❤️">❤️</button>
+        <button class="filmsync-reaction-btn" data-emoji="😂">😂</button>
+        <button class="filmsync-reaction-btn" data-emoji="🍿">🍿</button>
+        <button class="filmsync-reaction-btn" data-emoji="😱">😱</button>
+        <button class="filmsync-reaction-btn" data-emoji="🥺">🥺</button>
+      </div>
       <div class="filmsync-input-area">
         <input type="text" id="filmsyncMsgInput" placeholder="Mesaj yazın..." autocomplete="off">
         <button class="filmsync-send-btn" id="filmsyncSendBtn">Gönder</button>
@@ -884,6 +959,17 @@ function createChatUI() {
   });
 
   document.addEventListener('keydown', handleGlobalEnterKey);
+
+  // Eğlenceli Reaksiyon Buton Dinleyicileri
+  document.querySelectorAll('.filmsync-reaction-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const emoji = e.currentTarget.getAttribute('data-emoji') || '❤️';
+      sendReaction('float', emoji);
+    });
+  });
+
+  // Global Ekrana Tıklama Efekti (Reactions açıksa)
+  document.addEventListener('click', handleGlobalClickForReaction);
 }
 
 function startUIKeeper() {
@@ -995,6 +1081,62 @@ function updateUsersDisplay(users) {
   if (!userListDisplay) return;
   const formattedUsers = users.join(', ');
   userListDisplay.textContent = `Aktif (${users.length}): ${formattedUsers}`;
+}
+
+// --- ✨ EĞLENCE MOTORU (REACTIONS & CLICKS) ---
+function handleGlobalClickForReaction(e) {
+  if (!reactionsEnabled) return;
+  
+  // UI paneline, butonlara veya baloncuğa tıklandıysa yoksay
+  if (e.target.closest('#filmsync-root') || e.target.closest('.filmsync-toast') || e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.tagName === 'INPUT') {
+    return;
+  }
+
+  // Yüzde hesabı (farklı çözünürlüklerde aynı yerde çıkması için)
+  const xRatio = (e.clientX / window.innerWidth).toFixed(3);
+  const yRatio = (e.clientY / window.innerHeight).toFixed(3);
+
+  sendReaction('click', '❤️', parseFloat(xRatio), parseFloat(yRatio));
+}
+
+function sendReaction(type, emoji, x = 0, y = 0) {
+  if (!db || !roomId || !reactionsEnabled) return;
+  db.ref(`rooms/${roomId}/reactions`).push({
+    type,
+    emoji,
+    x,
+    y,
+    senderId: userId,
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  });
+}
+
+function playReactionAnim(reaction) {
+  let root = document.getElementById('filmsync-root');
+  
+  // Tam ekran sorununu aşmak için, root bulunamazsa veya görünmezse body'ye bas.
+  const container = root ? root : document.body;
+
+  const el = document.createElement('div');
+  el.textContent = reaction.emoji;
+
+  if (reaction.type === 'float') {
+    el.classList.add('filmsync-reaction-float');
+    // Uçan reaksiyonlara hafif rastgele yatay kayma (random left/right position)
+    const randomOffset = Math.floor(Math.random() * 60) - 30; // -30px to +30px
+    el.style.right = (350 + randomOffset) + 'px'; // Panel genişliği + offset
+    container.appendChild(el);
+  } else if (reaction.type === 'click') {
+    el.classList.add('filmsync-reaction-click');
+    el.style.left = (reaction.x * window.innerWidth) + 'px';
+    el.style.top = (reaction.y * window.innerHeight) + 'px';
+    container.appendChild(el);
+  }
+
+  // Animasyon bitince elementi temizle
+  setTimeout(() => {
+    el.remove();
+  }, 2600);
 }
 
 // --- 🔔 APPLE TARZI BİLDİRİM TOAST MOTORU ---
