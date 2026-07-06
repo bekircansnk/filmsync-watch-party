@@ -18,13 +18,14 @@ let userListDisplay = null;
 
 // Firebase Varsayılan Yapılandırması (Bulut Modu için taslak config)
 const defaultFirebaseConfig = {
-  apiKey: "AIzaSyD_FilmSyncDefaultApiKey_2026",
-  authDomain: "filmsync-watch-party.firebaseapp.com",
-  databaseURL: "https://filmsync-watch-party-default-rtdb.firebaseio.com",
-  projectId: "filmsync-watch-party",
-  storageBucket: "filmsync-watch-party.appspot.com",
-  messagingSenderId: "777888999",
-  appId: "1:777888999:web:filmsyncdefaultappkey"
+  apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
+  authDomain: "movieparty-af87f.firebaseapp.com",
+  databaseURL: "https://movieparty-af87f-default-rtdb.firebaseio.com",
+  projectId: "movieparty-af87f",
+  storageBucket: "movieparty-af87f.firebasestorage.app",
+  messagingSenderId: "563223702114",
+  appId: "1:563223702114:web:00815dcbe7645d83b83f3b",
+  measurementId: "G-4KR5X5Y4ZS"
 };
 
 // Sayfa yüklendiğinde başlat
