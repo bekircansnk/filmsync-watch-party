@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const globalStatusText = document.getElementById('globalStatusText');
   const copiedToast = document.getElementById('copiedToast');
 
-  // Arayüzü başlat ve Firebase dinleyicilerini kur
+  // Arayüzü başlat
   updateUI();
 
   // "Odaya Katıl / Kur"
@@ -117,7 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // "Film Sayfasına Git"
   btnGoToMovie.addEventListener('click', () => {
+    if (!db && firebase.apps.length) db = firebase.database();
     if (!db || !currentRoomId) return;
+    
     db.ref(`rooms/${currentRoomId}/lastState/url`).once('value').then((snapshot) => {
       const url = snapshot.val();
       if (url) {
@@ -218,6 +220,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       db = firebase.database();
 
+      // Eski dinleyicileri temizle
+      db.ref(`rooms/${roomId}/users`).off();
+      db.ref(`rooms/${roomId}/lastState/url`).off();
+
       // 1. Canlı Kullanıcıları Dinle
       db.ref(`rooms/${roomId}/users`).on('value', (snapshot) => {
         const usersData = snapshot.val();
@@ -236,9 +242,11 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
         userCountTitle.textContent = `Aktif Üyeler (${count})`;
+      }, (error) => {
+        console.log('Firebase users read error:', error);
       });
 
-      // 2. Canlı URL Eşleşmesini Dinle (Film Sayfasına Git Butonunu göstermek için)
+      // 2. Canlı URL Eşleşmesini Dinle
       db.ref(`rooms/${roomId}/lastState/url`).on('value', (snapshot) => {
         const targetUrl = snapshot.val();
         if (!targetUrl) {
@@ -249,7 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           if (tabs[0]) {
             const currentUrl = tabs[0].url;
-            // Eğer oda sahibi farklı bir film sayfasındaysa butonu görünür kıl
             if (currentUrl !== targetUrl) {
               btnGoToMovie.classList.remove('hidden');
             } else {
@@ -257,10 +264,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         });
+      }, (error) => {
+        console.log('Firebase url read error:', error);
       });
 
     } catch (e) {
-      console.error(e);
+      console.error('setupFirebaseListeners error:', e);
     }
   }
 
