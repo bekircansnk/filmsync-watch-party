@@ -93,12 +93,13 @@
 
     .btn-group {
       display: flex;
+      flex-direction: column;
       gap: 10px;
       margin-top: 15px;
     }
 
     button {
-      flex: 1;
+      width: 100%;
       padding: 11px;
       border: none;
       border-radius: 8px;
@@ -118,10 +119,20 @@
       box-shadow: 0 4px 15px rgba(102, 252, 241, 0.4);
     }
 
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-bright);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: 8px;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
     .btn-danger {
       background: var(--accent);
       color: white;
-      width: 100%;
       margin-top: 10px;
     }
 
@@ -184,6 +195,10 @@
     }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Firebase SDK Yerel Yüklemeleri (Popup içinde doğrudan Firebase kullanımı için) -->
+  <script src="libs/firebase-app.js"></script>
+  <script src="libs/firebase-database.js"></script>
 </head>
 <body>
   <div class="container">
@@ -202,6 +217,7 @@
         <span class="status-dot active"></span>
         <span>Firebase Bulut Bağlantısı Aktif</span>
       </div>
+      <button id="btnCopyInvite" class="btn-secondary">Davet Linkini Kopyala</button>
       <button id="btnLeaveRoom" class="btn-danger">Odan Ayrıl</button>
     </div>
 

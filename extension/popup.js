@@ -1,4 +1,15 @@
 // FilmSync Popup Logic
+const firebaseConfig = {
+  apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
+  authDomain: "movieparty-af87f.firebaseapp.com",
+  databaseURL: "https://movieparty-af87f-default-rtdb.firebaseio.com",
+  projectId: "movieparty-af87f",
+  storageBucket: "movieparty-af87f.firebasestorage.app",
+  messagingSenderId: "563223702114",
+  appId: "1:563223702114:web:00815dcbe7645d83b83f3b",
+  measurementId: "G-4KR5X5Y4ZS"
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   const joinFormContainer = document.getElementById('joinFormContainer');
   const activeRoomContainer = document.getElementById('activeRoomContainer');
@@ -12,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const btnJoinRoom = document.getElementById('btnJoinRoom');
   const btnLeaveRoom = document.getElementById('btnLeaveRoom');
+  const btnCopyInvite = document.getElementById('btnCopyInvite');
   
   const globalStatusDot = document.getElementById('globalStatusDot');
   const globalStatusText = document.getElementById('globalStatusText');
@@ -23,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // "Odaya Katıl / Kur" butonuna tıklandığında
   btnJoinRoom.addEventListener('click', () => {
     const username = usernameInput.value.trim() || 'Anonim';
-    const roomId = roomIdInput.value.trim().replace(/\s+/g, '-'); // Boşlukları tire ile değiştir
+    const roomId = roomIdInput.value.trim().replace(/\s+/g, '-');
     const password = passwordInput.value.trim();
 
     if (!roomId) {
@@ -31,10 +43,77 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    saveSettings(roomId, username, password);
+    globalStatusDot.classList.add('active');
+    globalStatusText.textContent = 'Bağlanıyor...';
+
+    // Firebase'e doğrudan popup'tan bağlanıp kontrol et (Yeni sekmedeyken de yönlendirmesi için)
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      const db = firebase.database();
+      
+      db.ref(`rooms/${roomId}`).once('value').then((snapshot) => {
+        const roomData = snapshot.val();
+        
+        if (roomData) {
+          // Oda varsa şifreyi doğrula
+          if (roomData.password && roomData.password !== password) {
+            alert('Hatalı oda şifresi!');
+            resetStatus();
+            return;
+          }
+          
+          // Şifre doğruysa kaydet ve yönlendir
+          saveSettings(roomId, username, password, () => {
+            if (roomData.lastState && roomData.lastState.url) {
+              // Aktif sekmeyi oda sahibinin izlediği asıl filme yönlendir!
+              chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs[0]) {
+                  chrome.tabs.update(tabs[0].id, { url: roomData.lastState.url });
+                }
+              });
+            }
+          });
+
+        } else {
+          // Oda yoksa ilk kez oluştur
+          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const currentTabUrl = (tabs[0] && tabs[0].url) ? tabs[0].url : '';
+            
+            // Eğer yeni sekme/boş sayfadaysak oda kurmayı engelle veya uyar
+            if (!currentTabUrl || currentTabUrl.startsWith('chrome://')) {
+              alert('Oda kurabilmek için önce bir film veya dizi sayfası açmalısınız!');
+              resetStatus();
+              return;
+            }
+
+            db.ref(`rooms/${roomId}`).set({
+              password: password,
+              lastState: {
+                isPlaying: false,
+                currentTime: 0,
+                url: currentTabUrl,
+                lastUpdated: firebase.database.ServerValue.TIMESTAMP
+              }
+            }).then(() => {
+              saveSettings(roomId, username, password);
+            });
+          });
+        }
+      }).catch(err => {
+        console.error('Firebase Bağlantı Hatası:', err);
+        alert('Bulut sunucusuna bağlanılamadı.');
+        resetStatus();
+      });
+
+    } catch (e) {
+      console.error(e);
+      resetStatus();
+    }
   });
 
-  // "Odan Ayrıl" butonuna tıklandığında
+  // "Odan Ayrıl"
   btnLeaveRoom.addEventListener('click', () => {
     chrome.storage.local.remove(['roomId', 'password'], () => {
       notifyContentScript();
@@ -42,51 +121,66 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Oda adına tıklandığında kopyalama yap
+  // "Davet Linkini Kopyala"
+  btnCopyInvite.addEventListener('click', () => {
+    chrome.storage.local.get(['roomId', 'password'], (result) => {
+      if (result.roomId) {
+        const inviteUrl = `https://github.com/bekircansnk/filmsync-watch-party?join=${encodeURIComponent(result.roomId)}&pass=${encodeURIComponent(result.password || '')}`;
+        navigator.clipboard.writeText(inviteUrl).then(() => {
+          showToast('Davet linki kopyalandı!');
+        });
+      }
+    });
+  });
+
   roomIdDisplay.addEventListener('click', () => {
     const code = roomIdDisplay.textContent;
     if (code && code !== '-----') {
       navigator.clipboard.writeText(code).then(() => {
-        copiedToast.style.display = 'block';
-        setTimeout(() => {
-          copiedToast.style.display = 'none';
-        }, 2000);
+        showToast('Oda adı kopyalandı!');
       });
     }
   });
 
-  // Ayarları storage'a kaydet ve sekmeyi bilgilendir
-  function saveSettings(roomId, username, password) {
+  function resetStatus() {
+    globalStatusDot.classList.remove('active');
+    globalStatusText.textContent = 'Bağlantı Yok';
+  }
+
+  function saveSettings(roomId, username, password, callback) {
     chrome.storage.local.set({ roomId, username, password }, () => {
       notifyContentScript();
       updateUI();
+      if (callback) callback();
     });
   }
 
-  // Arayüzü güncelleme
   function updateUI() {
     chrome.storage.local.get(['roomId', 'username', 'password'], (result) => {
       if (result.roomId) {
         joinFormContainer.classList.add('hidden');
         activeRoomContainer.classList.remove('hidden');
-        
         roomIdDisplay.textContent = result.roomId;
         activeUsername.textContent = result.username;
       } else {
         joinFormContainer.classList.remove('hidden');
         activeRoomContainer.classList.add('hidden');
-        
         if (result.username) usernameInput.value = result.username;
         if (result.roomId) roomIdInput.value = result.roomId;
         if (result.password) passwordInput.value = result.password;
-        
-        globalStatusDot.classList.remove('active');
-        globalStatusText.textContent = 'Bağlantı Yok';
+        resetStatus();
       }
     });
   }
 
-  // Aktif sekmelerdeki content script'e haber ver
+  function showToast(text) {
+    copiedToast.textContent = text;
+    copiedToast.style.display = 'block';
+    setTimeout(() => {
+      copiedToast.style.display = 'none';
+    }, 2000);
+  }
+
   function notifyContentScript() {
     chrome.tabs.query({}, (tabs) => {
       tabs.forEach((tab) => {

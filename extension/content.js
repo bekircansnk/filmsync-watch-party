@@ -31,6 +31,35 @@ const firebaseConfig = {
 init();
 
 function init() {
+  // GİTHUB DAVET LİNKİ KONTROLÜ (Auto-Join)
+  if (window === window.top && window.location.href.includes('github.com/bekircansnk/filmsync-watch-party')) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const joinRoom = urlParams.get('join');
+    const joinPass = urlParams.get('pass') || '';
+
+    if (joinRoom) {
+      showAutoJoinOverlay(joinRoom);
+      chrome.storage.local.set({ roomId: joinRoom, username: 'Misafir_' + Math.random().toString(36).substr(2, 4), password: joinPass }, () => {
+        // Firebase'e bağlanıp oda sahibinin izlediği asıl film URL'ini al ve yönlendir
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const tempDb = firebase.database();
+        tempDb.ref(`rooms/${joinRoom}/lastState`).once('value').then((snapshot) => {
+          const state = snapshot.val();
+          if (state && state.url) {
+            setTimeout(() => {
+              chrome.runtime.sendMessage({ type: 'redirect-tab', url: state.url });
+            }, 1500); // Şık geçiş efekti için 1.5 saniye bekle
+          } else {
+            alert('Bu odada aktif bir film izlenmiyor veya oda bulunamadı.');
+            document.getElementById('filmsync-autojoin-overlay')?.remove();
+          }
+        });
+      });
+      return; // Alt taraftaki normal başlatmayı engelle
+    }
+  }
+
+  // Normal Başlatma
   chrome.storage.local.get(['roomId', 'username', 'password'], (result) => {
     if (result.roomId) {
       roomId = result.roomId;
@@ -40,19 +69,14 @@ function init() {
       
       console.log(`[FilmSync] Canlı odaya bağlanılıyor: ${roomId}, Kullanıcı: ${username}`);
       
-      // ÇİFT SOHBET PENCERESİ ÇÖZÜMÜ: Sohbet arayüzünü yalnızca TOP (Ana) sayfaya ekle, iframe'leri engelle!
+      // Çift Sohbet Penceresini Önleme (Yalnızca top frame enjeksiyonu)
       if (window === window.top) {
         createChatUI();
         createDanmakuContainer();
       }
       
-      // Firebase'i başlat
       initializeFirebase(firebaseConfig);
-      
-      // Sayfadaki video elementini bul
       findVideoElement();
-      
-      // Tam ekran dinleyicisi
       setupFullscreenListener();
     } else {
       removeChatUI();
@@ -84,7 +108,7 @@ function initializeFirebase(config) {
       const roomData = snapshot.val();
       
       if (roomData) {
-        // Oda varsa şifreyi kontrol et
+        // Şifre kontrolü
         if (roomData.password && roomData.password !== password) {
           alert('[FilmSync Hata] Hatalı oda şifresi!');
           removeChatUI();
@@ -92,17 +116,16 @@ function initializeFirebase(config) {
           return;
         }
         
-        // CANLI URL YÖNLENDİRMESİ: Odaya katılırken odanın güncel URL'i bizimkinden farklıysa sekmeyi yönlendir!
+        // CANLI URL YÖNLENDİRMESİ: Odanın güncel URL'i bizimkinden farklıysa sekmeyi yönlendir!
         if (roomData.lastState && roomData.lastState.url && roomData.lastState.url !== window.location.href) {
-          // Yönlendirmeden önce ana sayfada olduğumuzdan emin olalım
           if (window === window.top) {
             console.log(`[FilmSync] Sekme oda sahibiyle eşitlenmek için yönlendiriliyor: ${roomData.lastState.url}`);
             chrome.runtime.sendMessage({ type: 'redirect-tab', url: roomData.lastState.url });
-            return; // Yönlenme başlayacağı için işlemi durdur
+            return;
           }
         }
       } else {
-        // Oda yoksa ilk kez oluştur, şifreyi ve ilk URL'i tanımla
+        // Oda yoksa ilk kez oluştur ve ilk URL'i tanımla (Sadece TOP FRAME yazar!)
         roomRef.child('password').set(password);
         if (window === window.top) {
           db.ref(`rooms/${roomId}/lastState/url`).set(window.location.href);
@@ -114,12 +137,13 @@ function initializeFirebase(config) {
       userRef.set({ username, lastActive: firebase.database.ServerValue.TIMESTAMP });
       userRef.onDisconnect().remove();
       
-      // Katılım mesajı gönder
+      // Yalnızca ana pencere açıldığında sistem mesajı gönder
       if (window === window.top) {
         sendSystemMessage(`${username} odaya katıldı.`);
+        // Oda sahibi olarak güncel URL'imizi güncelle (Sadece top frame!)
+        db.ref(`rooms/${roomId}/lastState/url`).set(window.location.href);
       }
       
-      // Dinleyicileri kur
       setupFirebaseListeners();
     }).catch(err => {
       console.error('[FilmSync] Firebase bağlantı hatası:', err);
@@ -139,14 +163,13 @@ function setupFirebaseListeners() {
     const state = snapshot.val();
     if (!state || !videoElement || isSyncing) return;
 
-    // CANLI URL YÖNLENDİRMESİ: Eğer oda sahibi başka bir sayfaya geçtiyse bizi de yönlendir!
+    // CANLI URL YÖNLENDİRMESİ: Eğer oda sahibi başka bir sayfaya geçtiyse bizi de yönlendir (Sadece top frame!)
     if (state.url && state.url !== window.location.href && window === window.top) {
       console.log(`[FilmSync] Oda sahibi farklı bir sayfa açtı. Yönlendiriliyor: ${state.url}`);
       chrome.runtime.sendMessage({ type: 'redirect-tab', url: state.url });
       return;
     }
 
-    // Zaman farkını hesapla
     const timeDiff = (Date.now() - state.lastUpdated) / 1000;
     isSyncing = true;
     try {
@@ -171,7 +194,6 @@ function setupFirebaseListeners() {
       const msg = snapshot.val();
       if (msg) {
         appendMessage(msg);
-        // Sistem mesajı değilse ekranda kayan yazı olarak göster
         if (!msg.isSystem) {
           showDanmakuMessage(msg.username, msg.message);
         }
@@ -194,7 +216,6 @@ function setupFirebaseListeners() {
   }
 }
 
-// Bağlantı ve Dinleyicileri Temizleme
 function cleanupFirebase() {
   if (db && roomId && userId) {
     if (window === window.top) {
@@ -209,18 +230,16 @@ function cleanupFirebase() {
   }
 }
 
-// Medya Olayını Firebase'e Gönderme
+// Medya Olayını Gönderme (İframe 404 hatasını önlemek için URL göndermeyi kapattık!)
 function sendMediaEvent(isPlaying, currentTime) {
   if (!db || !roomId || isSyncing) return;
   db.ref(`rooms/${roomId}/lastState`).update({
     isPlaying,
     currentTime,
-    url: window.location.href, // Canlı URL senkronizasyonu için mevcut sayfa adresini ekle
     lastUpdated: firebase.database.ServerValue.TIMESTAMP
   });
 }
 
-// Video Elementini Arama
 function findVideoElement() {
   const checkInterval = setInterval(() => {
     const video = document.querySelector('video');
@@ -251,7 +270,7 @@ function setupVideoListeners() {
   });
 }
 
-// --- 🎨 EN YENİ SOHBET PANELİ VE SAĞ ÇERÇEVE ARAYÜZÜ ---
+// --- 🎨 SOHBET PANELİ VE SAĞ ÇERÇEVE ARAYÜZÜ ---
 
 function createChatUI() {
   if (document.getElementById('filmsync-root')) return;
@@ -259,7 +278,7 @@ function createChatUI() {
   const root = document.createElement('div');
   root.id = 'filmsync-root';
   root.style.position = 'fixed';
-  root.style.zIndex = '2147483646'; // Çok yüksek z-index (tam ekranda görünmesi için)
+  root.style.zIndex = '2147483646';
   root.style.top = '0';
   root.style.right = '0';
   root.style.height = '100vh';
@@ -269,7 +288,6 @@ function createChatUI() {
 
   const style = document.createElement('style');
   style.textContent = `
-    /* Sağ İnce Tetikleyici Çerçeve */
     #filmsync-sidebar-trigger {
       width: 8px;
       height: 100vh;
@@ -286,7 +304,6 @@ function createChatUI() {
       box-shadow: -4px 0 15px rgba(69, 243, 255, 0.1);
     }
 
-    /* Sohbet Paneli */
     #filmsync-chat-panel {
       width: 320px;
       height: 100vh;
@@ -294,7 +311,7 @@ function createChatUI() {
       backdrop-filter: blur(25px);
       -webkit-backdrop-filter: blur(25px);
       border-left: 1px solid rgba(255, 255, 255, 0.08);
-      display: none; /* Varsayılan gizli */
+      display: none;
       flex-direction: column;
       overflow: hidden;
       transition: all 0.3s ease;
@@ -355,7 +372,6 @@ function createChatUI() {
       gap: 10px;
     }
 
-    /* Mesaj Balonları */
     .filmsync-msg-row {
       display: flex;
       flex-direction: column;
@@ -471,15 +487,11 @@ function createChatUI() {
   messageList = document.getElementById('filmsync-messages');
   userListDisplay = document.getElementById('filmsyncUserList');
 
-  // Sağ ince bara tıklandığında sohbeti aç/kapat
   sidebarTrigger.addEventListener('click', toggleChatPanel);
-  
-  // Kapatma butonu
   document.getElementById('filmsyncCloseBtn').addEventListener('click', () => {
     chatPanel.classList.remove('active');
   });
 
-  // Mesaj gönderme
   document.getElementById('filmsyncSendBtn').addEventListener('click', sendChatMessage);
   messageInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -488,7 +500,6 @@ function createChatUI() {
     }
   });
 
-  // Enter tuşu dinleyicisi
   document.addEventListener('keydown', handleGlobalEnterKey);
 }
 
@@ -508,14 +519,12 @@ function toggleChatPanel() {
   }
 }
 
-// Global Enter ve Yazmaya Başlama Dinleyicisi
 function handleGlobalEnterKey(e) {
   const activeEl = document.activeElement;
   const isInput = activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable;
 
   if (isInput) return;
 
-  // Enter tuşu sohbet panelini açar ve odaklar
   if (e.key === 'Enter') {
     e.preventDefault();
     chatPanel.classList.add('active');
@@ -523,12 +532,10 @@ function handleGlobalEnterKey(e) {
     return;
   }
 
-  // Kullanıcı herhangi bir harf tuşuna bastığında sohbeti otomatik açıp odağı oraya alalım
   const isAlphanumeric = e.key.length === 1 && /[a-zA-Z0-9İıŞşĞğÇçÖöÜü\s]/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey;
   if (isAlphanumeric) {
     chatPanel.classList.add('active');
     messageInput.focus();
-    // Tuşa basılan harfi de doğrudan input'a ekleyelim
     setTimeout(() => {
       messageInput.value = e.key;
     }, 10);
@@ -559,6 +566,13 @@ function sendSystemMessage(text) {
 
 function appendMessage({ username: msgUser, message, isSystem }) {
   if (!messageList) return;
+
+  // Mükerrer mesajları önle
+  const lastMsg = messageList.lastElementChild;
+  if (lastMsg && lastMsg.querySelector('.filmsync-msg-bubble')?.textContent === message && 
+      lastMsg.querySelector('.filmsync-msg-sender')?.textContent === msgUser) {
+    return;
+  }
 
   const row = document.createElement('div');
   row.classList.add('filmsync-msg-row');
@@ -596,9 +610,9 @@ function createDanmakuContainer() {
   danmakuContainer.style.top = '10%';
   danmakuContainer.style.left = '0';
   danmakuContainer.style.width = '100%';
-  danmakuContainer.style.height = '40%'; // Videonun üst yüzde 40'lık alanında aksın
-  danmakuContainer.style.pointerEvents = 'none'; // Videoya tıklamayı engellememek için tıklamaları yoksay
-  danmakuContainer.style.zIndex = '2147483647'; // En üst katman
+  danmakuContainer.style.height = '40%';
+  danmakuContainer.style.pointerEvents = 'none';
+  danmakuContainer.style.zIndex = '2147483647';
   danmakuContainer.style.overflow = 'hidden';
 
   const style = document.createElement('style');
@@ -615,7 +629,7 @@ function createDanmakuContainer() {
          1px -1px 0 #000,
         -1px  1px 0 #000,
          1px  1px 0 #000,
-         0px 0px 8px rgba(69, 243, 255, 0.8); /* Turkuaz neon parıltı */
+         0px 0px 8px rgba(69, 243, 255, 0.8);
       padding: 6px 14px;
       background: rgba(11, 12, 16, 0.4);
       border-radius: 20px;
@@ -626,12 +640,8 @@ function createDanmakuContainer() {
     }
 
     @keyframes filmsync-danmaku-slide {
-      0% {
-        transform: translateX(0);
-      }
-      100% {
-        transform: translateX(-220vw); /* Ekran genişliğine göre sola kaydır */
-      }
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-220vw); }
     }
   `;
 
@@ -646,14 +656,11 @@ function showDanmakuMessage(sender, text) {
   item.classList.add('filmsync-danmaku-item');
   item.textContent = `${sender}: ${text}`;
 
-  // Kayan yazının dikeyde farklı katmanlarda (lane) akması için rastgele bir satır belirle
-  const lanes = 6; // 6 farklı dikey kulvar
+  const lanes = 6;
   const randomLane = Math.floor(Math.random() * lanes);
-  item.style.top = `${randomLane * 40}px`; // Kulvar başına 40px boşluk
+  item.style.top = `${randomLane * 40}px`;
 
   danmakuContainer.appendChild(item);
-
-  // Animasyon bitince elementi DOM'dan temizle
   item.addEventListener('animationend', () => {
     item.remove();
   });
@@ -666,7 +673,6 @@ function setupFullscreenListener() {
     document.addEventListener(eventName, () => {
       const root = document.getElementById('filmsync-root');
       const danmaku = document.getElementById('filmsync-danmaku-container');
-
       const fsElement = document.fullscreenElement || 
                         document.webkitFullscreenElement || 
                         document.mozFullScreenElement || 
@@ -675,11 +681,42 @@ function setupFullscreenListener() {
       if (fsElement) {
         if (root) fsElement.appendChild(root);
         if (danmaku) fsElement.appendChild(danmaku);
-        console.log('[FilmSync] Tam ekranda arayüzler oynatıcı elementinin altına taşındı.');
       } else {
         if (root) document.body.appendChild(root);
         if (danmaku) document.body.appendChild(danmaku);
       }
     });
   });
+}
+
+// --- ⚙️ AUTO-JOIN (DAVET LİNKİ) EKRAN EFEKTİ ---
+function showAutoJoinOverlay(roomName) {
+  const overlay = document.createElement('div');
+  overlay.id = 'filmsync-autojoin-overlay';
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100vw';
+  overlay.style.height = '100vh';
+  overlay.style.background = 'rgba(11, 12, 16, 0.9)';
+  overlay.style.backdropFilter = 'blur(10px)';
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.zIndex = '2147483647';
+  overlay.style.color = '#fff';
+  overlay.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
+  overlay.innerHTML = `
+    <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 10px;">FilmSync 🍿</div>
+    <div style="font-size: 1.2rem; color: #45f3ff; font-weight: 600; margin-bottom: 20px;">
+      "${roomName}" Odasına Katılınıyor...
+    </div>
+    <div style="width: 40px; height: 40px; border: 4px solid rgba(69, 243, 255, 0.1); border-top-color: #45f3ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+    <style>
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+  `;
+  document.body.appendChild(overlay);
 }
