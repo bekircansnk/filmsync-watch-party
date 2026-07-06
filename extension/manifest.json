@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "FilmSync Watch Party",
+  "version": "1.0.0",
+  "description": "Arkadaşlarınızla her web sitesindeki filmleri eşzamanlı olarak izleyin.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "libs/firebase-app.js",
+        "libs/firebase-database.js",
+        "content.js"
+      ],
+      "run_at": "document_end",
+      "all_frames": true
+    }
+  ]
+}

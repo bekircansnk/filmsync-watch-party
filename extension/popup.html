@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>FilmSync Watch Party</title>
+  <style>
+    :root {
+      --bg-color: #0b0c10;
+      --panel-bg: rgba(31, 40, 51, 0.45);
+      --primary: #45f3ff;
+      --secondary: #66fcf1;
+      --text: #c5c6c7;
+      --text-bright: #ffffff;
+      --accent: #ff4757;
+      --font: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 320px;
+      font-family: var(--font);
+      background-color: var(--bg-color);
+      color: var(--text);
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      background: var(--panel-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-bright);
+      text-align: center;
+      margin-bottom: 5px;
+      letter-spacing: 0.5px;
+    }
+
+    h1 span {
+      color: var(--primary);
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #888;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      color: var(--secondary);
+      font-weight: 600;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: var(--text-bright);
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 8px rgba(69, 243, 255, 0.2);
+    }
+
+    select option {
+      background-color: #1f2833;
+      color: var(--text-bright);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    button {
+      flex: 1;
+      padding: 11px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #0b0c10;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(102, 252, 241, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-bright);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-danger {
+      background: var(--accent);
+      color: white;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .btn-danger:hover {
+      box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+    }
+
+    .active-room-card {
+      background: rgba(69, 243, 255, 0.05);
+      border: 1px dashed var(--primary);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .room-id-display {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 8px 0;
+      letter-spacing: 2px;
+      cursor: pointer;
+    }
+
+    .room-id-display:active {
+      transform: scale(0.98);
+    }
+
+    .copied-toast {
+      font-size: 0.7rem;
+      color: var(--secondary);
+      margin-top: 4px;
+      display: none;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      margin-top: 10px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent);
+    }
+
+    .status-dot.active {
+      background-color: #2ed573;
+      box-shadow: 0 0 8px #2ed573;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <h1>FilmSync <span>Party</span> 🍿</h1>
+    <div class="subtitle">Arkadaşlarınla Birlikte İzle</div>
+
+    <!-- Aktif Bağlantı Detayı -->
+    <div id="activeRoomContainer" class="active-room-card hidden">
+      <div>Şu an bu odadasınız:</div>
+      <div id="roomIdDisplay" class="room-id-display" title="Kopyalamak için tıklayın">-----</div>
+      <div class="copied-toast" id="copiedToast">Oda kodu kopyalandı!</div>
+      <div style="font-size: 0.8rem; margin-top: 5px;">
+        Kullanıcı: <strong id="activeUsername" style="color: var(--text-bright);">---</strong>
+      </div>
+      <div class="status-indicator">
+        <span class="status-dot active"></span>
+        <span id="activeModeText">Bağlantı Aktif</span>
+      </div>
+      <button id="btnLeaveRoom" class="btn-danger">Odan Ayrıl</button>
+    </div>
+
+    <!-- Bağlantı Formu -->
+    <div id="joinFormContainer">
+      <div class="form-group">
+        <label for="usernameInput">Adınız</label>
+        <input type="text" id="usernameInput" placeholder="Kullanıcı adınızı girin">
+      </div>
+
+      <div class="form-group">
+        <label for="roomIdInput">Oda Kodu (Katılmak İçin)</label>
+        <input type="text" id="roomIdInput" placeholder="Oda kodunu yapıştırın">
+      </div>
+
+      <div class="form-group">
+        <label for="passwordInput">Oda Şifresi</label>
+        <input type="password" id="passwordInput" placeholder="Şifre girin veya oda kurarken belirleyin">
+      </div>
+
+      <div class="form-group">
+        <label for="modeSelect">Çalışma Modu</label>
+        <select id="modeSelect">
+          <option value="local">Lokal Mod (Yerel Test - Sunucusuz)</option>
+          <option value="cloud">Bulut Modu (Google Firebase)</option>
+        </select>
+      </div>
+
+      <div class="btn-group">
+        <button id="btnJoinRoom" class="btn-primary">Katıl</button>
+        <button id="btnCreateRoom" class="btn-secondary">Oda Kur</button>
+      </div>
+
+      <div class="status-indicator">
+        <span class="status-dot" id="globalStatusDot"></span>
+        <span id="globalStatusText">Bağlantı Yok</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

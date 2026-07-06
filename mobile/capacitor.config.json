@@ -1,0 +1,11 @@
+{
+  "appId": "com.filmsync.party",
+  "appName": "FilmSync Mobile",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "allowNavigation": [
+      "*"
+    ]
+  }
+}
