@@ -29,6 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnRetrySync = document.getElementById('btnRetrySync');
   const btnGoToMovie = document.getElementById('btnGoToMovie');
   
+  const hostLockSwitch = document.getElementById('hostLockSwitch');
+  const skipIntroInput = document.getElementById('skipIntroInput');
+  
   const userCountTitle = document.getElementById('userCountTitle');
   const activeUsersList = document.getElementById('activeUsersList');
   
@@ -115,6 +118,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Host Lock Switch Değiştiğinde (Oda Kilidi)
+  hostLockSwitch.addEventListener('change', () => {
+    if (!db || !currentRoomId) return;
+    
+    chrome.storage.local.get(['userId'], (result) => {
+      const activeUserId = result.userId;
+      db.ref(`rooms/${currentRoomId}/lastState`).update({
+        hostOnly: hostLockSwitch.checked,
+        hostId: hostLockSwitch.checked ? activeUserId : null
+      }).then(() => {
+        showToast(hostLockSwitch.checked ? 'Oda kilidi aktif!' : 'Oda kilidi kaldırıldı.');
+      });
+    });
+  });
+
+  // Skip Intro Saniye Değiştiğinde
+  skipIntroInput.addEventListener('input', () => {
+    const val = parseInt(skipIntroInput.value) || 0;
+    chrome.storage.local.set({ skipIntroTime: val }, () => {
+      notifyContentScript();
+    });
+  });
+
   // "Film Sayfasına Git"
   btnGoToMovie.addEventListener('click', () => {
     if (!db && firebase.apps.length) db = firebase.database();
@@ -192,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Arayüz ve Canlı Firebase Dinleyicileri
   function updateUI() {
-    chrome.storage.local.get(['roomId', 'username', 'password'], (result) => {
+    chrome.storage.local.get(['roomId', 'username', 'password', 'skipIntroTime'], (result) => {
       if (result.roomId) {
         joinFormContainer.classList.add('hidden');
         activeRoomContainer.classList.remove('hidden');
@@ -200,6 +226,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         currentRoomId = result.roomId;
         setupFirebaseListeners(result.roomId);
+
+        // Skip Intro Değerini yansıt
+        if (result.skipIntroTime) {
+          skipIntroInput.value = result.skipIntroTime;
+        }
       } else {
         joinFormContainer.classList.remove('hidden');
         activeRoomContainer.classList.add('hidden');
@@ -212,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Firebase üzerinden Canlı Kullanıcı ve URL Dinleme
+  // Firebase üzerinden Canlı Kullanıcı, URL ve Host Lock Dinleme
   function setupFirebaseListeners(roomId) {
     try {
       if (!firebase.apps.length) {
@@ -223,6 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Eski dinleyicileri temizle
       db.ref(`rooms/${roomId}/users`).off();
       db.ref(`rooms/${roomId}/lastState/url`).off();
+      db.ref(`rooms/${roomId}/lastState/hostOnly`).off();
 
       // 1. Canlı Kullanıcıları Dinle
       db.ref(`rooms/${roomId}/users`).on('value', (snapshot) => {
@@ -242,8 +274,6 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
         userCountTitle.textContent = `Aktif Üyeler (${count})`;
-      }, (error) => {
-        console.log('Firebase users read error:', error);
       });
 
       // 2. Canlı URL Eşleşmesini Dinle
@@ -264,12 +294,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         });
-      }, (error) => {
-        console.log('Firebase url read error:', error);
+      });
+
+      // 3. Host Lock Durumunu Dinle
+      db.ref(`rooms/${roomId}/lastState/hostOnly`).on('value', (snapshot) => {
+        const isLocked = snapshot.val() || false;
+        hostLockSwitch.checked = isLocked;
       });
 
     } catch (e) {
-      console.error('setupFirebaseListeners error:', e);
+      console.error(e);
     }
   }
 
@@ -277,6 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (db && currentRoomId) {
       db.ref(`rooms/${currentRoomId}/users`).off();
       db.ref(`rooms/${currentRoomId}/lastState/url`).off();
+      db.ref(`rooms/${currentRoomId}/lastState/hostOnly`).off();
     }
     currentRoomId = null;
   }
