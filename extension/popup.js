@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnJoinRoom = document.getElementById('btnJoinRoom');
   const btnLeaveRoom = document.getElementById('btnLeaveRoom');
   const btnCopyInvite = document.getElementById('btnCopyInvite');
+  const btnRetrySync = document.getElementById('btnRetrySync');
   
   const globalStatusDot = document.getElementById('globalStatusDot');
   const globalStatusText = document.getElementById('globalStatusText');
@@ -32,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Arayüzü güncelle
   updateUI();
 
-  // "Odaya Katıl / Kur" butonuna tıklandığında
+  // "Odaya Katıl / Kur"
   btnJoinRoom.addEventListener('click', () => {
     const username = usernameInput.value.trim() || 'Anonim';
     const roomId = roomIdInput.value.trim().replace(/\s+/g, '-');
@@ -46,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
     globalStatusDot.classList.add('active');
     globalStatusText.textContent = 'Bağlanıyor...';
 
-    // Firebase'e doğrudan popup'tan bağlanıp kontrol et (Yeni sekmedeyken de yönlendirmesi için)
     try {
       if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
@@ -57,17 +57,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const roomData = snapshot.val();
         
         if (roomData) {
-          // Oda varsa şifreyi doğrula
           if (roomData.password && roomData.password !== password) {
             alert('Hatalı oda şifresi!');
             resetStatus();
             return;
           }
           
-          // Şifre doğruysa kaydet ve yönlendir
           saveSettings(roomId, username, password, () => {
             if (roomData.lastState && roomData.lastState.url) {
-              // Aktif sekmeyi oda sahibinin izlediği asıl filme yönlendir!
               chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                 if (tabs[0]) {
                   chrome.tabs.update(tabs[0].id, { url: roomData.lastState.url });
@@ -77,11 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
           });
 
         } else {
-          // Oda yoksa ilk kez oluştur
           chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             const currentTabUrl = (tabs[0] && tabs[0].url) ? tabs[0].url : '';
             
-            // Eğer yeni sekme/boş sayfadaysak oda kurmayı engelle veya uyar
             if (!currentTabUrl || currentTabUrl.startsWith('chrome://')) {
               alert('Oda kurabilmek için önce bir film veya dizi sayfası açmalısınız!');
               resetStatus();
@@ -102,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
       }).catch(err => {
-        console.error('Firebase Bağlantı Hatası:', err);
+        console.error(err);
         alert('Bulut sunucusuna bağlanılamadı.');
         resetStatus();
       });
@@ -112,6 +107,23 @@ document.addEventListener('DOMContentLoaded', () => {
       resetStatus();
     }
   });
+
+  // "Senkronizasyonu Yenile"
+  if (btnRetrySync) {
+    btnRetrySync.addEventListener('click', () => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]) {
+          chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, (response) => {
+            if (chrome.runtime.lastError) {
+              alert('Oynatıcı bulunamadı. Lütfen önce film sayfasını açtığınızdan emin olun!');
+              return;
+            }
+            showToast('Senkronizasyon yenileniyor...');
+          });
+        }
+      });
+    });
+  }
 
   // "Odan Ayrıl"
   btnLeaveRoom.addEventListener('click', () => {
