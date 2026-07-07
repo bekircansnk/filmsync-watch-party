@@ -302,19 +302,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const usersData = snapshot.val();
         activeUsersList.innerHTML = '';
         
-        let count = 0;
+        const uniqueUsernames = new Set();
         if (usersData) {
           Object.values(usersData).forEach(u => {
             if (u.username) {
-              count++;
-              const el = document.createElement('div');
-              el.classList.add('user-list-item');
-              el.innerHTML = `<span class="user-online-dot"></span><span>${u.username}</span>`;
-              activeUsersList.appendChild(el);
+              uniqueUsernames.add(u.username);
             }
           });
         }
-        userCountTitle.textContent = `Aktif Üyeler (${count})`;
+        
+        uniqueUsernames.forEach(username => {
+          const el = document.createElement('div');
+          el.className = 'user-list-item';
+          el.innerHTML = `<span class="user-online-dot"></span><span>${username}</span>`;
+          activeUsersList.appendChild(el);
+        });
+        
+        userCountTitle.textContent = `Aktif Üyeler (${uniqueUsernames.size})`;
       });
 
       // 2. Canlı URL Eşleşmesini Dinle
