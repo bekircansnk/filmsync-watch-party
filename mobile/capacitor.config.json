@@ -1,6 +1,6 @@
 {
   "appId": "com.filmsync.party",
-  "appName": "FilmSync Mobile",
+  "appName": "Erva ile Film Partisi",
   "webDir": "dist",
   "server": {
     "androidScheme": "https",

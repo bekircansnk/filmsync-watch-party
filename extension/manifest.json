@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "FilmSync İzleme Partisi",
+  "name": "Erva ile Film Partisi",
   "version": "1.0.0",
-  "description": "Arkadaşlarınızla her web sitesindeki filmleri eşzamanlı olarak izleyin.",
+  "description": "Erva & Bekir çiftine özel film/dizi eşzamanlı izleme eklentisi.",
   "permissions": [
     "storage",
     "activeTab",

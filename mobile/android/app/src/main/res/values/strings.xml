@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">FilmSync Mobile</string>
-    <string name="title_activity_main">FilmSync Mobile</string>
+    <string name="app_name">Erva ile Film Partisi</string>
+    <string name="title_activity_main">Erva ile Film Partisi</string>
     <string name="package_name">com.filmsync.party</string>
     <string name="custom_url_scheme">com.filmsync.party</string>
 </resources>
