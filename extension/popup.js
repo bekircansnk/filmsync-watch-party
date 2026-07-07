@@ -29,13 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnRetrySync = document.getElementById('btnRetrySync');
   const btnGoToMovie = document.getElementById('btnGoToMovie');
   
-  const hostLockSwitch = document.getElementById('hostLockSwitch');
-  const reactionsSwitch = document.getElementById('reactionsSwitch');
-  const loveMeterSwitch = document.getElementById('loveMeterSwitch');
-  const drawingSwitch = document.getElementById('drawingSwitch');
-  const moodThemeSelect = document.getElementById('moodThemeSelect');
-  const skipIntroInput = document.getElementById('skipIntroInput');
-  
   const userCountTitle = document.getElementById('userCountTitle');
   const activeUsersList = document.getElementById('activeUsersList');
   
@@ -126,60 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Host Lock Switch Değiştiğinde (Oda Kilidi)
-  hostLockSwitch.addEventListener('change', () => {
-    if (!db || !currentRoomId) return;
-    
-    chrome.storage.local.get(['userId'], (result) => {
-      const activeUserId = result.userId;
-      db.ref(`rooms/${currentRoomId}/lastState`).update({
-        hostOnly: hostLockSwitch.checked,
-        hostId: hostLockSwitch.checked ? activeUserId : null
-      }).then(() => {
-        showToast(hostLockSwitch.checked ? 'Oda kilidi aktif!' : 'Oda kilidi kaldırıldı.');
-      });
-    });
-  });
 
-  // Eğlenceli Reaksiyonlar Değiştiğinde
-  reactionsSwitch.addEventListener('change', () => {
-    chrome.storage.local.set({ reactionsEnabled: reactionsSwitch.checked }, () => {
-      notifyContentScript();
-    });
-  });
-
-  // Uyum Ölçer Değiştiğinde
-  loveMeterSwitch.addEventListener('change', () => {
-    chrome.storage.local.set({ loveMeterEnabled: loveMeterSwitch.checked }, () => {
-      notifyContentScript();
-    });
-  });
-
-  // Çizim Modu Değiştiğinde
-  drawingSwitch.addEventListener('change', () => {
-    chrome.storage.local.set({ drawingEnabled: drawingSwitch.checked }, () => {
-      notifyContentScript();
-    });
-  });
-
-  // Ambiyans Işığı Değiştiğinde
-  moodThemeSelect.addEventListener('change', () => {
-    if (!db || !currentRoomId) return;
-    
-    db.ref(`rooms/${currentRoomId}/lastState`).update({
-      theme: moodThemeSelect.value
-    }).then(() => {
-      showToast('Tema güncellendi!');
-    });
-  });
-
-  // Skip Intro Saniye Değiştiğinde
-  skipIntroInput.addEventListener('input', () => {
-    const val = parseInt(skipIntroInput.value) || 0;
-    chrome.storage.local.set({ skipIntroTime: val }, () => {
-      notifyContentScript();
-    });
-  });
 
   // "Film Sayfasına Git"
   btnGoToMovie.addEventListener('click', () => {
@@ -258,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Arayüz ve Canlı Firebase Dinleyicileri
   function updateUI() {
-    chrome.storage.local.get(['roomId', 'username', 'password', 'skipIntroTime', 'reactionsEnabled', 'loveMeterEnabled', 'drawingEnabled'], (result) => {
+    chrome.storage.local.get(['roomId', 'username', 'password'], (result) => {
       if (result.roomId) {
         joinFormContainer.classList.add('hidden');
         activeRoomContainer.classList.remove('hidden');
@@ -266,16 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         currentRoomId = result.roomId;
         setupFirebaseListeners(result.roomId);
-
-        // Skip Intro Değerini yansıt
-        if (result.skipIntroTime) {
-          skipIntroInput.value = result.skipIntroTime;
-        }
-
-        // Reaksiyon Anahtarı Yansıt (Varsayılan true kabul et)
-        reactionsSwitch.checked = result.reactionsEnabled !== false;
-        loveMeterSwitch.checked = result.loveMeterEnabled !== false;
-        drawingSwitch.checked = result.drawingEnabled !== false;
       } else {
         joinFormContainer.classList.remove('hidden');
         activeRoomContainer.classList.add('hidden');
@@ -349,18 +279,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
 
-      // 3. Host Lock Durumunu Dinle
-      db.ref(`rooms/${roomId}/lastState/hostOnly`).on('value', (snapshot) => {
-        const isLocked = snapshot.val() || false;
-        hostLockSwitch.checked = isLocked;
-      });
-
-      // 4. Ambiyans Işığını Dinle
-      db.ref(`rooms/${roomId}/lastState/theme`).on('value', (snapshot) => {
-        const activeTheme = snapshot.val() || 'none';
-        moodThemeSelect.value = activeTheme;
-      });
-
     } catch (e) {
       console.error(e);
     }
@@ -370,8 +288,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (db && currentRoomId) {
       db.ref(`rooms/${currentRoomId}/users`).off();
       db.ref(`rooms/${currentRoomId}/lastState/url`).off();
-      db.ref(`rooms/${currentRoomId}/lastState/hostOnly`).off();
-      db.ref(`rooms/${currentRoomId}/lastState/theme`).off();
     }
     currentRoomId = null;
   }
