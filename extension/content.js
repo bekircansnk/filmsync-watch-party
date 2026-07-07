@@ -225,7 +225,10 @@ function setupFirebaseListeners() {
     try {
       if (state.isPlaying && videoElement.paused) {
         videoElement.currentTime = state.currentTime + (timeDiff > 0 ? timeDiff : 0);
-        videoElement.play().catch(e => console.log('Oynatma etkileşim bekliyor.', e));
+        videoElement.play().catch(e => {
+          console.log('Oynatma etkileşim bekliyor.', e);
+          showNotificationToast('FilmSync', 'Senkronizasyon için sayfaya tıklayıp oynat butonuna basın! 🍿');
+        });
       } else if (!state.isPlaying && !videoElement.paused) {
         videoElement.currentTime = state.currentTime;
         videoElement.pause();
@@ -235,7 +238,7 @@ function setupFirebaseListeners() {
     } catch (e) {
       console.error('[FilmSync] Medya eşitleme hatası:', e);
     }
-    setTimeout(() => { isSyncing = false; }, 300);
+    setTimeout(() => { isSyncing = false; }, 1500);
   });
 
   // 2. Sohbet Mesajlarını Dinle
@@ -370,14 +373,17 @@ function forceSync() {
       try {
         videoElement.currentTime = state.currentTime;
         if (state.isPlaying) {
-          videoElement.play().catch(e => console.log('Oynatma engellendi.', e));
+          videoElement.play().catch(e => {
+            console.log('Oynatma engellendi.', e);
+            showNotificationToast('FilmSync', 'Senkronizasyon için sayfaya tıklayıp oynat butonuna basın! 🍿');
+          });
         } else {
           videoElement.pause();
         }
       } catch (e) {
         console.error(e);
       }
-      setTimeout(() => { isSyncing = false; }, 300);
+      setTimeout(() => { isSyncing = false; }, 1500);
     }
   });
 }
@@ -472,7 +478,7 @@ function startDriftCorrection() {
         console.log(`[FilmSync] Zaman sapması tespit edildi (${Math.abs(localTime - expectedTime)}sn). Otomatik eşitleniyor.`);
         isSyncing = true;
         videoElement.currentTime = expectedTime;
-        setTimeout(() => { isSyncing = false; }, 300);
+        setTimeout(() => { isSyncing = false; }, 1500);
       }
     });
   }, 3000);
