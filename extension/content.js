@@ -120,9 +120,23 @@ function init() {
 // Storage ve Popup Mesaj Dinleyicileri
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'settings-updated') {
-    cleanupFirebase();
-    removeChatUI();
-    init();
+    chrome.storage.local.get(['skipIntroTime', 'reactionsEnabled', 'loveMeterEnabled', 'drawingEnabled'], (result) => {
+      skipIntroTime = parseInt(result.skipIntroTime) || 0;
+      reactionsEnabled = result.reactionsEnabled !== false;
+      loveMeterEnabled = result.loveMeterEnabled !== false;
+      drawingEnabled = result.drawingEnabled !== false;
+
+      // Arayüz elementlerinin durumlarını güncelle
+      const loveMeter = document.getElementById('filmsync-love-meter');
+      const drawBtn = document.getElementById('filmsyncDrawBtn');
+      if (loveMeter) loveMeter.style.display = loveMeterEnabled ? 'flex' : 'none';
+      if (drawBtn) drawBtn.style.display = drawingEnabled ? 'block' : 'none';
+
+      // Çizim modu devre dışı bırakıldıysa modu kapat
+      if (!drawingEnabled && isDrawingMode) {
+        toggleDrawingMode();
+      }
+    });
     sendResponse({ status: 'success' });
   } else if (message.type === 'force-sync') {
     forceSync();
@@ -267,12 +281,17 @@ function setupFirebaseListeners() {
 
   // 5. Eğlenceli Reaksiyonları Dinle (Canlı Animasyonlar)
   if (window === window.top) {
+    let isReactionHistoryLoaded = false;
+    db.ref(`rooms/${roomId}/reactions`).limitToLast(1).once('value').then(() => {
+      isReactionHistoryLoaded = true;
+    });
+
     db.ref(`rooms/${roomId}/reactions`).limitToLast(10).on('child_added', (snapshot) => {
       const reaction = snapshot.val();
       if (!reaction || !reactionsEnabled) return;
       
-      // Çok eski reaksiyonları canlandırma (son 5 saniye)
-      if (Date.now() - reaction.timestamp > 5000) return;
+      // Sadece dinleyici kurulduktan sonra gelen yeni reaksiyonları oynat
+      if (!isReactionHistoryLoaded) return;
 
       playReactionAnim(reaction);
     });
@@ -294,10 +313,18 @@ function setupFirebaseListeners() {
 
   // 8. Gizli Çift Reaksiyonlarını Dinle
   if (window === window.top) {
+    let isSecretHistoryLoaded = false;
+    db.ref(`rooms/${roomId}/secretReactions`).limitToLast(1).once('value').then(() => {
+      isSecretHistoryLoaded = true;
+    });
+
     db.ref(`rooms/${roomId}/secretReactions`).limitToLast(5).on('child_added', (snapshot) => {
       const reaction = snapshot.val();
       if (!reaction || !reactionsEnabled) return;
-      if (Date.now() - reaction.timestamp > 5000) return;
+      
+      // Sadece yeni gelen gizli reaksiyonları oynat
+      if (!isSecretHistoryLoaded) return;
+      
       playSecretReactionAnim(reaction);
     });
   }
@@ -311,13 +338,18 @@ function setupFirebaseListeners() {
   }
 
   // 10. Ortak Çizimleri Dinle
+  let isDrawingHistoryLoaded = false;
+  db.ref(`rooms/${roomId}/drawings`).limitToLast(1).once('value').then(() => {
+    isDrawingHistoryLoaded = true;
+  });
+
   db.ref(`rooms/${roomId}/drawings`).limitToLast(10).on('child_added', (snapshot) => {
     const drawing = snapshot.val();
     if (!drawing || !drawingEnabled) return;
     if (drawing.senderId === userId) return; // Kendi çizimimiz zaten yerel olarak çizildi
     
-    // Çok eski çizimleri yoksay
-    if (Date.now() - drawing.timestamp > 15000) return;
+    // Sadece yeni çizimleri oynat
+    if (!isDrawingHistoryLoaded) return;
 
     drawRemotePath(drawing.points, drawing.color);
   });
@@ -1267,13 +1299,6 @@ function createChatUI() {
   `;
 
   root.innerHTML = `
-    <!-- Ambiyans Işığı Katmanı -->
-    <div id="filmsync-mood-light"></div>
-
-    <!-- Ortak Çizim Canvas Katmanı -->
-    <canvas id="filmsync-canvas"></canvas>
-    <button id="filmsync-canvas-exit">Çizim Modundan Çık ❌</button>
-
     <!-- Uyum Ölçer (Love Meter) -->
     <div id="filmsync-love-meter" style="display: none;">
       <span id="filmsync-love-meter-heart">❤️</span>
@@ -1339,6 +1364,31 @@ function createChatUI() {
   document.body.appendChild(root);
   document.head.appendChild(style);
 
+  // Ambiyans Işığı Katmanını dinamik oluşturup body'ye ekle
+  let moodLight = document.getElementById('filmsync-mood-light');
+  if (!moodLight) {
+    moodLight = document.createElement('div');
+    moodLight.id = 'filmsync-mood-light';
+    document.body.appendChild(moodLight);
+  }
+
+  // Çizim Canvas elementini dinamik oluşturup body'ye ekle
+  canvasElement = document.getElementById('filmsync-canvas');
+  if (!canvasElement) {
+    canvasElement = document.createElement('canvas');
+    canvasElement.id = 'filmsync-canvas';
+    document.body.appendChild(canvasElement);
+  }
+
+  // Çizim Çıkış butonunu dinamik oluşturup body'ye ekle
+  let canvasExit = document.getElementById('filmsync-canvas-exit');
+  if (!canvasExit) {
+    canvasExit = document.createElement('button');
+    canvasExit.id = 'filmsync-canvas-exit';
+    canvasExit.textContent = 'Çizim Modundan Çık ❌';
+    document.body.appendChild(canvasExit);
+  }
+
   chatBubble = document.getElementById('filmsync-chat-bubble');
   chatPanel = document.getElementById('filmsync-chat-panel');
   messageInput = document.getElementById('filmsyncMsgInput');
@@ -1364,15 +1414,13 @@ function createChatUI() {
     drawBtn.addEventListener('click', toggleDrawingMode);
   }
 
-  const canvasExit = document.getElementById('filmsync-canvas-exit');
   if (canvasExit) {
     canvasExit.addEventListener('click', () => {
       if (isDrawingMode) toggleDrawingMode();
     });
   }
 
-  // Canvas elementini alıp ilklendir
-  canvasElement = document.getElementById('filmsync-canvas');
+  // Canvas elementini ilklendir
   if (canvasElement) {
     ctx = canvasElement.getContext('2d');
     resizeCanvas();
@@ -1456,6 +1504,13 @@ function startUIKeeper() {
 function removeChatUI() {
   const root = document.getElementById('filmsync-root');
   if (root) root.remove();
+  const moodLight = document.getElementById('filmsync-mood-light');
+  if (moodLight) moodLight.remove();
+  const canvas = document.getElementById('filmsync-canvas');
+  if (canvas) canvas.remove();
+  const canvasExit = document.getElementById('filmsync-canvas-exit');
+  if (canvasExit) canvasExit.remove();
+  
   document.removeEventListener('keydown', handleGlobalEnterKey);
   stopVoiceCall();
 }
@@ -2038,17 +2093,22 @@ function setupFullscreenListener() {
   events.forEach(eventName => {
     document.addEventListener(eventName, () => {
       const root = document.getElementById('filmsync-root');
+      const moodLight = document.getElementById('filmsync-mood-light');
+      const canvas = document.getElementById('filmsync-canvas');
+      const canvasExit = document.getElementById('filmsync-canvas-exit');
       const fsElement = document.fullscreenElement || 
                         document.webkitFullscreenElement || 
                         document.mozFullScreenElement || 
                         document.msFullscreenElement;
 
-      if (fsElement && root) {
-        fsElement.appendChild(root);
-        console.log('[FilmSync] Sohbet kutusu tam ekran elementinin altına taşındı.');
-      } else if (root) {
-        document.body.appendChild(root);
-      }
+      const targetContainer = fsElement ? fsElement : document.body;
+
+      if (root) targetContainer.appendChild(root);
+      if (moodLight) targetContainer.appendChild(moodLight);
+      if (canvas) targetContainer.appendChild(canvas);
+      if (canvasExit) targetContainer.appendChild(canvasExit);
+      
+      console.log('[FilmSync] Arayüz elementleri tam ekran konteynerine senkronize edildi.');
     });
   });
 }
