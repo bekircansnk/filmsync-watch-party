@@ -206,58 +206,66 @@ function setupFirebaseListeners() {
   // 1. Medya Durumunu Dinle
   db.ref(`rooms/${roomId}/lastState`).on('value', (snapshot) => {
     const state = snapshot.val();
+    // Kendi gönderdiğimiz güncellemeyi veya senkronizasyon sırasında gelen değişiklikleri yoksay
     if (!state || !videoElement || isSyncing) return;
+    if (state.senderId === userId) return;
 
-    // Oda Kilitleme ve Kurucu Bilgisini güncelle
+    // Oda kilitleme ve kurucu bilgisini güncelle
     hostOnly = state.hostOnly || false;
     hostId = state.hostId || null;
 
-    if (state.senderId === userId) return;
-
-    // Yönlendirme kilidi bildirimi
+    // Yönlendirme bildirimi
     if (state.url && state.url !== window.location.href && window === window.top) {
       showMovieRedirectNotification(state.url);
       return;
     }
 
-    const timeDiff = (Date.now() - state.lastUpdated) / 1000;
+    // Senkronize edecek bir video var mı?
+    const videoReady = videoElement.readyState >= 1;
+    if (!videoReady) return;
+
     isSyncing = true;
     try {
+      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
+      const targetTime = state.currentTime + timeDiff;
+
       if (state.isPlaying && videoElement.paused) {
-        videoElement.currentTime = state.currentTime + (timeDiff > 0 ? timeDiff : 0);
+        videoElement.currentTime = targetTime;
         videoElement.play().catch(e => {
-          console.log('Oynatma etkileşim bekliyor.', e);
+          console.log('[FilmSync] Oynatma engellendi:', e.message);
           showNotificationToast('FilmSync', 'Senkronizasyon için sayfaya tıklayıp oynat butonuna basın! 🍿');
         });
       } else if (!state.isPlaying && !videoElement.paused) {
         videoElement.currentTime = state.currentTime;
         videoElement.pause();
-      } else if (Math.abs(videoElement.currentTime - state.currentTime) > 2) {
-        videoElement.currentTime = state.currentTime;
+      } else if (Math.abs(videoElement.currentTime - targetTime) > 3) {
+        // Sadece 3 saniyeden fazla sapma varsa düzelt
+        videoElement.currentTime = targetTime;
       }
     } catch (e) {
-      console.error('[FilmSync] Medya eşitleme hatası:', e);
+      console.error('[FilmSync] Medya eşileme hatası:', e);
     }
-    setTimeout(() => { isSyncing = false; }, 1500);
+    setTimeout(() => { isSyncing = false; }, 2000);
   });
 
   // 2. Sohbet Mesajlarını Dinle
   if (window === window.top) {
-    let isHistoryLoaded = false;
-    db.ref(`rooms/${roomId}/messages`).limitToLast(1).once('value').then(() => {
-      isHistoryLoaded = true;
-    });
+    const renderedMessageKeys = new Set();
 
     db.ref(`rooms/${roomId}/messages`).limitToLast(50).on('child_added', (snapshot) => {
       const msg = snapshot.val();
-      if (msg) {
-        appendMessage(msg);
-        
-        if (isHistoryLoaded && !msg.isSystem && msg.username !== username && window === window.top) {
-          const isPanelActive = chatPanel && chatPanel.classList.contains('active');
-          if (!isPanelActive) {
-            showNotificationToast(msg.username, msg.message);
-          }
+      const key = snapshot.key;
+      if (!msg || renderedMessageKeys.has(key)) return;
+      renderedMessageKeys.add(key);
+
+      appendMessage(msg);
+
+      // Geçmiş mesajları ilk yükleme sonrasında bildirim göster
+      const msgAge = Date.now() - (msg.timestamp || 0);
+      if (msgAge < 10000 && !msg.isSystem && msg.username !== username) {
+        const isPanelActive = chatPanel && chatPanel.classList.contains('active');
+        if (!isPanelActive) {
+          showNotificationToast(msg.username, msg.message);
         }
       }
     });
@@ -267,13 +275,14 @@ function setupFirebaseListeners() {
   if (window === window.top) {
     db.ref(`rooms/${roomId}/users`).on('value', (snapshot) => {
       const usersData = snapshot.val();
-      const activeUsers = [];
+      // Set kullanarak mükerrer username'leri filtrele
+      const uniqueUsers = new Set();
       if (usersData) {
         Object.values(usersData).forEach(u => {
-          if (u.username) activeUsers.push(u.username);
+          if (u.username) uniqueUsers.add(u.username);
         });
       }
-      updateUsersDisplay(activeUsers);
+      updateUsersDisplay([...uniqueUsers]);
     });
   }
 
@@ -461,27 +470,33 @@ function startVideoTracking() {
   }, 1000);
 }
 
-// Zaman Kayması Kontrol Motoru (Drift Correction)
+// Zaman Kayması Kontrol Motoru (Drift Correction) - sadece receiver tarafta çalışır
 function startDriftCorrection() {
   setInterval(() => {
     if (!db || !roomId || !videoElement || isSyncing || videoElement.paused) return;
-    
+    // readyState 1+ = metadata yüklendi
+    if (videoElement.readyState < 1) return;
+
     db.ref(`rooms/${roomId}/lastState`).once('value').then((snapshot) => {
       const state = snapshot.val();
+      // Kendi gönderdiğimiz durum ya da durdu ysa kontrol etme
       if (!state || state.senderId === userId || !state.isPlaying) return;
+      // Öncekiyle aynıysa (tekrar eden sorgu) gerçek sapma hesapla
+      if (isSyncing) return;
 
-      const timeDiff = (Date.now() - state.lastUpdated) / 1000;
-      const expectedTime = state.currentTime + (timeDiff > 0 ? timeDiff : 0);
-      const localTime = videoElement.currentTime;
+      const timeDiff = Math.max(0, (Date.now() - state.lastUpdated) / 1000);
+      const expectedTime = state.currentTime + timeDiff;
+      const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      if (Math.abs(localTime - expectedTime) > 2) {
-        console.log(`[FilmSync] Zaman sapması tespit edildi (${Math.abs(localTime - expectedTime)}sn). Otomatik eşitleniyor.`);
+      // Sadece 3-30 saniye arası sapma varsa düzelt (30+ şüpheli, kullanıcı seek yapmış olabilir)
+      if (drift > 3 && drift < 30) {
+        console.log(`[FilmSync Drift] ${drift.toFixed(1)}sn sapma tespit edildi. Düzeltiliyor.`);
         isSyncing = true;
         videoElement.currentTime = expectedTime;
-        setTimeout(() => { isSyncing = false; }, 1500);
+        setTimeout(() => { isSyncing = false; }, 2000);
       }
     });
-  }, 3000);
+  }, 5000); // 3sn yerine 5sn - daha az Firebase yükü
 }
 
 function setupVideoListeners() {
@@ -1584,12 +1599,6 @@ function sendSystemMessage(text) {
 
 function appendMessage({ username: msgUser, message, isSystem }) {
   if (!messageList) return;
-
-  const lastMsg = messageList.lastElementChild;
-  if (lastMsg && lastMsg.querySelector('.filmsync-msg-bubble')?.textContent === message && 
-      lastMsg.querySelector('.filmsync-msg-sender')?.textContent === msgUser) {
-    return;
-  }
 
   const row = document.createElement('div');
   row.classList.add('filmsync-msg-row');
