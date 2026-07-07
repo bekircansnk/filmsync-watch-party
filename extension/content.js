@@ -729,10 +729,22 @@ function createChatUI() {
 
   const root = document.createElement('div');
   root.id = 'filmsync-root';
-  root.setAttribute('style', 'position: fixed !important; z-index: 2147483647 !important; bottom: 0; right: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;');
+  // Root tüm ekranı kaplayan bir container - içindekiler absolute konumlanacak
+  // Bu sayede tam ekran elementine append edildiğinde iç elementler doğru yerlerinde görünür
+  root.setAttribute('style', [
+    'position: fixed',
+    'top: 0',
+    'left: 0',
+    'width: 100%',
+    'height: 100%',
+    'z-index: 2147483640',
+    'pointer-events: none',
+    'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+  ].join(' !important; ') + ' !important;');
 
   const style = document.createElement('style');
   style.textContent = `
+    /* ROOT ÜÜLERİ - pointer-events aktif bölgeler */
     #filmsync-chat-bubble {
       position: fixed !important;
       bottom: 20px !important;
@@ -747,6 +759,7 @@ function createChatUI() {
       justify-content: center;
       box-shadow: 0 8px 24px rgba(69, 243, 255, 0.4);
       z-index: 2147483647 !important;
+      pointer-events: auto !important;
       transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     #filmsync-chat-bubble:hover {
@@ -764,9 +777,9 @@ function createChatUI() {
       top: 0 !important;
       right: -330px !important;
       width: 320px;
-      height: 100vh;
-      background: rgba(11, 12, 16, 0.6) !important; /* Yarı saydam cam panel */
-      backdrop-filter: blur(25px) !important; /* Derin cam buğusu */
+      height: 100%;
+      background: rgba(11, 12, 16, 0.6) !important;
+      backdrop-filter: blur(25px) !important;
       -webkit-backdrop-filter: blur(25px) !important;
       border-left: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
@@ -775,6 +788,7 @@ function createChatUI() {
       transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 2147483646 !important;
       box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6);
+      pointer-events: auto !important;
     }
     #filmsync-chat-panel.active {
       right: 0 !important;
@@ -941,7 +955,7 @@ function createChatUI() {
       top: 20px !important;
       right: -320px !important;
       width: 280px;
-      background: rgba(11, 12, 16, 0.6) !important; /* Cam bildirim */
+      background: rgba(11, 12, 16, 0.6) !important;
       backdrop-filter: blur(20px) !important;
       -webkit-backdrop-filter: blur(20px) !important;
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -954,6 +968,7 @@ function createChatUI() {
       z-index: 2147483647 !important;
       cursor: pointer;
       transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: auto !important;
     }
     .filmsync-toast.active { right: 20px !important; }
     .filmsync-toast-header {
@@ -1385,29 +1400,29 @@ function createChatUI() {
   document.body.appendChild(root);
   document.head.appendChild(style);
 
-  // Ambiyans Işığı Katmanını dinamik oluşturup body'ye ekle
+  // Ambiyans Işığı Katmanını root içine ekle (tam ekranda root ile birlikte taşınsın)
   let moodLight = document.getElementById('filmsync-mood-light');
   if (!moodLight) {
     moodLight = document.createElement('div');
     moodLight.id = 'filmsync-mood-light';
-    document.body.appendChild(moodLight);
+    root.appendChild(moodLight); // ✔ body yerine root
   }
 
-  // Çizim Canvas elementini dinamik oluşturup body'ye ekle
+  // Çizim Canvas elementini root içine ekle
   canvasElement = document.getElementById('filmsync-canvas');
   if (!canvasElement) {
     canvasElement = document.createElement('canvas');
     canvasElement.id = 'filmsync-canvas';
-    document.body.appendChild(canvasElement);
+    root.appendChild(canvasElement); // ✔ body yerine root
   }
 
-  // Çizim Çıkış butonunu dinamik oluşturup body'ye ekle
+  // Çizim Çıkış butonunu root içine ekle
   let canvasExit = document.getElementById('filmsync-canvas-exit');
   if (!canvasExit) {
     canvasExit = document.createElement('button');
     canvasExit.id = 'filmsync-canvas-exit';
     canvasExit.textContent = 'Çizim Modundan Çık ❌';
-    document.body.appendChild(canvasExit);
+    root.appendChild(canvasExit); // ✔ body yerine root
   }
 
   chatBubble = document.getElementById('filmsync-chat-bubble');
@@ -1425,10 +1440,22 @@ function createChatUI() {
   const secretMenu = document.getElementById('filmsyncSecretMenu');
   const drawBtn = document.getElementById('filmsyncDrawBtn');
   const loveMeter = document.getElementById('filmsync-love-meter');
+  const sendBtn = document.getElementById('filmsyncSendBtn');
 
   // Uyum Ölçer ve Çizim Modu buton görünürlüğü
   if (loveMeter) loveMeter.style.display = loveMeterEnabled ? 'flex' : 'none';
   if (drawBtn) drawBtn.style.display = drawingEnabled ? 'block' : 'none';
+
+  // Gönder butonu: başlangıçta disabled, input boLuşa geri devre dışı
+  if (sendBtn && messageInput) {
+    sendBtn.disabled = true;
+    sendBtn.style.opacity = '0.4';
+    messageInput.addEventListener('input', () => {
+      const hasText = messageInput.value.trim().length > 0;
+      sendBtn.disabled = !hasText;
+      sendBtn.style.opacity = hasText ? '1' : '0.4';
+    });
+  }
 
   // Çizim Butonu dinleme
   if (drawBtn) {
@@ -1523,14 +1550,9 @@ function startUIKeeper() {
 }
 
 function removeChatUI() {
+  // moodLight, canvas, canvasExit artık root içinde, root.remove() yeterli
   const root = document.getElementById('filmsync-root');
   if (root) root.remove();
-  const moodLight = document.getElementById('filmsync-mood-light');
-  if (moodLight) moodLight.remove();
-  const canvas = document.getElementById('filmsync-canvas');
-  if (canvas) canvas.remove();
-  const canvasExit = document.getElementById('filmsync-canvas-exit');
-  if (canvasExit) canvasExit.remove();
   
   document.removeEventListener('keydown', handleGlobalEnterKey);
   stopVoiceCall();
@@ -2027,6 +2049,7 @@ function updateLoveMeterUI(score) {
 function triggerPerfectSyncMatch() {
   showNotificationToast('Perfect Match', 'Tebrikler! %100 Uyum yakalandı! 💕🎉');
   
+  const container = document.getElementById('filmsync-root') || document.body;
   // Ekranın her yerinden süzülen kalpler fırlat
   for (let i = 0; i < 30; i++) {
     setTimeout(() => {
@@ -2036,8 +2059,7 @@ function triggerPerfectSyncMatch() {
       
       // Ekranın altından rastgele bir x koordinatından yükselsin
       heart.style.left = Math.floor(Math.random() * window.innerWidth) + 'px';
-      // content.js'deki CSS floatUp animasyonunu tetiklemek için float class'ı verdik
-      document.body.appendChild(heart);
+      container.appendChild(heart);
       setTimeout(() => heart.remove(), 2600);
     }, i * 150);
   }
@@ -2045,6 +2067,9 @@ function triggerPerfectSyncMatch() {
 
 // --- 🔔 APPLE TARZI BİLDİRİM TOAST MOTORU ---
 function showNotificationToast(sender, text) {
+  // Toast'u root içine ekle - tam ekranda da görünür olsun
+  const container = document.getElementById('filmsync-root') || document.body;
+
   const toast = document.createElement('div');
   toast.classList.add('filmsync-toast');
   toast.innerHTML = `
@@ -2052,7 +2077,7 @@ function showNotificationToast(sender, text) {
     <div class="filmsync-toast-body">${text.length > 45 ? text.substring(0, 42) + '...' : text}</div>
   `;
 
-  document.body.appendChild(toast);
+  container.appendChild(toast);
   
   setTimeout(() => {
     toast.classList.add('active');
@@ -2076,6 +2101,7 @@ function showNotificationToast(sender, text) {
 function showMovieRedirectNotification(targetUrl) {
   if (document.getElementById('filmsync-redirect-toast')) return;
 
+  const container = document.getElementById('filmsync-root') || document.body;
   const toast = document.createElement('div');
   toast.id = 'filmsync-redirect-toast';
   toast.classList.add('filmsync-toast');
@@ -2089,7 +2115,7 @@ function showMovieRedirectNotification(targetUrl) {
     </div>
   `;
 
-  document.body.appendChild(toast);
+  container.appendChild(toast);
 
   setTimeout(() => {
     toast.classList.add('active');
@@ -2108,22 +2134,19 @@ function setupFullscreenListener() {
   events.forEach(eventName => {
     document.addEventListener(eventName, () => {
       const root = document.getElementById('filmsync-root');
-      const moodLight = document.getElementById('filmsync-mood-light');
-      const canvas = document.getElementById('filmsync-canvas');
-      const canvasExit = document.getElementById('filmsync-canvas-exit');
+      if (!root) return;
+
       const fsElement = document.fullscreenElement || 
                         document.webkitFullscreenElement || 
                         document.mozFullScreenElement || 
                         document.msFullscreenElement;
 
-      const targetContainer = fsElement ? fsElement : document.body;
-
-      if (root) targetContainer.appendChild(root);
-      if (moodLight) targetContainer.appendChild(moodLight);
-      if (canvas) targetContainer.appendChild(canvas);
-      if (canvasExit) targetContainer.appendChild(canvasExit);
+      // Root'u tam ekran elementine (veya body'e) taşı
+      // moodLight, canvas, canvasExit zaten root içinde olduğundan onlar da taşınır
+      const targetContainer = fsElement || document.body;
+      targetContainer.appendChild(root);
       
-      console.log('[FilmSync] Arayüz elementleri tam ekran konteynerine senkronize edildi.');
+      console.log(`[FilmSync] Tam ekran: root → ${fsElement ? 'fullscreenElement' : 'body'}`);
     });
   });
 }
