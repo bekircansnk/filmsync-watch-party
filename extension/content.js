@@ -15,7 +15,8 @@ let introSkipped = false;
 let reactionsEnabled = true;
 let loveMeterEnabled = true;
 let drawingEnabled = true;
-let isDrawingMode = false;
+let drawCanvas, drawCtx, isDrawingMode = false;
+let isFirebaseInitialized = false;
 let canvasElement = null;
 let ctx = null;
 let currentDrawingPath = [];
@@ -107,7 +108,12 @@ function init() {
       
       console.log(`[FilmSync] Canlı odaya bağlanılıyor: ${roomId}, Kullanıcı: ${username}`);
       
-      initializeFirebase(firebaseConfig);
+      // Iframe spam'ini önle: Başlangıçta sadece Top Window bağlansın. 
+      // Iframe'ler sadece video bulurlarsa bağlanacak (startVideoTracking içinde)
+      if (window === window.top) {
+        initializeFirebase(firebaseConfig);
+      }
+      
       startVideoTracking();
       startDriftCorrection();
       setupFullscreenListener();
@@ -146,6 +152,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Firebase SDK Başlatma
 function initializeFirebase(config) {
+  if (isFirebaseInitialized) return;
+  isFirebaseInitialized = true;
+
   try {
     if (!firebase.apps.length) {
       firebase.initializeApp(config);
@@ -249,7 +258,7 @@ function setupFirebaseListeners() {
   });
 
   // 2. Sohbet Mesajlarını Dinle
-  if (window === window.top) {
+  if (true /* MASTER FRAME İZİNLİ */) {
     const renderedMessageKeys = new Set();
 
     db.ref(`rooms/${roomId}/messages`).limitToLast(50).on('child_added', (snapshot) => {
@@ -272,7 +281,7 @@ function setupFirebaseListeners() {
   }
 
   // 3. Aktif Kullanıcıları Dinle
-  if (window === window.top) {
+  if (true /* MASTER FRAME İZİNLİ */) {
     db.ref(`rooms/${roomId}/users`).on('value', (snapshot) => {
       const usersData = snapshot.val();
       // Set kullanarak mükerrer username'leri filtrele
@@ -287,12 +296,12 @@ function setupFirebaseListeners() {
   }
 
   // 4. WebRTC Sinyalleşme Dinleyicisi
-  if (window === window.top) {
+  if (true /* MASTER FRAME İZİNLİ */) {
     setupVoiceSignaling();
   }
 
   // 5. Eğlenceli Reaksiyonları Dinle (Canlı Animasyonlar)
-  if (window === window.top) {
+  if (true /* MASTER FRAME İZİNLİ */) {
     let isReactionHistoryLoaded = false;
     db.ref(`rooms/${roomId}/reactions`).limitToLast(1).once('value').then(() => {
       isReactionHistoryLoaded = true;
@@ -316,7 +325,7 @@ function setupFirebaseListeners() {
   });
 
   // 7. Ortak Yer İşaretlerini Dinle
-  if (window === window.top) {
+  if (true /* MASTER FRAME İZİNLİ */) {
     db.ref(`rooms/${roomId}/bookmarks`).on('value', (snapshot) => {
       const bookmarksData = snapshot.val();
       updateBookmarksUI(bookmarksData);
@@ -324,7 +333,7 @@ function setupFirebaseListeners() {
   }
 
   // 8. Gizli Çift Reaksiyonlarını Dinle
-  if (window === window.top) {
+  if (true /* MASTER FRAME İZİNLİ */) {
     let isSecretHistoryLoaded = false;
     db.ref(`rooms/${roomId}/secretReactions`).limitToLast(1).once('value').then(() => {
       isSecretHistoryLoaded = true;
@@ -342,7 +351,7 @@ function setupFirebaseListeners() {
   }
 
   // 9. Love Meter Durumunu Dinle
-  if (window === window.top) {
+  if (true /* MASTER FRAME İZİNLİ */) {
     db.ref(`rooms/${roomId}/loveMeter`).on('value', (snapshot) => {
       const score = snapshot.val() || 0;
       updateLoveMeterUI(score);
@@ -417,7 +426,7 @@ function cleanupFirebase() {
     });
 
     db.ref(`rooms/${roomId}/lastState`).off();
-    if (window === window.top) {
+    if (true /* MASTER FRAME İZİNLİ */) {
       db.ref(`rooms/${roomId}/messages`).off();
       db.ref(`rooms/${roomId}/users`).off();
       db.ref(`rooms/${roomId}/calls`).off();
@@ -454,10 +463,15 @@ function startVideoTracking() {
       console.log('[FilmSync] Video tespit edildi. İlk otomatik eşitleme çalıştırılıyor.');
       forceSync();
 
-      // Sadece videolu sayfada arayüz oluştur
-      if (window === window.top && !document.getElementById('filmsync-root')) {
+      // Sadece videolu sayfada arayüz oluştur (Ana sayfa veya iframe fark etmez)
+      if (!document.getElementById('filmsync-root')) {
         createChatUI();
         startUIKeeper();
+        
+        // Eğer iframe içinde video bulduysak, iframe'in chat'i okuyabilmesi için Firebase'i başlat!
+        if (window !== window.top) {
+          initializeFirebase(firebaseConfig);
+        }
       }
     }
     
