@@ -249,7 +249,7 @@ function setupFirebaseListeners() {
   });
 
   // 2. Sohbet Mesajlarını Dinle
-  if (true /* IFRAME İZİNLİ */) {
+  if (window === window.top) {
     const renderedMessageKeys = new Set();
 
     db.ref(`rooms/${roomId}/messages`).limitToLast(50).on('child_added', (snapshot) => {
@@ -272,7 +272,7 @@ function setupFirebaseListeners() {
   }
 
   // 3. Aktif Kullanıcıları Dinle
-  if (true /* IFRAME İZİNLİ */) {
+  if (window === window.top) {
     db.ref(`rooms/${roomId}/users`).on('value', (snapshot) => {
       const usersData = snapshot.val();
       // Set kullanarak mükerrer username'leri filtrele
@@ -287,12 +287,12 @@ function setupFirebaseListeners() {
   }
 
   // 4. WebRTC Sinyalleşme Dinleyicisi
-  if (true /* IFRAME İZİNLİ */) {
+  if (window === window.top) {
     setupVoiceSignaling();
   }
 
   // 5. Eğlenceli Reaksiyonları Dinle (Canlı Animasyonlar)
-  if (true /* IFRAME İZİNLİ */) {
+  if (window === window.top) {
     let isReactionHistoryLoaded = false;
     db.ref(`rooms/${roomId}/reactions`).limitToLast(1).once('value').then(() => {
       isReactionHistoryLoaded = true;
@@ -315,8 +315,8 @@ function setupFirebaseListeners() {
     updateMoodTheme(theme);
   });
 
-  // 7. Ortak Çizim Modu Dinleyicisi
-  if (true /* IFRAME İZİNLİ */) {
+  // 7. Ortak Yer İşaretlerini Dinle
+  if (window === window.top) {
     db.ref(`rooms/${roomId}/bookmarks`).on('value', (snapshot) => {
       const bookmarksData = snapshot.val();
       updateBookmarksUI(bookmarksData);
@@ -324,7 +324,7 @@ function setupFirebaseListeners() {
   }
 
   // 8. Gizli Çift Reaksiyonlarını Dinle
-  if (true /* IFRAME İZİNLİ */) {
+  if (window === window.top) {
     let isSecretHistoryLoaded = false;
     db.ref(`rooms/${roomId}/secretReactions`).limitToLast(1).once('value').then(() => {
       isSecretHistoryLoaded = true;
@@ -341,8 +341,8 @@ function setupFirebaseListeners() {
     });
   }
 
-  // 6. Özel Love Meter ve Host Reaksiyonları
-  if (true /* IFRAME İZİNLİ */) {
+  // 9. Love Meter Durumunu Dinle
+  if (window === window.top) {
     db.ref(`rooms/${roomId}/loveMeter`).on('value', (snapshot) => {
       const score = snapshot.val() || 0;
       updateLoveMeterUI(score);
@@ -417,7 +417,7 @@ function cleanupFirebase() {
     });
 
     db.ref(`rooms/${roomId}/lastState`).off();
-    if (true /* IFRAME İZİNLİ */) {
+    if (window === window.top) {
       db.ref(`rooms/${roomId}/messages`).off();
       db.ref(`rooms/${roomId}/users`).off();
       db.ref(`rooms/${roomId}/calls`).off();
@@ -454,8 +454,8 @@ function startVideoTracking() {
       console.log('[FilmSync] Video tespit edildi. İlk otomatik eşitleme çalıştırılıyor.');
       forceSync();
 
-      // Sadece videolu sayfada arayüz oluştur (Iframe veya Top fark etmez!)
-      if (!document.getElementById('filmsync-root')) {
+      // Sadece videolu sayfada arayüz oluştur
+      if (window === window.top && !document.getElementById('filmsync-root')) {
         createChatUI();
         startUIKeeper();
       }
