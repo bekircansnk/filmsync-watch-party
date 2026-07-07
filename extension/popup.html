@@ -223,16 +223,23 @@
     }
 
     .room-id-display {
-      font-size: 1.2rem;
+      font-size: 1.8rem;
       font-weight: 700;
-      color: var(--primary);
-      margin: 8px 0;
-      letter-spacing: 1px;
+      color: #f1c40f; /* Altın sarısı */
+      margin: 12px 0;
+      letter-spacing: 3px;
       cursor: pointer;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 8px 15px;
+      display: inline-block;
+      box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.02);
+      transition: all 0.2s ease;
     }
-
-    .room-id-display:active {
-      transform: scale(0.98);
+    .room-id-display:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
     }
 
     .copied-toast {
@@ -330,6 +337,10 @@
 
     <!-- Aktif Bağlantı Detayı -->
     <div id="activeRoomContainer" class="active-room-card hidden">
+      <div class="status-indicator" style="margin-top: 0; margin-bottom: 12px; font-weight: 600; color: #2ed573;">
+        <span class="status-dot active"></span>
+        <span>Bağlandı & Senkronize</span>
+      </div>
       <div>Şu an bağlı olduğunuz oda:</div>
       <div id="roomIdDisplay" class="room-id-display" title="Kopyalamak için tıklayın">-----</div>
       <div class="copied-toast" id="copiedToast">Oda adı kopyalandı!</div>

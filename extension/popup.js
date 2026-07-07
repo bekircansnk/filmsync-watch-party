@@ -295,6 +295,10 @@ document.addEventListener('DOMContentLoaded', () => {
         firebase.initializeApp(firebaseConfig);
       }
       db = firebase.database();
+      
+      // Durumu 'Bağlandı & Senkronize' yap
+      globalStatusDot.classList.add('active');
+      globalStatusText.textContent = 'Bağlandı & Senkronize';
 
       // Eski dinleyicileri temizle
       db.ref(`rooms/${roomId}/users`).off();

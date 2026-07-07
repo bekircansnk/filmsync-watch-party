@@ -281,7 +281,7 @@ function setupFirebaseListeners() {
   }
 
   // 3. Aktif Kullanıcıları Dinle
-  if (true /* MASTER FRAME İZİNLİ */) {
+  if (window === window.top) {
     db.ref(`rooms/${roomId}/users`).on('value', (snapshot) => {
       const usersData = snapshot.val();
       // Set kullanarak mükerrer username'leri filtrele
@@ -296,7 +296,7 @@ function setupFirebaseListeners() {
   }
 
   // 4. WebRTC Sinyalleşme Dinleyicisi
-  if (true /* MASTER FRAME İZİNLİ */) {
+  if (window === window.top) {
     setupVoiceSignaling();
   }
 
@@ -325,7 +325,7 @@ function setupFirebaseListeners() {
   });
 
   // 7. Ortak Yer İşaretlerini Dinle
-  if (true /* MASTER FRAME İZİNLİ */) {
+  if (window === window.top) {
     db.ref(`rooms/${roomId}/bookmarks`).on('value', (snapshot) => {
       const bookmarksData = snapshot.val();
       updateBookmarksUI(bookmarksData);
