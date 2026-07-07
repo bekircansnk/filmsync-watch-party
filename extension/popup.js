@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = passwordInput.value.trim();
 
     if (!roomId) {
-      alert('Lütfen geçerli bir oda adı girin.');
+      showToast('Lütfen geçerli bir oda adı girin.');
       return;
     }
 
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (roomData) {
           if (roomData.password && roomData.password !== password) {
-            alert('Hatalı oda şifresi!');
+            showToast('Hatalı oda şifresi!');
             resetStatus();
             return;
           }
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
           saveSettings(roomId, username, password, () => {
             if (roomData.lastState && roomData.lastState.url) {
               chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                if (tabs[0]) {
+                if (tabs && tabs[0]) {
                   chrome.tabs.update(tabs[0].id, { url: roomData.lastState.url });
                 }
               });
@@ -89,10 +89,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           // Oda yoksa yeni kur (Film sayfası gerektirir)
           chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            const currentTabUrl = (tabs[0] && tabs[0].url) ? tabs[0].url : '';
+            const currentTabUrl = (tabs && tabs[0] && tabs[0].url) ? tabs[0].url : '';
             
             if (!currentTabUrl || currentTabUrl.startsWith('chrome://') || currentTabUrl.startsWith('about:')) {
-              alert('Oda kurabilmek için önce bir film veya dizi sayfası açmalısınız!');
+              showToast('Önce bir film/dizi sayfası açmalısınız!');
               resetStatus();
               return;
             }
@@ -107,12 +107,16 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             }).then(() => {
               saveSettings(roomId, username, password);
+            }).catch(e => {
+              console.error(e);
+              showToast('Oda kurulumu başarısız.');
+              resetStatus();
             });
           });
         }
       }).catch(err => {
         console.error(err);
-        alert('Bulut sunucusuna bağlanılamadı.');
+        showToast('Bulut sunucusuna bağlanılamadı.');
         resetStatus();
       });
 
@@ -200,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (tabs[0]) {
         chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, (response) => {
           if (chrome.runtime.lastError) {
-            alert('Oynatıcı bulunamadı. Lütfen film sayfasını açtığınızdan emin olun!');
+            showToast('Oynatıcı bulunamadı. Film sayfasını açın!');
             return;
           }
           showToast('Senkronizasyon yenileniyor...');
