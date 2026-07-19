@@ -10,6 +10,13 @@ const firebaseConfig = {
   measurementId: "G-4KR5X5Y4ZS"
 };
 
+
+const Logger = {
+  info: (...args) => console.log('[FilmSync INFO]', ...args),
+  warn: (...args) => console.warn('[FilmSync WARN]', ...args),
+  error: (...args) => console.error('[FilmSync ERROR]', ...args)
+};
+
 let db = null;
 let currentRoomId = null;
 
@@ -101,20 +108,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }).then(() => {
               saveSettings(roomId, username, password);
             }).catch(e => {
-              console.error(e);
+              Logger.error(e);
               showToast('Oda kurulumu başarısız.');
               resetStatus();
             });
           });
         }
       }).catch(err => {
-        console.error(err);
+        Logger.error(err);
         showToast('Bulut sunucusuna bağlanılamadı.');
         resetStatus();
       });
 
     } catch (e) {
-      console.error(e);
+      Logger.error(e);
       resetStatus();
     }
   });
@@ -280,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
     } catch (e) {
-      console.error(e);
+      Logger.error(e);
     }
   }
 
