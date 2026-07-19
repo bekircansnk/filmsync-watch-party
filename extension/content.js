@@ -15,6 +15,15 @@ let userListDisplay = null;
 
 let isFirebaseInitialized = false;
 
+let lastStateQuery = null;
+let messagesQuery = null;
+let usersQuery = null;
+
+let videoTrackingInterval = null;
+let driftCorrectionInterval = null;
+let uiKeeperInterval = null;
+let isFullscreenListenerSetup = false;
+
 // Firebase Canlı Yapılandırması
 const firebaseConfig = {
   apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
@@ -91,9 +100,20 @@ function init() {
   });
 }
 
+// Ensure teardown happens safely on reload or navigation
+window.addEventListener('beforeunload', cleanupFirebase);
+window.addEventListener('pagehide', cleanupFirebase);
+
 // Storage ve Popup Mesaj Dinleyicileri
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'settings-updated') {
+    cleanupFirebase();
+    if (videoTrackingInterval) clearInterval(videoTrackingInterval);
+    if (driftCorrectionInterval) clearInterval(driftCorrectionInterval);
+    if (uiKeeperInterval) clearInterval(uiKeeperInterval);
+    isFirebaseInitialized = false;
+    removeChatUI();
+    init();
     sendResponse({ status: 'success' });
   } else if (message.type === 'force-sync') {
     forceSync();
@@ -162,7 +182,8 @@ function setupFirebaseListeners() {
   if (!db) return;
 
   // 1. Medya Durumunu Dinle
-  db.ref(`rooms/${roomId}/lastState`).on('value', (snapshot) => {
+  lastStateQuery = db.ref(`rooms/${roomId}/lastState`);
+  lastStateQuery.on('value', (snapshot) => {
     const state = snapshot.val();
     if (!state || !videoElement || isSyncing) return;
     if (state.senderId === userId) return;
@@ -202,7 +223,8 @@ function setupFirebaseListeners() {
 
   // 2. Sohbet Mesajlarını Dinle
   const renderedMessageKeys = new Set();
-  db.ref(`rooms/${roomId}/messages`).limitToLast(50).on('child_added', (snapshot) => {
+  messagesQuery = db.ref(`rooms/${roomId}/messages`).limitToLast(50);
+  messagesQuery.on('child_added', (snapshot) => {
     const msg = snapshot.val();
     const key = snapshot.key;
     if (!msg || renderedMessageKeys.has(key)) return;
@@ -222,7 +244,8 @@ function setupFirebaseListeners() {
 
   // 3. Aktif Kullanıcıları Dinle
   if (window === window.top) {
-    db.ref(`rooms/${roomId}/users`).on('value', (snapshot) => {
+    usersQuery = db.ref(`rooms/${roomId}/users`);
+    usersQuery.on('value', (snapshot) => {
       const usersData = snapshot.val();
       const uniqueUsers = new Set();
       if (usersData) {
@@ -267,23 +290,35 @@ function forceSync() {
 
 // Bağlantı Temizleme
 function cleanupFirebase() {
-  if (db && roomId && userId) {
+  const currentRoomId = roomId;
+  const currentUserId = userId;
+
+  if (db && currentRoomId && currentUserId) {
     if (window === window.top) {
       sendSystemMessage(`${username} odadan ayrıldı.`);
     }
     
-    db.ref(`rooms/${roomId}/users/${userId}`).remove().then(() => {
-      db.ref(`rooms/${roomId}/users`).once('value').then((snapshot) => {
+    db.ref(`rooms/${currentRoomId}/users/${currentUserId}`).remove().then(() => {
+      db.ref(`rooms/${currentRoomId}/users`).once('value').then((snapshot) => {
         const users = snapshot.val();
         if (!users || Object.keys(users).length === 0) {
-          db.ref(`rooms/${roomId}`).remove();
+          db.ref(`rooms/${currentRoomId}`).remove();
         }
       });
-    });
+    }).catch(e => console.error('[FilmSync] Kullanıcı temizleme hatası:', e));
 
-    db.ref(`rooms/${roomId}/lastState`).off();
-    db.ref(`rooms/${roomId}/messages`).off();
-    db.ref(`rooms/${roomId}/users`).off();
+    if (lastStateQuery) {
+      lastStateQuery.off();
+      lastStateQuery = null;
+    }
+    if (messagesQuery) {
+      messagesQuery.off();
+      messagesQuery = null;
+    }
+    if (usersQuery) {
+      usersQuery.off();
+      usersQuery = null;
+    }
   }
 }
 
@@ -300,7 +335,8 @@ function sendMediaEvent(isPlaying, currentTime) {
 
 // Videolu Sayfalarda UI Motoru
 function startVideoTracking() {
-  setInterval(() => {
+  if (videoTrackingInterval) clearInterval(videoTrackingInterval);
+  videoTrackingInterval = setInterval(() => {
     const activeVideo = document.querySelector('video');
     if (activeVideo && activeVideo !== videoElement) {
       removeVideoListeners();
@@ -325,7 +361,8 @@ function startVideoTracking() {
 
 // Drift Correction
 function startDriftCorrection() {
-  setInterval(() => {
+  if (driftCorrectionInterval) clearInterval(driftCorrectionInterval);
+  driftCorrectionInterval = setInterval(() => {
     if (!db || !roomId || !videoElement || isSyncing || videoElement.paused) return;
     if (videoElement.readyState < 1) return;
 
@@ -679,7 +716,8 @@ function createChatUI() {
 }
 
 function startUIKeeper() {
-  setInterval(() => {
+  if (uiKeeperInterval) clearInterval(uiKeeperInterval);
+  uiKeeperInterval = setInterval(() => {
     if (roomId && document.querySelector('video') && !document.getElementById('filmsync-root')) {
       console.log('[FilmSync UI Keeper] Arayüz yenileniyor.');
       createChatUI();
@@ -845,6 +883,9 @@ function showMovieRedirectNotification(targetUrl) {
 
 // --- 📺 TAM EKRAN DESTEĞİ ---
 function setupFullscreenListener() {
+  if (isFullscreenListenerSetup) return;
+  isFullscreenListenerSetup = true;
+
   const events = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
   events.forEach(eventName => {
     document.addEventListener(eventName, () => {
