@@ -142,17 +142,28 @@ document.addEventListener('DOMContentLoaded', () => {
     globalStatusDot.classList.add('active');
     globalStatusText.textContent = 'Bağlanıyor...';
 
+    // 7 saniyelik timeout koruması
+    let isTimeout = false;
+    const connectionTimeout = setTimeout(() => {
+      isTimeout = true;
+      showGlobalToast('Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin! ⚠️');
+      resetStatus();
+    }, 7000);
+
     // Unique user id elde et veya oluştur (Çakışmaları önlemek için zamandamgası ekle)
     chrome.storage.local.get(['userId'], (res) => {
+      if (isTimeout) return;
       let userId = res.userId;
       if (!userId) {
         userId = 'usr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
       }
 
       chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+        if (isTimeout) return;
         const currentTabUrl = (tabs && tabs[0] && tabs[0].url) ? tabs[0].url : '';
         
         if (!currentTabUrl || currentTabUrl.startsWith('chrome://') || currentTabUrl.startsWith('about:')) {
+          clearTimeout(connectionTimeout);
           showGlobalToast('Önce bir film/dizi sayfası açmalısınız!');
           resetStatus();
           return;
@@ -160,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
           if (typeof firebase === 'undefined') {
+            clearTimeout(connectionTimeout);
             showGlobalToast('Firebase kütüphanesi yüklenemedi!');
             resetStatus();
             return;
@@ -182,6 +194,9 @@ document.addEventListener('DOMContentLoaded', () => {
               lastUpdated: firebase.database.ServerValue.TIMESTAMP
             }
           }).then(() => {
+            if (isTimeout) return;
+            clearTimeout(connectionTimeout);
+
             // Ayarları kaydet
             saveSettings(roomId, username, password, userId, hostOnly, () => {
               // Davet linkini kopyala
@@ -198,12 +213,15 @@ document.addEventListener('DOMContentLoaded', () => {
               });
             });
           }).catch(e => {
+            if (isTimeout) return;
+            clearTimeout(connectionTimeout);
             console.error(e);
             showGlobalToast('Oda kurulumu başarısız.');
             resetStatus();
           });
 
         } catch (e) {
+          clearTimeout(connectionTimeout);
           console.error(e);
           resetStatus();
         }
@@ -219,59 +237,80 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (typeof firebase === 'undefined') {
-      showGlobalToast('Firebase kütüphanesi yüklenemedi!');
-      return;
-    }
-
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    const tempDb = firebase.database();
-
     globalStatusDot.classList.add('active');
     globalStatusText.textContent = 'Oda aranıyor...';
 
-    // Odanın varlığını Firebase'den sorgula
-    tempDb.ref(`rooms/${code}`).once('value').then((snapshot) => {
-      const roomData = snapshot.val();
-      if (!roomData) {
-        showGlobalToast('Böyle bir oda bulunamadı! ❌');
+    // 7 saniyelik timeout koruması
+    let isTimeout = false;
+    const joinTimeout = setTimeout(() => {
+      isTimeout = true;
+      showGlobalToast('Odaya katılma zaman aşımına uğradı! ⚠️');
+      resetStatus();
+    }, 7000);
+
+    try {
+      if (typeof firebase === 'undefined') {
+        clearTimeout(joinTimeout);
+        showGlobalToast('Firebase kütüphanesi yüklenemedi!');
         resetStatus();
         return;
       }
 
-      // Başarılı: Odaya katılım ayarlarını yerel depolamaya kaydet
-      chrome.storage.local.get(['userId'], (res) => {
-        let userId = res.userId;
-        // Çakışmaları önlemek için her odaya katılımda benzersiz ID üret
-        userId = 'usr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        
-        const username = usernameInput.value.trim();
-        if (!username) {
-          showGlobalToast('Lütfen odaya katılmadan önce adınızı girin! 🍿');
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      const tempDb = firebase.database();
+
+      // Odanın varlığını Firebase'den sorgula
+      tempDb.ref(`rooms/${code}`).once('value').then((snapshot) => {
+        if (isTimeout) return;
+        clearTimeout(joinTimeout);
+
+        const roomData = snapshot.val();
+        if (!roomData) {
+          showGlobalToast('Böyle bir oda bulunamadı! ❌');
           resetStatus();
           return;
         }
-        
-        saveSettings(code, username, '', userId, roomData.hostOnly || false, () => {
-          showGlobalToast('Odaya başarıyla katıldınız! 🎉');
+
+        // Başarılı: Odaya katılım ayarlarını yerel depolamaya kaydet
+        chrome.storage.local.get(['userId'], (res) => {
+          let userId = res.userId;
+          // Çakışmaları önlemek için her odaya katılımda benzersiz ID üret
+          userId = 'usr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
           
-          // Eklentiye bağlanması için bildirim gönder
-          chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-            if (tabs && tabs[0]) {
-              chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, () => {
-                if (chrome.runtime.lastError) {}
-              });
-            }
+          const username = usernameInput.value.trim();
+          if (!username) {
+            showGlobalToast('Lütfen odaya katılmadan önce adınızı girin! 🍿');
+            resetStatus();
+            return;
+          }
+          
+          saveSettings(code, username, '', userId, roomData.hostOnly || false, () => {
+            showGlobalToast('Odaya başarıyla katıldınız! 🎉');
+            
+            // Eklentiye bağlanması için bildirim gönder
+            chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+              if (tabs && tabs[0]) {
+                chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, () => {
+                  if (chrome.runtime.lastError) {}
+                });
+              }
+            });
           });
         });
+      }).catch(err => {
+        if (isTimeout) return;
+        clearTimeout(joinTimeout);
+        console.error(err);
+        showGlobalToast('Bağlantı hatası yaşandı.');
+        resetStatus();
       });
-    }).catch(err => {
-      console.error(err);
-      showGlobalToast('Bağlantı hatası yaşandı.');
+    } catch (e) {
+      clearTimeout(joinTimeout);
+      console.error(e);
       resetStatus();
-    });
+    }
   }
 
   // Odaya Katıl Düğmeleri Tetikleyicileri
