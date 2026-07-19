@@ -18,5 +18,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const tabId = sender.tab ? sender.tab.id : null;
     sendResponse({ tabId: tabId });
     return true;
+  } else if (message.type === 'page-unload') {
+    const { roomId, username, userId } = message;
+    if (roomId && username) {
+      // 1. lastState nesnesini duraklatıldı olarak güncelle
+      fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isPlaying: false,
+          lastUpdated: Date.now(),
+          senderId: userId || 'unloaded_user'
+        })
+      }).catch(err => console.error('[FilmSync Unload Patch Hatası]', err));
+
+      // 2. Sistem mesajı gönder
+      fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/messages.json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: 'Sistem',
+          message: `${username} sayfayı yeniledi, film duraklatıldı.`,
+          isSystem: true,
+          timestamp: Date.now()
+        })
+      }).catch(err => console.error('[FilmSync Unload Msg Hatası]', err));
+    }
+    sendResponse({ status: 'success' });
+    return true;
   }
 });

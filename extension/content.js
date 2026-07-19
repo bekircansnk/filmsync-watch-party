@@ -174,6 +174,18 @@ function init() {
   });
 }
 
+// Sayfa yenilenirken veya kapanırken durum güncellemesi tetikle (REST API üzerinden Service Worker ile çalışır)
+window.addEventListener('beforeunload', () => {
+  if (roomId && isFirebaseInitialized && window === window.top) {
+    chrome.runtime.sendMessage({
+      type: 'page-unload',
+      roomId: roomId,
+      username: username,
+      userId: userId
+    });
+  }
+});
+
 // Storage ve Popup Mesaj Dinleyicileri
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'settings-updated') {
@@ -308,10 +320,6 @@ function initializeFirebase(config) {
       
       setupFirebaseListeners();
       forceSync();
-      setTimeout(() => {
-        isFirstSync = false;
-        console.log('[FilmSync] İlk senkronizasyon kilidi kaldırıldı.');
-      }, 3000);
     }).catch(err => {
       console.error('[FilmSync] Firebase bağlantı hatası:', err);
     });
@@ -468,6 +476,7 @@ function applyRemoteState(state) {
     setTimeout(() => {
       setupVideoListeners();
       isSyncing = false;
+      isFirstSync = false; // İlk senkronizasyon kilidini kaldır
       
       // Kilit açıldığında sıradaki bekleyen durum varsa onu uygula
       if (pendingState) {
@@ -493,7 +502,10 @@ function forceSync() {
     }
 
     ensureVideoReady((isReady) => {
-      if (!isReady || !videoElement) return;
+      if (!isReady || !videoElement) {
+        isFirstSync = false;
+        return;
+      }
 
       isSyncing = true;
       try {
@@ -513,7 +525,9 @@ function forceSync() {
       setTimeout(() => { 
         setupVideoListeners(); // Dinleyicileri geri tak
         isSyncing = false; 
-      }, 1500);
+        isFirstSync = false; // İlk senkronizasyon kilidini kaldır
+        console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
+      }, 2000);
     });
   });
 }
@@ -578,7 +592,16 @@ function sendMediaEvent(isPlaying, currentTime) {
     updatePayload.url = window.location.href;
   }
 
-  db.ref(`rooms/${roomId}/lastState`).update(updatePayload);
+  db.ref(`rooms/${roomId}/lastState`).update(updatePayload).then(() => {
+    // Sadece top window ise sistem mesajı göndersin (Iframe kirliliğini önlemek için)
+    if (window === window.top) {
+      const formattedTime = formatTime(currentTime);
+      const msgText = isPlaying 
+        ? `${username} filmi başlattı. (Kaldığı yer: ${formattedTime})`
+        : `${username} filmi duraklattı.`;
+      sendSystemMessage(msgText);
+    }
+  }).catch(err => console.error('[FilmSync] Medya durum yazma hatası:', err));
 }
 
 // Videolu Sayfalarda UI Motoru
@@ -2043,5 +2066,12 @@ function startIframeFullscreenKeeper() {
       }
     }
   }, 1000);
+}
+
+function formatTime(seconds) {
+  if (isNaN(seconds)) return '00:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
