@@ -3,7 +3,7 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('FilmSync Watch Party eklentisi başarıyla kuruldu.');
 });
 
-// Sekme Yönlendirme Dinleyicisi (Canlı URL Senkronizasyonu İçin)
+// Sekme Yönlendirme ve Bilgi Dinleyicisi
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'redirect-tab' && message.url) {
     const tabId = sender.tab ? sender.tab.id : null;
@@ -14,5 +14,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       return true; // Asenkron yanıt için true dön
     }
+  } else if (message.type === 'get-tab-id') {
+    const tabId = sender.tab ? sender.tab.id : null;
+    sendResponse({ tabId: tabId });
+    return true;
   }
 });

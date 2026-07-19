@@ -112,40 +112,53 @@ function init() {
   }
 
   // Normal Başlatma
-  chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar'], (result) => {
-    if (result.roomId) {
-      roomId = result.roomId;
-      username = result.username || 'Anonim';
-      password = result.password || '';
-      selectedAvatar = result.selectedAvatar || '🍿';
-      
-      if (result.userId) {
-        userId = result.userId;
+  chrome.runtime.sendMessage({ type: 'get-tab-id' }, (tabResponse) => {
+    const myTabId = tabResponse ? tabResponse.tabId : null;
+
+    chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
+      if (result.roomId) {
+        // Aktif Sekme İzolasyonu: Sadece popup üzerinden oda kurulan/katılınan aktif sekmede çalıştır!
+        // result.activeTabId tanımlıysa ve benim sekmemle eşleşmiyorsa diğer sekmelerdeki işlemleri bloke et.
+        if (result.activeTabId !== undefined && result.activeTabId !== null && myTabId !== null && myTabId !== result.activeTabId) {
+          console.log(`[FilmSync İzolasyon] Eklenti bu sekmede pasif. Aktif Sekme ID: ${result.activeTabId}, Bu Sekme ID: ${myTabId}`);
+          removeChatUI();
+          cleanupFirebase();
+          return;
+        }
+
+        roomId = result.roomId;
+        username = result.username || 'Anonim';
+        password = result.password || '';
+        selectedAvatar = result.selectedAvatar || '🍿';
+        
+        if (result.userId) {
+          userId = result.userId;
+        } else {
+          userId = 'user_' + Math.random().toString(36).substr(2, 9);
+          chrome.storage.local.set({ userId });
+        }
+        
+        console.log(`[FilmSync] Canlı odaya bağlanılıyor: ${roomId}, Kullanıcı: ${username}`);
+        
+        // Iframe spam'ini önle: Başlangıçta sadece Top Window bağlansın.
+        if (window === window.top) {
+          initializeFirebase(firebaseConfig);
+          createChatUI();
+          startUIKeeper();
+        }
+        
+        startVideoTracking();
+        startDriftCorrection();
+        setupFullscreenListener();
+        setupFullscreenIdleDetector();
+        startIframeFullscreenKeeper();
       } else {
-        userId = 'user_' + Math.random().toString(36).substr(2, 9);
-        chrome.storage.local.set({ userId });
+        removeChatUI();
       }
       
-      console.log(`[FilmSync] Canlı odaya bağlanılıyor: ${roomId}, Kullanıcı: ${username}`);
-      
-      // Iframe spam'ini önle: Başlangıçta sadece Top Window bağlansın.
-      if (window === window.top) {
-        initializeFirebase(firebaseConfig);
-        createChatUI();
-        startUIKeeper();
-      }
-      
-      startVideoTracking();
-      startDriftCorrection();
-      setupFullscreenListener();
-      setupFullscreenIdleDetector();
-      startIframeFullscreenKeeper();
-    } else {
-      removeChatUI();
-    }
-    
-    // Netflix detay sayfaları için buton enjeksiyonunu başlat
-    startButtonObserver();
+      // Netflix detay sayfaları için buton enjeksiyonunu başlat
+      startButtonObserver();
+    });
   });
 }
 
@@ -163,35 +176,45 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Canlı Depolama Değişikliği Dinleyicisi (Iframe'ler ve Üst Sayfa Eşleşmesi İçin)
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'local') {
-    if (changes.roomId || changes.username || changes.password) {
+    if (changes.roomId || changes.username || changes.password || changes.activeTabId) {
       console.log('[FilmSync Storage] Depolama değişikliği algılandı, oda ayarları yenileniyor.');
       
       // Mevcut Firebase dinleyicilerini temizle
       cleanupFirebase();
       isFirebaseInitialized = false;
       
-      chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar'], (result) => {
-        roomId = result.roomId;
-        username = result.username || 'Anonim';
-        password = result.password || '';
-        selectedAvatar = result.selectedAvatar || '🍿';
-        
-        if (result.userId) userId = result.userId;
+      chrome.runtime.sendMessage({ type: 'get-tab-id' }, (tabResponse) => {
+        const myTabId = tabResponse ? tabResponse.tabId : null;
 
-        if (roomId) {
-          console.log(`[FilmSync Storage] Yeni oda bağlantısı tetikleniyor: ${roomId}`);
-          initializeFirebase(firebaseConfig);
-          
-          if (videoElement) {
-            forceSync();
-            if (!document.getElementById('filmsync-root')) {
-              createChatUI();
-              startUIKeeper();
-            }
+        chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
+          if (result.activeTabId !== undefined && result.activeTabId !== null && myTabId !== null && myTabId !== result.activeTabId) {
+            console.log(`[FilmSync İzolasyon Storage] Eklenti bu sekmede pasif hale getiriliyor.`);
+            removeChatUI();
+            return;
           }
-        } else {
-          removeChatUI();
-        }
+
+          roomId = result.roomId;
+          username = result.username || 'Anonim';
+          password = result.password || '';
+          selectedAvatar = result.selectedAvatar || '🍿';
+          
+          if (result.userId) userId = result.userId;
+
+          if (roomId) {
+            console.log(`[FilmSync Storage] Yeni oda bağlantısı tetikleniyor: ${roomId}`);
+            initializeFirebase(firebaseConfig);
+            
+            if (videoElement) {
+              forceSync();
+              if (!document.getElementById('filmsync-root')) {
+                createChatUI();
+                startUIKeeper();
+              }
+            }
+          } else {
+            removeChatUI();
+          }
+        });
       });
     }
   }

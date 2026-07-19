@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clearTimeout(connectionTimeout);
 
             // Ayarları kaydet
-            saveSettings(roomId, username, password, userId, hostOnly, () => {
+            saveSettings(roomId, username, password, userId, hostOnly, (tabs && tabs[0] ? tabs[0].id : null), () => {
               // Davet linkini kopyala
               const inviteUrl = `https://github.com/bekircansnk/filmsync-watch-party?join=${encodeURIComponent(roomId)}&pass=`;
               copyToClipboard(inviteUrl);
@@ -286,13 +286,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
           
-          saveSettings(code, username, '', userId, roomData.hostOnly || false, () => {
-            showGlobalToast('Odaya başarıyla katıldınız! 🎉');
-            
-            // Eklentiye bağlanması için bildirim gönder
-            chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-              if (tabs && tabs[0]) {
-                chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, () => {
+          chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+            const activeTabId = tabs && tabs[0] ? tabs[0].id : null;
+            saveSettings(code, username, '', userId, roomData.hostOnly || false, activeTabId, () => {
+              showGlobalToast('Odaya başarıyla katıldınız! 🎉');
+              
+              if (activeTabId) {
+                chrome.tabs.sendMessage(activeTabId, { type: 'force-sync' }, () => {
                   if (chrome.runtime.lastError) {}
                 });
               }
@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // "Odadan Ayrıl"
   btnLeaveRoom.addEventListener('click', () => {
     cleanupFirebaseListeners();
-    chrome.storage.local.remove(['roomId', 'password'], () => {
+    chrome.storage.local.remove(['roomId', 'password', 'activeTabId'], () => {
       notifyContentScript();
       updateUI();
     });
@@ -408,8 +408,8 @@ document.addEventListener('DOMContentLoaded', () => {
     globalStatusText.textContent = 'Bağlantı Yok';
   }
 
-  function saveSettings(roomId, username, password, userId, hostOnly, callback) {
-    chrome.storage.local.set({ roomId, username, password, userId, hostOnly, selectedAvatar }, () => {
+  function saveSettings(roomId, username, password, userId, hostOnly, activeTabId, callback) {
+    chrome.storage.local.set({ roomId, username, password, userId, hostOnly, activeTabId, selectedAvatar }, () => {
       notifyContentScript();
       updateUI();
       if (callback) callback();
