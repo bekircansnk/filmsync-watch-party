@@ -2,17 +2,19 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>FilmSync İzleme Partisi</title>
+  <title>Evo ve Beko Film Partisi</title>
   <style>
     :root {
-      --bg-color: #0b0c10;
-      --panel-bg: rgba(31, 40, 51, 0.35); /* Yarı saydam cam arka planı */
-      --primary: #45f3ff;
-      --secondary: #66fcf1;
-      --text: #c5c6c7;
+      --bg-color: #141414;
+      --panel-bg: #181818;
+      --primary: #e50914;
+      --primary-hover: #ff2d38;
+      --primary-gradient: linear-gradient(135deg, #e50914, #ff3d47);
+      --secondary: #aaaaaa;
+      --text: #cccccc;
       --text-bright: #ffffff;
-      --accent: #ff4757;
-      --font: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --border: rgba(255, 255, 255, 0.08);
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
     }
 
     * {
@@ -24,7 +26,7 @@
     body {
       width: 320px;
       font-family: var(--font);
-      background: linear-gradient(135deg, #0b0c10 0%, #1f2833 100%); /* Gradyan koyu uzay arka planı */
+      background: var(--bg-color);
       color: var(--text);
       padding: 15px;
       overflow-x: hidden;
@@ -32,89 +34,177 @@
 
     .container {
       background: var(--panel-bg);
-      backdrop-filter: blur(25px); /* Derin cam buğusu */
-      -webkit-backdrop-filter: blur(25px);
-      border: 1px solid rgba(255, 255, 255, 0.08); /* İnce cam kenarlığı */
-      border-radius: 20px;
-      padding: 22px;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+
+    .logo-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-img {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(229, 9, 20, 0.45);
     }
 
     h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
+      font-size: 1.05rem;
+      font-weight: 800;
       color: var(--text-bright);
-      text-align: center;
-      margin-bottom: 5px;
-      letter-spacing: 0.5px;
+      letter-spacing: -0.5px;
     }
 
     h1 span {
-      color: var(--primary);
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    .subtitle {
-      font-size: 0.8rem;
-      text-align: center;
-      margin-bottom: 20px;
-      color: #888;
+    .status-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-bright);
+      padding: 3px 8px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #e50914;
+    }
+
+    .status-dot.active {
+      background-color: #2ed573;
+      box-shadow: 0 0 6px #2ed573;
+    }
+
+    /* Durum A: Aktif Oynatıcı Olan Sayfa - Parti Başlatma Arayüzü */
+    .party-creator-panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 14px;
     }
 
     .form-group {
-      margin-bottom: 15px;
+      margin-bottom: 14px;
     }
 
     label {
       display: block;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 6px;
+      letter-spacing: 0.8px;
+      margin-bottom: 5px;
       color: var(--secondary);
-      font-weight: 600;
+      font-weight: 700;
     }
 
     input {
       width: 100%;
-      padding: 10px 12px;
-      background: rgba(255, 255, 255, 0.03); /* Cam input */
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
+      padding: 9px 12px;
+      background: #2f2f2f !important;
+      border: 1px solid var(--border);
+      border-radius: 8px;
       color: var(--text-bright);
       font-size: 0.85rem;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.2s ease;
     }
 
     input:focus {
       outline: none;
-      background: rgba(255, 255, 255, 0.06);
       border-color: var(--primary);
-      box-shadow: 0 0 12px rgba(69, 243, 255, 0.3);
+      background: #3a3a3a !important;
+      box-shadow: 0 0 10px rgba(229, 9, 20, 0.2);
     }
 
-    /* Switch Tasarımları */
+    .avatar-list {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .avatar-btn {
+      width: 36px;
+      height: 36px;
+      font-size: 1.3rem;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .avatar-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: scale(1.1);
+    }
+
+    .avatar-btn.selected {
+      border-color: var(--primary);
+      background: rgba(229, 9, 20, 0.15);
+      box-shadow: 0 0 10px rgba(229, 9, 20, 0.3);
+    }
+
     .switch-group {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
-      padding: 6px 0;
+      margin-bottom: 16px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
     }
-    .switch-label {
+
+    .switch-text {
       font-size: 0.8rem;
-      color: var(--text-bright);
+      color: var(--text);
+      font-weight: 600;
     }
+
     .switch {
       position: relative;
       display: inline-block;
-      width: 40px;
+      width: 38px;
       height: 20px;
     }
+
     .switch input {
       opacity: 0;
       width: 0;
       height: 0;
     }
+
     .slider {
       position: absolute;
       cursor: pointer;
@@ -122,231 +212,273 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: rgba(255, 255, 255, 0.15);
+      background-color: #2f2f2f;
       transition: .3s;
       border-radius: 20px;
+      border: 1px solid var(--border);
     }
+
     .slider:before {
       position: absolute;
       content: "";
-      height: 14px;
-      width: 14px;
+      height: 12px;
+      width: 12px;
       left: 3px;
       bottom: 3px;
-      background-color: white;
+      background-color: #888;
       transition: .3s;
       border-radius: 50%;
     }
+
     input:checked + .slider {
       background-color: var(--primary);
     }
+
     input:checked + .slider:before {
-      transform: translateX(20px);
+      transform: translateX(18px);
+      background-color: white;
     }
 
-    .btn-group {
+    .btn-start-party {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary-gradient);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-start-party:hover {
+      background: linear-gradient(135deg, #ff2d38, #ff6b72);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(229, 9, 20, 0.6);
+    }
+
+    /* Durum B: Desteklenmeyen Sayfa - Platform Yönlendirme Listesi */
+    .platform-selector-panel {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-top: 15px;
     }
 
-    button {
-      width: 100%;
-      padding: 11px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
-      font-size: 0.85rem;
-      font-weight: 600;
+    .platform-info-text {
+      font-size: 0.8rem;
+      color: #888;
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+
+    .platform-section-header {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .platform-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .platform-card {
+      background: #2f2f2f;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transition: all 0.2s ease;
     }
 
-    .btn-primary {
-      background: linear-gradient(135deg, rgba(69, 243, 255, 0.2), rgba(102, 252, 241, 0.2));
-      color: var(--primary);
-      border: 1px solid rgba(69, 243, 255, 0.4);
+    .platform-card:hover {
+      background: #3d3d3d;
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
     }
 
-    .btn-primary:hover {
-      transform: translateY(-1.5px);
-      background: linear-gradient(135deg, rgba(69, 243, 255, 0.3), rgba(102, 252, 241, 0.3));
-      box-shadow: 0 0 15px rgba(69, 243, 255, 0.4);
+    .platform-icon {
+      font-size: 1.5rem;
+      margin-bottom: 4px;
     }
 
-    .btn-action {
-      background: linear-gradient(135deg, rgba(46, 213, 115, 0.2), rgba(123, 237, 159, 0.2));
-      color: #2ed573;
-      border: 1px solid rgba(46, 213, 115, 0.4);
-      margin-top: 10px;
-    }
-
-    .btn-action:hover {
-      transform: translateY(-1.5px);
-      background: linear-gradient(135deg, rgba(46, 213, 115, 0.3), rgba(123, 237, 159, 0.3));
-      box-shadow: 0 0 15px rgba(46, 213, 115, 0.4);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.04);
+    .platform-name {
+      font-size: 0.7rem;
+      font-weight: 700;
       color: var(--text-bright);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      margin-top: 8px;
+      text-align: center;
     }
 
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.1);
-      transform: translateY(-1.5px);
-      box-shadow: 0 5px 12px rgba(255, 255, 255, 0.1);
-    }
-
-    .btn-danger {
-      background: rgba(255, 71, 87, 0.15);
-      color: #ff4757;
-      border: 1px solid rgba(255, 71, 87, 0.3);
-      margin-top: 10px;
-    }
-
-    .btn-danger:hover {
-      transform: translateY(-1.5px);
-      background: rgba(255, 71, 87, 0.25);
-      box-shadow: 0 0 15px rgba(255, 71, 87, 0.4);
-    }
-
+    /* Aktif Oda Kartı (Katılınca Görünen) */
     .active-room-card {
-      background: rgba(69, 243, 255, 0.05);
-      border: 1px dashed var(--primary);
-      border-radius: 12px;
-      padding: 15px;
-      margin-bottom: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-align: center;
     }
 
     .room-id-display {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: #f1c40f; /* Altın sarısı */
-      margin: 12px 0;
-      letter-spacing: 3px;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #ff3d47;
+      margin: 10px 0;
+      letter-spacing: 4px;
       cursor: pointer;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      padding: 8px 15px;
+      background: #2f2f2f;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 20px;
       display: inline-block;
-      box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.02);
       transition: all 0.2s ease;
     }
+
     .room-id-display:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.15);
+      background: #3a3a3a;
     }
 
     .copied-toast {
       font-size: 0.7rem;
-      color: var(--secondary);
-      margin-top: 4px;
+      color: #2ed573;
+      margin-top: 2px;
       display: none;
-    }
-
-    /* Ayarlar Paneli */
-    .settings-panel {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      text-align: left;
-    }
-    .settings-title {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--secondary);
-      margin-bottom: 8px;
       font-weight: 600;
     }
 
     .user-list-container {
+      width: 100%;
       margin-top: 12px;
       padding-top: 12px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-top: 1px solid var(--border);
       text-align: left;
     }
+
     .user-list-title {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: var(--secondary);
       margin-bottom: 6px;
-      font-weight: 600;
+      font-weight: 700;
     }
+
     .user-list-items {
       font-size: 0.8rem;
       color: var(--text);
       max-height: 80px;
       overflow-y: auto;
-      padding-left: 5px;
-    }
-    .user-list-item {
       display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 4px;
-    }
-    .user-online-dot {
-      width: 6px;
-      height: 6px;
-      background-color: #2ed573;
-      border-radius: 50%;
+      flex-wrap: wrap;
+      gap: 5px;
+      padding-left: 2px;
     }
 
-    .status-indicator {
-      display: flex;
+    .user-badge {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2px 8px;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 6px;
-      font-size: 0.8rem;
+      gap: 4px;
+      font-size: 0.75rem;
+    }
+
+    .user-badge-online-dot {
+      width: 5px;
+      height: 5px;
+      background: #2ed573;
+      border-radius: 50%;
+      box-shadow: 0 0 4px #2ed573;
+    }
+
+    .btn-secondary {
+      background: #2f2f2f;
+      color: var(--text-bright);
+      border: 1px solid var(--border);
       margin-top: 10px;
+      width: 100%;
+      padding: 10px;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
     }
 
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background-color: var(--accent);
+    .btn-secondary:hover {
+      background: #3d3d3d;
     }
 
-    .status-dot.active {
-      background-color: #2ed573;
-      box-shadow: 0 0 8px #2ed573;
+    .btn-danger {
+      background: rgba(229, 9, 20, 0.15);
+      color: #e50914;
+      border: 1px solid rgba(229, 9, 20, 0.3);
+      margin-top: 8px;
+      width: 100%;
+      padding: 10px;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-danger:hover {
+      background: rgba(229, 9, 20, 0.25);
+    }
+
+    .toast-popup {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20,20,20,0.95);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.75rem;
+      color: var(--text-bright);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 1000;
     }
 
     .hidden {
-      display: none;
+      display: none !important;
     }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
-  
-  <script src="libs/firebase-app.js"></script>
-  <script src="libs/firebase-database.js"></script>
 </head>
 <body>
   <div class="container">
-    <img src="icon.png" style="width: 64px; height: 64px; border-radius: 16px; display: block; margin: 0 auto 12px auto; box-shadow: 0 0 20px rgba(69, 243, 255, 0.4); border: 2px solid rgba(255, 255, 255, 0.15);" alt="Erva ile Film Partisi Logo">
-    <h1>Erva ile Film <span>Partisi</span> 🍿</h1>
-    <div class="subtitle">Erva ❤️ Bekir | Biz Bize Film Keyfi</div>
-
-    <!-- Aktif Bağlantı Detayı -->
-    <div id="activeRoomContainer" class="active-room-card hidden">
-      <div class="status-indicator" style="margin-top: 0; margin-bottom: 12px; font-weight: 600; color: #2ed573;">
-        <span class="status-dot active"></span>
-        <span>Bağlandı & Senkronize</span>
+    <!-- Eklenti Header -->
+    <div class="logo-container">
+      <div class="logo-brand">
+        <img src="icon128.png" class="logo-img" alt="Evo ve Beko Logo">
+        <h1>Evo & Beko<span>.</span>🍿</h1>
       </div>
-      <div>Şu an bağlı olduğunuz oda:</div>
-      <div id="roomIdDisplay" class="room-id-display" title="Kopyalamak için tıklayın">-----</div>
-      <div class="copied-toast" id="copiedToast">Oda adı kopyalandı!</div>
-      
-      <button id="btnGoToMovie" class="btn-action hidden">Film Sayfasına Git 🎬</button>
+      <div class="status-badge">
+        <span class="status-dot" id="globalStatusDot"></span>
+        <span id="globalStatusText">Bağlantı Yok</span>
+      </div>
+    </div>
 
+    <!-- 1. AKTİF SOHBET PARTİ KARTI (Oda Kurulunca/Katılınca Görünür) -->
+    <div id="activeRoomContainer" class="active-room-card hidden">
+      <div style="font-size: 0.8rem; color: #888; font-weight: bold; margin-bottom: 5px;">Bağlantı Aktif! Davet Linki Kopyalandı.</div>
+      <div id="roomIdDisplay" class="room-id-display" title="Oda Kodunu Kopyala">----</div>
+      <div class="copied-toast" id="copiedToast">Oda kodu kopyalandı!</div>
+      
+      <button id="btnGoToMovie" class="btn-secondary hidden" style="background: #2ed573; border-color: #2ed573; color: white; margin-bottom: 8px;">Film Sayfasına Git 🎬</button>
 
       <!-- Aktif Kullanıcı Listesi -->
       <div class="user-list-container">
@@ -354,39 +486,120 @@
         <div class="user-list-items" id="activeUsersList"></div>
       </div>
 
-      <button id="btnRetrySync" class="btn-primary" style="margin-top: 12px;">Senkronizasyonu Yenile</button>
+      <button id="btnRetrySync" class="btn-secondary" style="margin-top: 12px;">Senkronizasyonu Yenile</button>
       <button id="btnCopyInvite" class="btn-secondary">Davet Linkini Kopyala</button>
-      <button id="btnLeaveRoom" class="btn-danger">Odan Ayrıl</button>
+      <button id="btnLeaveRoom" class="btn-danger">Odadan Ayrıl</button>
     </div>
 
-    <!-- Bağlantı Formu -->
-    <div id="joinFormContainer">
+    <!-- 2. PARTİ BAŞLATMA EKRANI (Desteklenen bir film sitesinde ise) -->
+    <div id="partyCreatorContainer" class="party-creator-panel hidden">
+      <div class="section-title">Evo & Beko Film Partisi Başlat</div>
+      
       <div class="form-group">
         <label for="usernameInput">Adınız</label>
         <input type="text" id="usernameInput" placeholder="Kullanıcı adınızı girin">
       </div>
 
+      <!-- Avatar Seçici -->
       <div class="form-group">
-        <label for="roomIdInput">Oda Adı</label>
-        <input type="text" id="roomIdInput" placeholder="İstediğiniz oda adını girin">
+        <label>Profil Simgesi</label>
+        <div class="avatar-list" id="avatarList">
+          <button class="avatar-btn selected" data-avatar="🍿">🍿</button>
+          <button class="avatar-btn" data-avatar="🍕">🍕</button>
+          <button class="avatar-btn" data-avatar="🍔">🍔</button>
+          <button class="avatar-btn" data-avatar="🍪">🍪</button>
+          <button class="avatar-btn" data-avatar="🍩">🍩</button>
+          <button class="avatar-btn" data-avatar="🔥">🔥</button>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="passwordInput">Oda Şifresi</label>
-        <input type="password" id="passwordInput" placeholder="Belirlemek istediğiniz şifre">
+      <!-- Sadece Host Kontrolü Switch -->
+      <div class="switch-group">
+        <span class="switch-text">Sadece Bende Kontrol Olsun</span>
+        <label class="switch">
+          <input type="checkbox" id="hostOnlySwitch">
+          <span class="slider"></span>
+        </label>
       </div>
 
-      <div class="btn-group">
-        <button id="btnJoinRoom" class="btn-primary">Odaya Katıl / Kur</button>
+      <button id="btnStartParty" class="btn-start-party" style="margin-bottom: 15px;">Partiyi Başlat</button>
+
+      <!-- Oda Koduyla Katılma Bölümü (Film Sayfasındayken) -->
+      <div style="padding-top: 15px; border-top: 1px solid var(--border);">
+        <div class="section-title" style="font-size: 0.85rem; margin-bottom: 10px;">Bir Odaya Katıl</div>
+        <div class="form-group" style="margin-bottom: 8px;">
+          <input type="text" id="joinRoomCodeInput" placeholder="4 Haneli Oda Kodu (Örn: ABCD)" maxlength="4" style="text-transform: uppercase; text-align: center; font-weight: bold; letter-spacing: 2px;">
+        </div>
+        <button id="btnJoinWithCode" class="btn-secondary" style="margin-top: 0; padding: 8px;">Katıl</button>
+      </div>
+    </div>
+
+    <!-- 3. DESTEKLENMEYEN SAYFA - SERVİS SEÇİCİ EKRAN (Normal sayfalarda ise) -->
+    <div id="platformSelectorContainer" class="platform-selector-panel hidden">
+      <div class="platform-info-text">
+        Eklentiyi kullanmak için lütfen aşağıdaki servislerden birini seçin:
       </div>
 
-      <div class="status-indicator">
-        <span class="status-dot" id="globalStatusDot"></span>
-        <span id="globalStatusText">Bağlantı Yok</span>
+      <div class="platform-section-header">Ücretsiz Servisler</div>
+      <div class="platform-grid" style="margin-bottom: 14px;">
+        <div class="platform-card" data-url="https://www.netflix.com">
+          <span class="platform-icon">🍿</span>
+          <span class="platform-name">Netflix</span>
+        </div>
+        <div class="platform-card" data-url="https://www.youtube.com">
+          <span class="platform-icon">📺</span>
+          <span class="platform-name">YouTube</span>
+        </div>
+        <div class="platform-card" data-url="https://www.disneyplus.com">
+          <span class="platform-icon">✨</span>
+          <span class="platform-name">Disney+</span>
+        </div>
+        <div class="platform-card" data-url="https://www.amazon.com/Prime-Video">
+          <span class="platform-icon">📦</span>
+          <span class="platform-name">Prime Video</span>
+        </div>
+        <div class="platform-card" data-url="https://www.max.com">
+          <span class="platform-icon">🎬</span>
+          <span class="platform-name">HBO Max</span>
+        </div>
+        <div class="platform-card" data-url="https://www.hulu.com">
+          <span class="platform-icon">🟢</span>
+          <span class="platform-name">Hulu</span>
+        </div>
+      </div>
+      
+      <div class="platform-section-header">Diğer Servisler</div>
+      <div class="platform-grid" style="margin-bottom: 15px;">
+        <div class="platform-card" data-url="https://open.spotify.com">
+          <span class="platform-icon">🎵</span>
+          <span class="platform-name">Spotify</span>
+        </div>
+        <div class="platform-card" data-url="https://www.crunchyroll.com">
+          <span class="platform-icon">🍣</span>
+          <span class="platform-name">Crunchyroll</span>
+        </div>
+        <div class="platform-card" data-url="https://www.twitch.tv">
+          <span class="platform-icon">🎮</span>
+          <span class="platform-name">Twitch</span>
+        </div>
+      </div>
+
+      <!-- Oda Koduyla Katılma Bölümü (Desteklenmeyen Sayfadayken) -->
+      <div style="padding-top: 15px; border-top: 1px solid var(--border);">
+        <div class="section-title" style="font-size: 0.85rem; margin-bottom: 10px;">Bir Odaya Katıl</div>
+        <div class="form-group" style="margin-bottom: 8px;">
+          <input type="text" id="joinRoomCodeInputSelector" placeholder="4 Haneli Oda Kodu (Örn: ABCD)" maxlength="4" style="text-transform: uppercase; text-align: center; font-weight: bold; letter-spacing: 2px;">
+        </div>
+        <button id="btnJoinWithCodeSelector" class="btn-secondary" style="margin-top: 0; padding: 8px;">Katıl</button>
       </div>
     </div>
   </div>
 
+  <div class="toast-popup" id="globalToast">Davet linki kopyalandı!</div>
+
+  <!-- Firebase SDK Kütüphaneleri -->
+  <script src="libs/firebase-app.js"></script>
+  <script src="libs/firebase-database.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

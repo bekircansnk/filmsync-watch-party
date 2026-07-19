@@ -37,7 +37,7 @@ def main():
     img = Image.open(source_path).convert("RGBA")
     
     # Target 1: Chrome Extension icon
-    ext_icon_dir = "/Users/bekir/Uygulamalarım/12-FilmSync/extension"
+    ext_icon_dir = "/Users/bekir/Uygulamalarim/12-FilmSync/extension"
     os.makedirs(ext_icon_dir, exist_ok=True)
     ext_icon_path = os.path.join(ext_icon_dir, "icon.png")
     ext_img = img.resize((256, 256), Image.Resampling.LANCZOS)
@@ -50,14 +50,14 @@ def main():
     print(f"Saved extension icon to {ext_icon_path}")
     
     # Target 2: Web Frontend logo
-    web_assets_dir = "/Users/bekir/Uygulamalarım/12-FilmSync/mobile/src/assets"
+    web_assets_dir = "/Users/bekir/Uygulamalarim/12-FilmSync/mobile/src/assets"
     os.makedirs(web_assets_dir, exist_ok=True)
     web_logo_path = os.path.join(web_assets_dir, "logo.png")
     ext_rounded.save(web_logo_path, "PNG")
     print(f"Saved web logo to {web_logo_path}")
     
     # Target 3: Android Res launcher icons
-    android_res_dir = "/Users/bekir/Uygulamalarım/12-FilmSync/mobile/android/app/src/main/res"
+    android_res_dir = "/Users/bekir/Uygulamalarim/12-FilmSync/mobile/android/app/src/main/res"
     
     configs = [
         ("mdpi", (48, 48), (108, 108)),

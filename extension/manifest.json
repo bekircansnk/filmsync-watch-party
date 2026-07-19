@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Erva ile Film Partisi",
-  "version": "1.0.0",
-  "description": "Erva & Bekir çiftine özel film/dizi eşzamanlı izleme eklentisi.",
+  "name": "Evo ve Beko Film Partisi",
+  "version": "1.1.0",
+  "description": "Evo ve Beko ile Netflix, YouTube ve diğer platformlarda arkadaşlarınızla eşzamanlı film izleyin ve sohbet edin.",
   "permissions": [
     "storage",
     "activeTab",
@@ -12,13 +12,13 @@
     "<all_urls>"
   ],
   "icons": {
-    "16": "icon.png",
-    "48": "icon.png",
-    "128": "icon.png"
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
   },
   "action": {
     "default_popup": "popup.html",
-    "default_icon": "icon.png"
+    "default_icon": "icon48.png"
   },
   "background": {
     "service_worker": "background.js"
@@ -33,6 +33,16 @@
       ],
       "run_at": "document_end",
       "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js"],
+      "matches": [
+        "*://*.netflix.com/*",
+        "*://*.disneyplus.com/*",
+        "*://*.youtube.com/*"
+      ]
     }
   ]
 }
