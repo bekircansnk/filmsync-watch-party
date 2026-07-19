@@ -425,7 +425,7 @@ function ensureVideoReady(callback, retriesLeft = 10) {
       ensureVideoReady(callback, retriesLeft - 1);
     }, 500);
   } else {
-    console.warn('[FilmSync] Video elementi zaman aşımına uğradı veya bulunamadı.');
+    console.log('[FilmSync] Video elementi zaman aşımına uğradı veya bulunamadı.');
     callback(false);
   }
 }
