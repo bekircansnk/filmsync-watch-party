@@ -252,7 +252,12 @@ document.addEventListener('DOMContentLoaded', () => {
         uniqueUsernames.forEach(username => {
           const el = document.createElement('div');
           el.className = 'user-list-item';
-          el.innerHTML = `<span class="user-online-dot"></span><span>${username}</span>`;
+          const dot = document.createElement('span');
+          dot.className = 'user-online-dot';
+          const nameSpan = document.createElement('span');
+          nameSpan.textContent = username;
+          el.appendChild(dot);
+          el.appendChild(nameSpan);
           activeUsersList.appendChild(el);
         });
         

@@ -761,14 +761,24 @@ function appendMessage({ username: msgUser, message, isSystem }) {
 
   if (isSystem) {
     row.classList.add('system');
-    row.innerHTML = `<div class="filmsync-msg-bubble">${message}</div>`;
+    const bubble = document.createElement('div');
+    bubble.classList.add('filmsync-msg-bubble');
+    bubble.textContent = message;
+    row.appendChild(bubble);
   } else {
     const isSelf = msgUser === username;
     row.classList.add(isSelf ? 'self' : 'other');
-    row.innerHTML = `
-      <div class="filmsync-msg-sender">${msgUser}</div>
-      <div class="filmsync-msg-bubble">${message}</div>
-    `;
+
+    const sender = document.createElement('div');
+    sender.classList.add('filmsync-msg-sender');
+    sender.textContent = msgUser;
+
+    const bubble = document.createElement('div');
+    bubble.classList.add('filmsync-msg-bubble');
+    bubble.textContent = message;
+
+    row.appendChild(sender);
+    row.appendChild(bubble);
   }
 
   messageList.appendChild(row);
@@ -787,10 +797,16 @@ function showNotificationToast(sender, text) {
 
   const toast = document.createElement('div');
   toast.classList.add('filmsync-toast');
-  toast.innerHTML = `
-    <div class="filmsync-toast-header">${sender}</div>
-    <div class="filmsync-toast-body">${text.length > 45 ? text.substring(0, 42) + '...' : text}</div>
-  `;
+  const header = document.createElement('div');
+  header.classList.add('filmsync-toast-header');
+  header.textContent = sender;
+
+  const body = document.createElement('div');
+  body.classList.add('filmsync-toast-body');
+  body.textContent = text.length > 45 ? text.substring(0, 42) + '...' : text;
+
+  toast.appendChild(header);
+  toast.appendChild(body);
 
   container.appendChild(toast);
   
