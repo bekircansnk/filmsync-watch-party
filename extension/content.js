@@ -761,14 +761,24 @@ function appendMessage({ username: msgUser, message, isSystem }) {
 
   if (isSystem) {
     row.classList.add('system');
-    row.innerHTML = `<div class="filmsync-msg-bubble">${message}</div>`;
+    const bubble = document.createElement('div');
+    bubble.className = 'filmsync-msg-bubble';
+    bubble.textContent = message;
+    row.appendChild(bubble);
   } else {
     const isSelf = msgUser === username;
     row.classList.add(isSelf ? 'self' : 'other');
-    row.innerHTML = `
-      <div class="filmsync-msg-sender">${msgUser}</div>
-      <div class="filmsync-msg-bubble">${message}</div>
-    `;
+
+    const senderDiv = document.createElement('div');
+    senderDiv.className = 'filmsync-msg-sender';
+    senderDiv.textContent = msgUser;
+
+    const bubbleDiv = document.createElement('div');
+    bubbleDiv.className = 'filmsync-msg-bubble';
+    bubbleDiv.textContent = message;
+
+    row.appendChild(senderDiv);
+    row.appendChild(bubbleDiv);
   }
 
   messageList.appendChild(row);
@@ -788,9 +798,12 @@ function showNotificationToast(sender, text) {
   const toast = document.createElement('div');
   toast.classList.add('filmsync-toast');
   toast.innerHTML = `
-    <div class="filmsync-toast-header">${sender}</div>
-    <div class="filmsync-toast-body">${text.length > 45 ? text.substring(0, 42) + '...' : text}</div>
+    <div class="filmsync-toast-header"></div>
+    <div class="filmsync-toast-body"></div>
   `;
+
+  toast.querySelector('.filmsync-toast-header').textContent = sender;
+  toast.querySelector('.filmsync-toast-body').textContent = text.length > 45 ? text.substring(0, 42) + '...' : text;
 
   container.appendChild(toast);
   
@@ -872,14 +885,14 @@ function showAutoJoinOverlay(roomName) {
 
   overlay.innerHTML = `
     <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 10px;">FilmSync 🍿</div>
-    <div style="font-size: 1.2rem; color: #45f3ff; font-weight: 600; margin-bottom: 20px;">
-      "${roomName}" Odasına Katılınıyor...
+    <div id="filmsync-autojoin-roomname" style="font-size: 1.2rem; color: #45f3ff; font-weight: 600; margin-bottom: 20px;">
     </div>
     <div style="width: 40px; height: 40px; border: 4px solid rgba(69, 243, 255, 0.1); border-top-color: #45f3ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
     <style>
       @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
   `;
+  overlay.querySelector('#filmsync-autojoin-roomname').textContent = `"${roomName}" Odasına Katılınıyor...`;
   document.body.appendChild(overlay);
 }
 
@@ -894,7 +907,7 @@ function showNamePromptModal(roomName, callback) {
   modal.innerHTML = `
     <div style="width: 320px; background: rgba(31, 40, 51, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; color: #fff;">
       <div style="font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; color: #fff;">FilmSync <span>Partisi</span> 🍿</div>
-      <div style="font-size: 0.85rem; color: #66fcf1; margin-bottom: 20px;">"${roomName}" odasına katılacaksınız.</div>
+      <div id="filmsync-prompt-roomname" style="font-size: 0.85rem; color: #66fcf1; margin-bottom: 20px;"></div>
       
       <div style="text-align: left; margin-bottom: 15px;">
         <label style="font-size: 0.75rem; text-transform: uppercase; color: #45f3ff; font-weight: 600; display: block; margin-bottom: 5px;">Adınız</label>
@@ -904,6 +917,8 @@ function showNamePromptModal(roomName, callback) {
       <button id="promptJoinBtn" style="width: 100%; padding: 11px; border: none; border-radius: 8px; background: linear-gradient(135deg, #45f3ff, #66fcf1); color: #0b0c10; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: transform 0.2s;">Odaya Katıl</button>
     </div>
   `;
+
+  modal.querySelector('#filmsync-prompt-roomname').textContent = `"${roomName}" odasına katılacaksınız.`;
 
   document.body.appendChild(modal);
 
