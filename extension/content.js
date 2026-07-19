@@ -1794,32 +1794,35 @@ function injectNetflixStartButton() {
           }
         }).then(() => {
           // Depolamaya oda durumunu yaz
-          chrome.storage.local.set({
-            roomId: randomRoomId,
-            userId: randomUserId,
-            username: 'Bekir',
-            password: '',
-            hostOnly: false,
-            selectedAvatar: '🍿'
-          }, () => {
-            // Davet linkini kopyala
-            const inviteUrl = `https://github.com/bekircansnk/filmsync-watch-party?join=${encodeURIComponent(randomRoomId)}&pass=`;
-            
-            // Clipboard Fallback kopyalama (Web page context)
-            try {
-              const dummy = document.createElement("textarea");
-              document.body.appendChild(dummy);
-              dummy.value = inviteUrl;
-              dummy.select();
-              document.execCommand("copy");
-              document.body.removeChild(dummy);
-              console.log('[FilmSync] Davet linki panoya kopyalandı.');
-            } catch (err) {
-              navigator.clipboard.writeText(inviteUrl);
-            }
+          chrome.storage.local.get(['username'], (res) => {
+            const savedName = res.username || '';
+            chrome.storage.local.set({
+              roomId: randomRoomId,
+              userId: randomUserId,
+              username: savedName,
+              password: '',
+              hostOnly: false,
+              selectedAvatar: '🍿'
+            }, () => {
+              // Davet linkini kopyala
+              const inviteUrl = `https://github.com/bekircansnk/filmsync-watch-party?join=${encodeURIComponent(randomRoomId)}&pass=`;
+              
+              // Clipboard Fallback kopyalama (Web page context)
+              try {
+                const dummy = document.createElement("textarea");
+                document.body.appendChild(dummy);
+                dummy.value = inviteUrl;
+                dummy.select();
+                document.execCommand("copy");
+                document.body.removeChild(dummy);
+                console.log('[FilmSync] Davet linki panoya kopyalandı.');
+              } catch (err) {
+                navigator.clipboard.writeText(inviteUrl);
+              }
 
-            // Videoyu başlat
-            playBtn.click();
+              // Videoyu başlat
+              playBtn.click();
+            });
           });
         }).catch(err => {
           console.error('[FilmSync] Oynatma butonuyla oda kurulumu hatası:', err);

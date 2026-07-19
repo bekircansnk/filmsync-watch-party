@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (result.username) {
       usernameInput.value = result.username;
     } else {
-      usernameInput.value = 'Bekir'; // Varsayılan isim
+      usernameInput.value = ''; // Standart olarak boş kalsın, kullanıcı yazsın
     }
     if (result.hostOnly !== undefined) {
       hostOnlySwitch.checked = result.hostOnly;
@@ -128,7 +128,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // "Partiyi Başlat" (Doğrudan Oda Kurma & Link Kopyalama)
   btnStartParty.addEventListener('click', () => {
-    const username = usernameInput.value.trim() || 'Bekir';
+    const username = usernameInput.value.trim();
+    if (!username) {
+      showGlobalToast('Lütfen bir kullanıcı adı girin! 🍿');
+      return;
+    }
     const hostOnly = hostOnlySwitch.checked;
 
     // 4 Harfli Oda Kodu üret
@@ -243,7 +247,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Çakışmaları önlemek için her odaya katılımda benzersiz ID üret
         userId = 'usr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         
-        const username = usernameInput.value.trim() || 'Bekir';
+        const username = usernameInput.value.trim();
+        if (!username) {
+          showGlobalToast('Lütfen odaya katılmadan önce adınızı girin! 🍿');
+          resetStatus();
+          return;
+        }
         
         saveSettings(code, username, '', userId, roomData.hostOnly || false, () => {
           showGlobalToast('Odaya başarıyla katıldınız! 🎉');
