@@ -1,4 +1,12 @@
 // FilmSync Partisi 🍿
+
+// Logger Object
+const Logger = {
+  info: (...args) => console.log('[INFO]', ...args),
+  warn: (...args) => console.warn('[WARN]', ...args),
+  error: (...args) => console.error('[ERROR]', ...args)
+};
+
 const firebaseConfig = {
   apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
   authDomain: "movieparty-af87f.firebaseapp.com",
@@ -101,20 +109,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }).then(() => {
               saveSettings(roomId, username, password);
             }).catch(e => {
-              console.error(e);
+              Logger.error(e);
               showToast('Oda kurulumu başarısız.');
               resetStatus();
             });
           });
         }
       }).catch(err => {
-        console.error(err);
+        Logger.error(err);
         showToast('Bulut sunucusuna bağlanılamadı.');
         resetStatus();
       });
 
     } catch (e) {
-      console.error(e);
+      Logger.error(e);
       resetStatus();
     }
   });
@@ -280,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
     } catch (e) {
-      console.error(e);
+      Logger.error(e);
     }
   }
 
