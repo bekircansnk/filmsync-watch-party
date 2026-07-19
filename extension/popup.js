@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const activeRoomContainer = document.getElementById('activeRoomContainer');
   const partyCreatorContainer = document.getElementById('partyCreatorContainer');
   const platformSelectorContainer = document.getElementById('platformSelectorContainer');
+  const commonUserConfig = document.getElementById('commonUserConfig');
   
   const usernameInput = document.getElementById('usernameInput');
   const hostOnlySwitch = document.getElementById('hostOnlySwitch');
@@ -441,6 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
           activeRoomContainer.classList.remove('hidden');
           partyCreatorContainer.classList.add('hidden');
           platformSelectorContainer.classList.add('hidden');
+          if (commonUserConfig) commonUserConfig.classList.add('hidden');
           roomIdDisplay.textContent = result.roomId;
           
           currentRoomId = result.roomId;
@@ -450,6 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
           activeRoomContainer.classList.add('hidden');
           partyCreatorContainer.classList.remove('hidden');
           platformSelectorContainer.classList.add('hidden');
+          if (commonUserConfig) commonUserConfig.classList.remove('hidden');
           resetStatus();
           cleanupFirebaseListeners();
         } else {
@@ -457,6 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
           activeRoomContainer.classList.add('hidden');
           partyCreatorContainer.classList.add('hidden');
           platformSelectorContainer.classList.remove('hidden');
+          if (commonUserConfig) commonUserConfig.classList.remove('hidden');
           resetStatus();
           cleanupFirebaseListeners();
         }

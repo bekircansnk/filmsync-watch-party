@@ -472,6 +472,27 @@
       </div>
     </div>
 
+    <!-- ORTAK KULLANICI ADI VE AVATAR ALANI (Aktif bir oda yokken her zaman görünür) -->
+    <div id="commonUserConfig" class="form-section">
+      <div class="form-group" style="margin-bottom: 10px;">
+        <label>Kullanıcı Adınız</label>
+        <input type="text" id="usernameInput" placeholder="Kullanıcı adınızı girin">
+      </div>
+
+      <!-- Profil Simgesi Seçici -->
+      <div class="form-group" style="margin-bottom: 0;">
+        <label>Profil Simgesi</label>
+        <div class="avatar-list" id="avatarList">
+          <button class="avatar-btn selected" data-avatar="🍿">🍿</button>
+          <button class="avatar-btn" data-avatar="🍕">🍕</button>
+          <button class="avatar-btn" data-avatar="🍔">🍔</button>
+          <button class="avatar-btn" data-avatar="🍪">🍪</button>
+          <button class="avatar-btn" data-avatar="🍩">🍩</button>
+          <button class="avatar-btn" data-avatar="🔥">🔥</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 1. AKTİF SOHBET PARTİ KARTI (Oda Kurulunca/Katılınca Görünür) -->
     <div id="activeRoomContainer" class="active-room-card hidden">
       <div style="font-size: 0.8rem; color: #888; font-weight: bold; margin-bottom: 5px;">Bağlantı Aktif! Davet Linki Kopyalandı.</div>
@@ -491,28 +512,10 @@
       <button id="btnLeaveRoom" class="btn-danger">Odadan Ayrıl</button>
     </div>
 
-    <!-- 2. PARTİ BAŞLATMA EKRANI (Desteklenen bir film sitesinde ise) -->
-    <div id="partyCreatorContainer" class="party-creator-panel hidden">
+    <!-- 2. PARTİ KURUCU EKRANI (Desteklenen bir film sayfasındayken) -->
+    <div id="partyCreatorContainer" class="party-creator-panel hidden" style="border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px;">
       <div class="section-title">Evo & Beko Film Partisi Başlat</div>
       
-      <div class="form-group">
-        <label for="usernameInput">Adınız</label>
-        <input type="text" id="usernameInput" placeholder="Kullanıcı adınızı girin">
-      </div>
-
-      <!-- Avatar Seçici -->
-      <div class="form-group">
-        <label>Profil Simgesi</label>
-        <div class="avatar-list" id="avatarList">
-          <button class="avatar-btn selected" data-avatar="🍿">🍿</button>
-          <button class="avatar-btn" data-avatar="🍕">🍕</button>
-          <button class="avatar-btn" data-avatar="🍔">🍔</button>
-          <button class="avatar-btn" data-avatar="🍪">🍪</button>
-          <button class="avatar-btn" data-avatar="🍩">🍩</button>
-          <button class="avatar-btn" data-avatar="🔥">🔥</button>
-        </div>
-      </div>
-
       <!-- Sadece Host Kontrolü Switch -->
       <div class="switch-group">
         <span class="switch-text">Sadece Bende Kontrol Olsun</span>
@@ -567,22 +570,7 @@
           <span class="platform-name">Hulu</span>
         </div>
       </div>
-      
-      <div class="platform-section-header">Diğer Servisler</div>
-      <div class="platform-grid" style="margin-bottom: 15px;">
-        <div class="platform-card" data-url="https://open.spotify.com">
-          <span class="platform-icon">🎵</span>
-          <span class="platform-name">Spotify</span>
-        </div>
-        <div class="platform-card" data-url="https://www.crunchyroll.com">
-          <span class="platform-icon">🍣</span>
-          <span class="platform-name">Crunchyroll</span>
-        </div>
-        <div class="platform-card" data-url="https://www.twitch.tv">
-          <span class="platform-icon">🎮</span>
-          <span class="platform-name">Twitch</span>
-        </div>
-      </div>
+
 
       <!-- Oda Koduyla Katılma Bölümü (Desteklenmeyen Sayfadayken) -->
       <div style="padding-top: 15px; border-top: 1px solid var(--border);">
