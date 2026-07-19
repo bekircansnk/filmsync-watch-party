@@ -320,6 +320,10 @@ function initializeFirebase(config) {
       
       setupFirebaseListeners();
       forceSync();
+      setTimeout(() => {
+        isFirstSync = false;
+        console.log('[FilmSync] İlk senkronizasyon kilidi zaman aşımıyla kaldırıldı.');
+      }, 1500);
     }).catch(err => {
       console.error('[FilmSync] Firebase bağlantı hatası:', err);
     });
@@ -593,14 +597,11 @@ function sendMediaEvent(isPlaying, currentTime) {
   }
 
   db.ref(`rooms/${roomId}/lastState`).update(updatePayload).then(() => {
-    // Sadece top window ise sistem mesajı göndersin (Iframe kirliliğini önlemek için)
-    if (window === window.top) {
-      const formattedTime = formatTime(currentTime);
-      const msgText = isPlaying 
-        ? `${username} filmi başlattı. (Kaldığı yer: ${formattedTime})`
-        : `${username} filmi duraklattı.`;
-      sendSystemMessage(msgText);
-    }
+    const formattedTime = formatTime(currentTime);
+    const msgText = isPlaying 
+      ? `${username} filmi başlattı. (Kaldığı yer: ${formattedTime})`
+      : `${username} filmi duraklattı.`;
+    sendSystemMessage(msgText);
   }).catch(err => console.error('[FilmSync] Medya durum yazma hatası:', err));
 }
 
