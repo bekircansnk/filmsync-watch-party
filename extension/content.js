@@ -325,24 +325,39 @@ function startVideoTracking() {
 
 // Drift Correction
 function startDriftCorrection() {
+  let mismatchCount = 0;
   setInterval(() => {
     if (!db || !roomId || !videoElement || isSyncing || videoElement.paused) return;
     if (videoElement.readyState < 1) return;
 
+    const requestStart = Date.now();
     db.ref(`rooms/${roomId}/lastState`).once('value').then((snapshot) => {
       const state = snapshot.val();
-      if (!state || state.senderId === userId || !state.isPlaying) return;
+      if (!state || state.senderId === userId || !state.isPlaying) {
+        mismatchCount = 0;
+        return;
+      }
       if (isSyncing) return;
+
+      const networkLatency = (Date.now() - requestStart) / 1000;
+      let dynamicThreshold = 2.5 + networkLatency;
+
+      if (mismatchCount > 0) {
+        dynamicThreshold = Math.max(1.0, dynamicThreshold - (mismatchCount * 0.5));
+      }
 
       const timeDiff = Math.max(0, (Date.now() - state.lastUpdated) / 1000);
       const expectedTime = state.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      if (drift > 3 && drift < 30) {
-        console.log(`[FilmSync Drift] ${drift.toFixed(1)}sn sapma düzeltiliyor.`);
+      if (drift > dynamicThreshold && drift < 30) {
+        console.log(`[FilmSync Drift] ${drift.toFixed(1)}sn sapma düzeltiliyor. (Eşik: ${dynamicThreshold.toFixed(2)}sn)`);
         isSyncing = true;
         videoElement.currentTime = expectedTime;
+        mismatchCount++;
         setTimeout(() => { isSyncing = false; }, 2000);
+      } else {
+        mismatchCount = 0;
       }
     });
   }, 5000);
