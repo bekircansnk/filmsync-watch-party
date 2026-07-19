@@ -1,0 +1,3 @@
+## 2024-07-19 - [DOM Update Optimization over Video Elements]
+**Learning:** Animating DOM elements (like slide-in sidebars or toasts) using layout-triggering properties (e.g., `right` or `left`) over hardware-accelerated video elements can cause significant main thread blocking, layout thrashing, and video playback frame drops.
+**Action:** Always prefer GPU-accelerated CSS properties (like `transform` with `translateX`/`translateY`) combined with `will-change: transform` when creating UI overlays and extensions for video players, ensuring composite layers handle the rendering rather than forcing a layout recalculation on every animation frame.
