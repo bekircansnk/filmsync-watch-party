@@ -1,13 +1,13 @@
 // FilmSync Partisi 🍿
 const firebaseConfig = {
-  apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
-  authDomain: "movieparty-af87f.firebaseapp.com",
-  databaseURL: "https://movieparty-af87f-default-rtdb.firebaseio.com",
-  projectId: "movieparty-af87f",
-  storageBucket: "movieparty-af87f.firebasestorage.app",
-  messagingSenderId: "563223702114",
-  appId: "1:563223702114:web:00815dcbe7645d83b83f3b",
-  measurementId: "G-4KR5X5Y4ZS"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  databaseURL: "YOUR_DATABASE_URL",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID"
 };
 
 let db = null;
