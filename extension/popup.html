@@ -241,6 +241,10 @@
       background: rgba(255, 255, 255, 0.08);
       border-color: rgba(255, 255, 255, 0.15);
     }
+    .room-id-display:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 4px;
+    }
 
     .copied-toast {
       font-size: 0.7rem;
@@ -342,7 +346,7 @@
         <span>Bağlandı & Senkronize</span>
       </div>
       <div>Şu an bağlı olduğunuz oda:</div>
-      <div id="roomIdDisplay" class="room-id-display" title="Kopyalamak için tıklayın">-----</div>
+      <div id="roomIdDisplay" class="room-id-display" title="Kopyalamak için tıklayın" role="button" tabindex="0" aria-label="Oda adını kopyala">-----</div>
       <div class="copied-toast" id="copiedToast">Oda adı kopyalandı!</div>
       
       <button id="btnGoToMovie" class="btn-action hidden">Film Sayfasına Git 🎬</button>

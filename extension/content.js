@@ -418,6 +418,10 @@ function createChatUI() {
       transform: scale(1.1) translateY(-2px);
       box-shadow: 0 12px 30px rgba(69, 243, 255, 0.6);
     }
+    #filmsync-chat-bubble:focus-visible {
+      outline: 2px solid #ffb86c;
+      outline-offset: 2px;
+    }
     #filmsync-chat-bubble svg {
       width: 24px;
       height: 24px;
@@ -477,6 +481,11 @@ function createChatUI() {
     }
     .filmsync-close-btn:hover {
       color: #ff4757;
+    }
+    .filmsync-close-btn:focus-visible {
+      outline: 2px solid #ffb86c;
+      outline-offset: 2px;
+      border-radius: 4px;
     }
 
     .filmsync-users {
@@ -620,8 +629,8 @@ function createChatUI() {
   `;
 
   root.innerHTML = `
-    <div id="filmsync-chat-bubble" title="Sohbeti Aç">
-      <svg viewBox="0 0 24 24">
+    <div id="filmsync-chat-bubble" title="Sohbeti Aç" role="button" tabindex="0" aria-label="Sohbeti Aç">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
       </svg>
     </div>
@@ -630,7 +639,7 @@ function createChatUI() {
       <div class="filmsync-header">
         <div class="filmsync-header-top">
           <div class="filmsync-header-title">FilmSync <span>Partisi</span> 🍿</div>
-          <button class="filmsync-close-btn" id="filmsyncCloseBtn">×</button>
+          <button class="filmsync-close-btn" id="filmsyncCloseBtn" aria-label="Sohbeti Kapat">×</button>
         </div>
         <div class="filmsync-users" id="filmsyncUserList">Üyeler yükleniyor...</div>
       </div>
@@ -665,7 +674,16 @@ function createChatUI() {
   }
 
   chatBubble.addEventListener('click', toggleChatPanel);
-  document.getElementById('filmsyncCloseBtn').addEventListener('click', toggleChatPanel);
+  chatBubble.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleChatPanel();
+    }
+  });
+
+  const closeBtn = document.getElementById('filmsyncCloseBtn');
+  closeBtn.addEventListener('click', toggleChatPanel);
+
   sendBtn.addEventListener('click', sendChatMessage);
   
   messageInput.addEventListener('keydown', (e) => {

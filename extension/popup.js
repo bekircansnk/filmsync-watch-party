@@ -183,6 +183,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  roomIdDisplay.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const code = roomIdDisplay.textContent;
+      if (code && code !== '-----') {
+        navigator.clipboard.writeText(code).then(() => {
+          showToast('Oda adı kopyalandı!');
+        });
+      }
+    }
+  });
+
   function resetStatus() {
     globalStatusDot.classList.remove('active');
     globalStatusText.textContent = 'Bağlantı Yok';
