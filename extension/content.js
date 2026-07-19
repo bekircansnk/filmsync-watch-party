@@ -427,7 +427,9 @@ function createChatUI() {
     #filmsync-chat-panel {
       position: fixed !important;
       top: 0 !important;
-      right: -330px !important;
+      right: 0 !important;
+      transform: translateX(100%);
+      will-change: transform;
       width: 320px;
       height: 100%;
       background: rgba(11, 12, 16, 0.7) !important;
@@ -437,13 +439,13 @@ function createChatUI() {
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 2147483646 !important;
       box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6);
       pointer-events: auto !important;
     }
     #filmsync-chat-panel.active {
-      right: 0 !important;
+      transform: translateX(0) !important;
     }
 
     .filmsync-header {
@@ -588,7 +590,9 @@ function createChatUI() {
     .filmsync-toast {
       position: fixed !important;
       top: 20px !important;
-      right: -320px !important;
+      right: 20px !important;
+      transform: translateX(120%);
+      will-change: transform;
       width: 280px;
       background: rgba(11, 12, 16, 0.7) !important;
       backdrop-filter: blur(20px) !important;
@@ -602,10 +606,10 @@ function createChatUI() {
       gap: 4px;
       z-index: 2147483647 !important;
       cursor: pointer;
-      transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       pointer-events: auto !important;
     }
-    .filmsync-toast.active { right: 20px !important; }
+    .filmsync-toast.active { transform: translateX(0) !important; }
     .filmsync-toast-header {
       font-size: 0.75rem;
       font-weight: 700;
@@ -616,6 +620,14 @@ function createChatUI() {
     .filmsync-toast-body {
       font-size: 0.85rem;
       color: #fff;
+    }
+
+    /* Video Player Frame Reduction */
+    body.filmsync-sidebar-open .nfp-video-player-container,
+    body.filmsync-sidebar-open .VideoContainer,
+    body.filmsync-sidebar-open .btm-media-client-element,
+    body.filmsync-sidebar-open ytd-watch-flexy {
+      width: calc(100% - 320px) !important;
     }
   `;
 
@@ -699,10 +711,12 @@ function toggleChatPanel() {
   chatPanel.classList.toggle('active');
   
   if (chatPanel.classList.contains('active')) {
+    document.body.classList.add('filmsync-sidebar-open');
     chatBubble.style.display = 'none';
     messageInput.focus();
     messageList.scrollTop = messageList.scrollHeight;
   } else {
+    document.body.classList.remove('filmsync-sidebar-open');
     chatBubble.style.display = 'flex';
   }
 }
