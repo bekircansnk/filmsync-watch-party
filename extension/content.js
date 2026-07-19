@@ -177,6 +177,9 @@ function init() {
 // Sayfa yenilenirken veya kapanırken durum güncellemesi tetikle (REST API üzerinden Service Worker ile çalışır)
 window.addEventListener('beforeunload', () => {
   if (roomId && isFirebaseInitialized && window === window.top) {
+    // Sayfa kapanırken oynatıcı eventlerinin tetiklenmesini önlemek için dinleyicileri derhal kaldır
+    removeVideoListeners();
+
     chrome.runtime.sendMessage({
       type: 'page-unload',
       roomId: roomId,
@@ -701,18 +704,27 @@ function removeVideoListeners() {
   videoElement.removeEventListener('playing', handlePlayingEvent);
 }
 
-function handlePlayEvent() {
-  if (isSyncing) return;
+function handlePlayEvent(e) {
+  // Eğer bu olay programatik bir senkronizasyon ise veya event isTrusted değilse yut
+  const isProgrammatic = isSyncing || (e && e.isTrusted === false);
+  if (isProgrammatic) return;
+
   sendMediaEvent(true, videoElement.currentTime);
 }
 
-function handlePauseEvent() {
-  if (isSyncing) return;
+function handlePauseEvent(e) {
+  // Eğer bu olay programatik bir senkronizasyon ise veya event isTrusted değilse yut
+  const isProgrammatic = isSyncing || (e && e.isTrusted === false);
+  if (isProgrammatic) return;
+
   sendMediaEvent(false, videoElement.currentTime);
 }
 
-function handleSeekEvent() {
-  if (isSyncing) return;
+function handleSeekEvent(e) {
+  // Eğer bu olay programatik bir senkronizasyon ise veya event isTrusted değilse yut
+  const isProgrammatic = isSyncing || (e && e.isTrusted === false);
+  if (isProgrammatic) return;
+
   sendMediaEvent(!videoElement.paused, videoElement.currentTime);
 }
 
