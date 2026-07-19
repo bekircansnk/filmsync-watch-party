@@ -90,20 +90,32 @@ function init() {
     if (joinRoom) {
       showNamePromptModal(joinRoom, (enteredName) => {
         showAutoJoinOverlay(joinRoom);
-        const newUserId = 'user_' + Math.random().toString(36).substr(2, 9);
-        chrome.storage.local.set({ roomId: joinRoom, username: enteredName, password: joinPass, userId: newUserId }, () => {
-          if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-          const tempDb = firebase.database();
-          tempDb.ref(`rooms/${joinRoom}/lastState`).once('value').then((snapshot) => {
-            const state = snapshot.val();
-            if (state && state.url) {
-              setTimeout(() => {
-                chrome.runtime.sendMessage({ type: 'redirect-tab', url: state.url });
-              }, 1000);
-            } else {
-              alert('Bu odada aktif bir film izlenmiyor veya oda bulunamadı.');
-              document.getElementById('filmsync-autojoin-overlay')?.remove();
-            }
+        
+        // Kendi sekme ID'mizi alıp activeTabId olarak kaydet
+        chrome.runtime.sendMessage({ type: 'get-tab-id' }, (tabResponse) => {
+          const myTabId = tabResponse ? tabResponse.tabId : null;
+          const newUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+          
+          chrome.storage.local.set({ 
+            roomId: joinRoom, 
+            username: enteredName, 
+            password: joinPass, 
+            userId: newUserId,
+            activeTabId: myTabId
+          }, () => {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            const tempDb = firebase.database();
+            tempDb.ref(`rooms/${joinRoom}/lastState`).once('value').then((snapshot) => {
+              const state = snapshot.val();
+              if (state && state.url) {
+                setTimeout(() => {
+                  chrome.runtime.sendMessage({ type: 'redirect-tab', url: state.url });
+                }, 1000);
+              } else {
+                alert('Bu odada aktif bir film izlenmiyor veya oda bulunamadı.');
+                document.getElementById('filmsync-autojoin-overlay')?.remove();
+              }
+            });
           });
         });
       });
@@ -119,7 +131,7 @@ function init() {
       if (result.roomId) {
         // Aktif Sekme İzolasyonu: Sadece popup üzerinden oda kurulan/katılınan aktif sekmede çalıştır!
         // result.activeTabId tanımlıysa ve benim sekmemle eşleşmiyorsa diğer sekmelerdeki işlemleri bloke et.
-        if (result.activeTabId !== undefined && result.activeTabId !== null && myTabId !== null && myTabId !== result.activeTabId) {
+        if (!result.activeTabId || (myTabId !== null && myTabId !== result.activeTabId)) {
           console.log(`[FilmSync İzolasyon] Eklenti bu sekmede pasif. Aktif Sekme ID: ${result.activeTabId}, Bu Sekme ID: ${myTabId}`);
           removeChatUI();
           cleanupFirebase();
@@ -187,7 +199,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         const myTabId = tabResponse ? tabResponse.tabId : null;
 
         chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
-          if (result.activeTabId !== undefined && result.activeTabId !== null && myTabId !== null && myTabId !== result.activeTabId) {
+          if (!result.activeTabId || (myTabId !== null && myTabId !== result.activeTabId)) {
             console.log(`[FilmSync İzolasyon Storage] Eklenti bu sekmede pasif hale getiriliyor.`);
             removeChatUI();
             return;
@@ -246,14 +258,24 @@ function initializeFirebase(config) {
         }
         
         // Eğer odaya giren kişi oda sahibi (host) ise ve geçerli bir video sayfasındaysa oda durumunu güncellesin.
-        // Video yoksa diğer katılımcıların izlediği film durumunu (lastState) sıfırlamasın!
+        // F5 ile yenilemelerde veya tekrar girişlerde mevcuttaki lastState durumunu sıfırlamak yerine koruyacağız!
+        // Sadece Firebase'de henüz lastState yoksa (veya url tanımsızsa) durum başlatılmalıdır.
         if (roomData.hostId === userId && window === window.top && hasVideo) {
-          db.ref(`rooms/${roomId}/lastState`).update({
-            url: window.location.href,
-            isPlaying: false,
-            currentTime: 0,
-            lastUpdated: firebase.database.ServerValue.TIMESTAMP,
-            senderId: userId
+          db.ref(`rooms/${roomId}/lastState`).once('value').then((stateSnap) => {
+            const currentState = stateSnap.val();
+            // Eğer Firebase'de zaten geçerli bir lastState varsa ve url bizim şu anki url ile aynıysa, sıfırlama yapma!
+            if (currentState && currentState.url === window.location.href && currentState.currentTime > 0) {
+              console.log('[FilmSync] Host yenileme algılandı, mevcut oda durumu korunuyor:', currentState);
+            } else {
+              // Oda yeni kuruluyorsa veya url değiştiyse durum güncellensin
+              db.ref(`rooms/${roomId}/lastState`).update({
+                url: window.location.href,
+                isPlaying: false,
+                currentTime: 0,
+                lastUpdated: firebase.database.ServerValue.TIMESTAMP,
+                senderId: userId
+              });
+            }
           });
         }
       } else {
@@ -535,6 +557,12 @@ function sendMediaEvent(isPlaying, currentTime) {
   const activeVideo = document.querySelector('video');
   if (!activeVideo) {
     console.log('[FilmSync] Video elementi olmayan sayfadan medya olayı gönderilmesi engellendi.');
+    return;
+  }
+
+  // Video henüz yüklenmediyse (hazır değilse) veya süresi tanımsız ise gönderme
+  if (activeVideo.readyState < 1 || isNaN(activeVideo.duration) || activeVideo.duration === 0) {
+    console.log('[FilmSync] Video henüz hazır değil, medya olayı atlanıyor.');
     return;
   }
 
@@ -1590,6 +1618,11 @@ function showNotificationToast(sender, text) {
 
 // --- 🎬 YÖNLENDİRME BİLDİRİM TOASTI ---
 function showMovieRedirectNotification(targetUrl) {
+  // Eğer sayfada zaten video/film oynatıcısı varsa veya toast zaten açık ise gösterme
+  if (videoElement || document.querySelector('video')) {
+    console.log('[FilmSync] Sayfada zaten video/film oynatıcısı var, yeni film bildirim toastu atlanıyor.');
+    return;
+  }
   if (document.getElementById('filmsync-redirect-toast')) return;
 
   const container = document.getElementById('filmsync-root') || document.body;
@@ -1598,6 +1631,19 @@ function showMovieRedirectNotification(targetUrl) {
   toast.classList.add('filmsync-toast');
   toast.style.background = 'rgba(69, 243, 255, 0.2)';
   toast.style.borderColor = '#45f3ff';
+  toast.style.position = 'relative'; // Kapatma butonu için relative
+  
+  // Kapatma Tuşu (X)
+  const closeBtn = document.createElement('span');
+  closeBtn.textContent = '✕';
+  closeBtn.setAttribute('style', 'position: absolute; top: 6px; right: 10px; color: #888; font-weight: bold; cursor: pointer; font-size: 0.8rem; z-index: 10;');
+  closeBtn.addEventListener('mouseover', () => closeBtn.style.color = '#fff');
+  closeBtn.addEventListener('mouseout', () => closeBtn.style.color = '#888');
+  closeBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // Toast tıklama olayını engelle
+    toast.classList.remove('active');
+    setTimeout(() => toast.remove(), 400);
+  });
   
   const toastHeader = document.createElement('div');
   toastHeader.className = 'filmsync-toast-header';
@@ -1605,9 +1651,10 @@ function showMovieRedirectNotification(targetUrl) {
 
   const toastBody = document.createElement('div');
   toastBody.className = 'filmsync-toast-body';
-  toastBody.setAttribute('style', 'color: #45f3ff; font-weight: bold; cursor: pointer;');
+  toastBody.setAttribute('style', 'color: #45f3ff; font-weight: bold; cursor: pointer; padding-right: 15px;');
   toastBody.textContent = 'Oda sahibi yeni bir film açtı. Katılmak için tıklayın! 🍿';
 
+  toast.appendChild(closeBtn);
   toast.appendChild(toastHeader);
   toast.appendChild(toastBody);
 
@@ -1617,7 +1664,14 @@ function showMovieRedirectNotification(targetUrl) {
     toast.classList.add('active');
   }, 50);
 
+  // 10 saniye sonra otomatik kaldır
+  const autoRemoveTimer = setTimeout(() => {
+    toast.classList.remove('active');
+    setTimeout(() => toast.remove(), 400);
+  }, 10000);
+
   toast.addEventListener('click', () => {
+    clearTimeout(autoRemoveTimer);
     toast.classList.remove('active');
     setTimeout(() => toast.remove(), 400);
     chrome.runtime.sendMessage({ type: 'redirect-tab', url: targetUrl });
