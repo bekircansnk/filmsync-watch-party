@@ -1,4 +1,10 @@
 // FilmSync Partisi 🍿
+const Logger = {
+  info: (...args) => console.log('[FilmSync INFO]', ...args),
+  warn: (...args) => console.warn('[FilmSync WARN]', ...args),
+  error: (...args) => console.error('[FilmSync ERROR]', ...args)
+};
+
 const firebaseConfig = {
   apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
   authDomain: "movieparty-af87f.firebaseapp.com",
@@ -101,20 +107,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }).then(() => {
               saveSettings(roomId, username, password);
             }).catch(e => {
-              console.error(e);
+              Logger.error(e);
               showToast('Oda kurulumu başarısız.');
               resetStatus();
             });
           });
         }
       }).catch(err => {
-        console.error(err);
+        Logger.error(err);
         showToast('Bulut sunucusuna bağlanılamadı.');
         resetStatus();
       });
 
     } catch (e) {
-      console.error(e);
+      Logger.error(e);
       resetStatus();
     }
   });
@@ -252,7 +258,12 @@ document.addEventListener('DOMContentLoaded', () => {
         uniqueUsernames.forEach(username => {
           const el = document.createElement('div');
           el.className = 'user-list-item';
-          el.innerHTML = `<span class="user-online-dot"></span><span>${username}</span>`;
+          const dot = document.createElement('span');
+          dot.className = 'user-online-dot';
+          const nameSpan = document.createElement('span');
+          nameSpan.textContent = username;
+          el.appendChild(dot);
+          el.appendChild(nameSpan);
           activeUsersList.appendChild(el);
         });
         
@@ -280,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
     } catch (e) {
-      console.error(e);
+      Logger.error(e);
     }
   }
 
