@@ -776,7 +776,8 @@ function createChatUI() {
     #filmsync-chat-panel {
       position: fixed !important;
       top: 0 !important;
-      right: -280px !important;
+      right: 0 !important;
+      transform: translateX(280px) !important;
       width: 270px;
       height: 100%;
       background: rgba(15, 15, 15, 0.65) !important;
@@ -786,13 +787,14 @@ function createChatUI() {
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease !important;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease !important;
+      will-change: transform;
       z-index: 2147483646 !important;
       box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6);
       pointer-events: auto !important;
     }
     #filmsync-chat-panel.active {
-      right: 0 !important;
+      transform: translateX(0) !important;
     }
 
     /* Header Bileşenleri */
@@ -1054,7 +1056,8 @@ function createChatUI() {
     .filmsync-toast {
       position: fixed !important;
       top: 20px !important;
-      right: -340px !important;
+      right: 20px !important;
+      transform: translateX(340px) !important;
       width: 280px;
       background: rgba(20, 20, 20, 0.95) !important;
       border: 1px solid rgba(255, 255, 255, 0.15);
@@ -1066,10 +1069,11 @@ function createChatUI() {
       gap: 4px;
       z-index: 2147483647 !important;
       cursor: pointer;
-      transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform;
       pointer-events: auto !important;
     }
-    .filmsync-toast.active { right: 20px !important; }
+    .filmsync-toast.active { transform: translateX(0) !important; }
     .filmsync-toast-header {
       font-size: 0.72rem;
       font-weight: 700;
@@ -1446,17 +1450,29 @@ function appendMessage({ username: msgUser, message, isSystem, timestamp }) {
 
   if (isSystem) {
     row.classList.add('system');
-    row.innerHTML = `<div class="filmsync-msg-bubble">${message}</div>`;
+    const systemBubble = document.createElement('div');
+    systemBubble.className = 'filmsync-msg-bubble';
+    systemBubble.textContent = message;
+    row.appendChild(systemBubble);
   } else {
     const isSelf = msgUser === username;
     row.classList.add(isSelf ? 'self' : 'other');
-    row.innerHTML = `
-      <div class="filmsync-msg-sender">
-        ${msgUser} 
-        <span style="font-size: 0.65rem; color: #666; font-weight: normal; margin-left: 6px;">${timeStr}</span>
-      </div>
-      <div class="filmsync-msg-bubble">${message}</div>
-    `;
+
+    const msgSender = document.createElement('div');
+    msgSender.className = 'filmsync-msg-sender';
+    msgSender.textContent = msgUser + ' ';
+
+    const timeSpan = document.createElement('span');
+    timeSpan.setAttribute('style', 'font-size: 0.65rem; color: #666; font-weight: normal; margin-left: 6px;');
+    timeSpan.textContent = timeStr;
+    msgSender.appendChild(timeSpan);
+
+    const msgBubble = document.createElement('div');
+    msgBubble.className = 'filmsync-msg-bubble';
+    msgBubble.textContent = message;
+
+    row.appendChild(msgSender);
+    row.appendChild(msgBubble);
   }
 
   messageList.appendChild(row);
@@ -1499,11 +1515,17 @@ function showNotificationToast(sender, text) {
   const toast = document.createElement('div');
   toast.classList.add('filmsync-toast');
   
-  // Mesajın tamamını kesilmeden göster
-  toast.innerHTML = `
-    <div class="filmsync-toast-header">${sender}</div>
-    <div class="filmsync-toast-body" style="font-size: 0.95rem; line-height: 1.3; font-weight: 500;">${text}</div>
-  `;
+  const toastHeader = document.createElement('div');
+  toastHeader.className = 'filmsync-toast-header';
+  toastHeader.textContent = sender;
+
+  const toastBody = document.createElement('div');
+  toastBody.className = 'filmsync-toast-body';
+  toastBody.setAttribute('style', 'font-size: 0.95rem; line-height: 1.3; font-weight: 500;');
+  toastBody.textContent = text;
+
+  toast.appendChild(toastHeader);
+  toast.appendChild(toastBody);
 
   container.appendChild(toast);
   
@@ -1554,12 +1576,17 @@ function showMovieRedirectNotification(targetUrl) {
   toast.style.background = 'rgba(69, 243, 255, 0.2)';
   toast.style.borderColor = '#45f3ff';
   
-  toast.innerHTML = `
-    <div class="filmsync-toast-header">Yeni Film Akışı 🎬</div>
-    <div class="filmsync-toast-body" style="color: #45f3ff; font-weight: bold; cursor: pointer;">
-      Oda sahibi yeni bir film açtı. Katılmak için tıklayın! 🍿
-    </div>
-  `;
+  const toastHeader = document.createElement('div');
+  toastHeader.className = 'filmsync-toast-header';
+  toastHeader.textContent = 'Yeni Film Akışı 🎬';
+
+  const toastBody = document.createElement('div');
+  toastBody.className = 'filmsync-toast-body';
+  toastBody.setAttribute('style', 'color: #45f3ff; font-weight: bold; cursor: pointer;');
+  toastBody.textContent = 'Oda sahibi yeni bir film açtı. Katılmak için tıklayın! 🍿';
+
+  toast.appendChild(toastHeader);
+  toast.appendChild(toastBody);
 
   container.appendChild(toast);
 

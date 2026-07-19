@@ -339,11 +339,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  roomIdDisplay.addEventListener('click', () => {
+  const handleCopyCode = () => {
     const code = roomIdDisplay.textContent;
     if (code && code !== '----') {
       copyToClipboard(code);
       showGlobalToast('Oda kodu kopyalandı! 📋');
+    }
+  };
+
+  roomIdDisplay.addEventListener('click', handleCopyCode);
+  roomIdDisplay.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleCopyCode();
     }
   });
 
@@ -438,7 +446,15 @@ document.addEventListener('DOMContentLoaded', () => {
               count++;
               const el = document.createElement('div');
               el.className = 'user-badge';
-              el.innerHTML = `<span class="user-badge-online-dot"></span><span>${u.avatar || '🍿'} ${u.username}</span>`;
+              
+              const dot = document.createElement('span');
+              dot.className = 'user-badge-online-dot';
+              
+              const textSpan = document.createElement('span');
+              textSpan.textContent = `${u.avatar || '🍿'} ${u.username}`;
+              
+              el.appendChild(dot);
+              el.appendChild(textSpan);
               activeUsersList.appendChild(el);
             }
           });
