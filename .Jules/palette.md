@@ -1,0 +1,5 @@
+## 2024-05-18 - Making Custom UI Divs Accessible
+
+**Learning:** When using generic `<div>` tags as interactive elements (like the platform selection cards in this extension), they are inherently invisible to keyboard navigation and screen readers. Relying solely on `click` events completely breaks the experience for users not using a mouse. Adding `role="button"` and `tabindex="0"` makes them discoverable, but if the element contains non-text content like emojis, they must be hidden with `aria-hidden="true"` while the parent container receives an explicit `aria-label` to provide context. Furthermore, `click` events do not automatically handle keyboard activation for non-button elements, so explicit `keydown` listeners for 'Enter' and 'Space' are required.
+
+**Action:** Whenever a custom UI element (like a card or icon) acts as a button, standard accessibility attributes (`role="button"`, `tabindex="0"`, `aria-label`), explicit keyboard event listeners, and visible focus states (`:focus-visible`) must be implemented simultaneously to ensure a complete and accessible interaction model.
