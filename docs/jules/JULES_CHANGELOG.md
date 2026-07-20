@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [20.07.2026] - Performans ve Layout İyileştirmeleri
+- **DOM Reflow Optimizasyonları:**
+  - `extension/content.js` içerisinde yer alan `#filmsync-mini-toolbar` ve ilgili panellerin layout özellikleri GPU hızlandırmalı özelliklere (`transform`, `opacity`) geçirildi.
+  - Sidebar açılıp kapanırken sürekli DOM reflow'a sebep olan `width` transition'ı `body.filmsync-sidebar-open` class'ından kaldırıldı.
+  - Performansı olumsuz etkileyen `transition: all` tanımlamaları spesifik özelliklerle değiştirildi ve `will-change` kullanılarak yüksek FPS'li video oynatma deneyimi güvence altına alındı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.

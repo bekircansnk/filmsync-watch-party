@@ -778,10 +778,11 @@ function createChatUI() {
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       z-index: 2147483647 !important;
       pointer-events: auto !important;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease !important;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease !important;
+      will-change: transform, opacity;
     }
     #filmsync-mini-toolbar.panel-active {
-      right: 282px !important; /* Panel genişliği (270px) + boşluk */
+      transform: translateX(-270px) !important; /* Panel genişliği (270px) + boşluk (right: 12px zaten var, üzerine eklenecek) */
     }
     .filmsync-tool-btn {
       width: 32px;
@@ -794,7 +795,7 @@ function createChatUI() {
       justify-content: center;
       cursor: pointer;
       position: relative;
-      transition: all 0.2s ease;
+      transition: transform 0.2s ease, background-color 0.2s ease;
     }
     .filmsync-tool-btn:hover {
       background: rgba(255, 255, 255, 0.1);
@@ -852,7 +853,7 @@ function createChatUI() {
       white-space: nowrap;
       pointer-events: none;
       opacity: 0;
-      transition: all 0.15s ease;
+      transition: opacity 0.15s ease, transform 0.15s ease;
     }
     .filmsync-tool-btn:hover::after {
       opacity: 1;
@@ -1088,7 +1089,7 @@ function createChatUI() {
       color: #fff;
       font-size: 0.85rem;
       outline: none;
-      transition: all 0.2s ease;
+      transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
     .filmsync-input-area input:focus {
       border-color: #e50914;
@@ -1107,7 +1108,7 @@ function createChatUI() {
       cursor: pointer;
       color: #fff;
       font-size: 1rem;
-      transition: all 0.2s;
+      transition: background-color 0.2s, box-shadow 0.2s;
     }
     .filmsync-send-btn:hover {
       background: #ff2d38;
@@ -1176,7 +1177,6 @@ function createChatUI() {
     /* Sayfa Daraltma & Kaydırma Kuralları */
     body.filmsync-sidebar-open {
       width: calc(100% - 270px) !important;
-      transition: width 0.3s ease;
     }
     /* Netflix, YouTube, Disney+ Player İzolasyonları */
     body.filmsync-sidebar-open .watch-video,
@@ -1847,7 +1847,7 @@ function injectNetflixStartButton() {
       align-items: center;
       gap: 8px;
       box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
-      transition: all 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
       font-family: inherit;
     `);
     startBtn.innerHTML = '<span>Evo & Beko Partisi Başlat</span> 🍿';
