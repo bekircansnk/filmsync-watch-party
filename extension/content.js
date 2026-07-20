@@ -1766,14 +1766,17 @@ function showAutoJoinOverlay(roomName) {
 
   overlay.innerHTML = `
     <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 10px;">FilmSync 🍿</div>
-    <div style="font-size: 1.2rem; color: #45f3ff; font-weight: 600; margin-bottom: 20px;">
-      "${roomName}" Odasına Katılınıyor...
+    <div id="filmsync-autojoin-text" style="font-size: 1.2rem; color: #45f3ff; font-weight: 600; margin-bottom: 20px;">
     </div>
     <div style="width: 40px; height: 40px; border: 4px solid rgba(69, 243, 255, 0.1); border-top-color: #45f3ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
     <style>
       @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
   `;
+  const textDiv = overlay.querySelector('#filmsync-autojoin-text');
+  if (textDiv) {
+    textDiv.textContent = '"' + roomName + '" Odasına Katılınıyor...';
+  }
   document.body.appendChild(overlay);
 }
 
@@ -1788,7 +1791,7 @@ function showNamePromptModal(roomName, callback) {
   modal.innerHTML = `
     <div style="width: 320px; background: rgba(31, 40, 51, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; color: #fff;">
       <div style="font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; color: #fff;">FilmSync <span>Partisi</span> 🍿</div>
-      <div style="font-size: 0.85rem; color: #66fcf1; margin-bottom: 20px;">"${roomName}" odasına katılacaksınız.</div>
+      <div id="filmsync-name-prompt-text" style="font-size: 0.85rem; color: #66fcf1; margin-bottom: 20px;"></div>
       
       <div style="text-align: left; margin-bottom: 15px;">
         <label style="font-size: 0.75rem; text-transform: uppercase; color: #45f3ff; font-weight: 600; display: block; margin-bottom: 5px;">Adınız</label>
@@ -1798,6 +1801,11 @@ function showNamePromptModal(roomName, callback) {
       <button id="promptJoinBtn" style="width: 100%; padding: 11px; border: none; border-radius: 8px; background: linear-gradient(135deg, #45f3ff, #66fcf1); color: #0b0c10; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: transform 0.2s;">Odaya Katıl</button>
     </div>
   `;
+
+  const promptTextDiv = modal.querySelector('#filmsync-name-prompt-text');
+  if (promptTextDiv) {
+    promptTextDiv.textContent = '"' + roomName + '" odasına katılacaksınız.';
+  }
 
   document.body.appendChild(modal);
 
