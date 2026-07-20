@@ -340,11 +340,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     db.ref(`rooms/${currentRoomId}/lastState/url`).once('value').then((snapshot) => {
       const url = snapshot.val();
-      if (url) {
+      if (url && !isEmbedUrl(url)) {
         chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-          if (tabs[0]) {
+          if (tabs[0] && tabs[0].url !== url) {
             chrome.tabs.update(tabs[0].id, { url }, () => {
-              // Yönlendirme bittikten sonra popup'ı kapat
               window.close();
             });
           }
@@ -568,5 +567,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     });
+  }
+
+  function isEmbedUrl(urlStr) {
+    if (!urlStr) return false;
+    const lower = urlStr.toLowerCase();
+    return (
+      lower.includes('/embed') ||
+      lower.includes('embed-') ||
+      lower.includes('embed.') ||
+      lower.includes('vidsrc') ||
+      lower.includes('player.php') ||
+      lower.includes('video.php') ||
+      lower.includes('stream.php')
+    );
   }
 });

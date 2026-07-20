@@ -282,9 +282,10 @@ function initializeFirebase(config) {
             if (currentState && currentState.url === window.location.href && currentState.currentTime > 0) {
               console.log('[FilmSync] Host yenileme algılandı, mevcut oda durumu korunuyor:', currentState);
             } else {
-              // Oda yeni kuruluyorsa veya url değiştiyse durum güncellensin
+              // Oda yeni kuruluyorsa veya url değiştiyse durum güncellensin (sadece embed adresi değilse)
+              const validUrl = (!isEmbedUrl(window.location.href)) ? window.location.href : (currentState?.url || '');
               db.ref(`rooms/${roomId}/lastState`).update({
-                url: window.location.href,
+                url: validUrl,
                 isPlaying: false,
                 currentTime: 0,
                 lastUpdated: firebase.database.ServerValue.TIMESTAMP,
@@ -296,6 +297,7 @@ function initializeFirebase(config) {
       } else {
         if (window === window.top) {
           // Oda ilk kez kurulurken eğer video varsa URL ile kur, yoksa boş veya mevcut URL ile kur ama durumları sıfırla.
+          const initialUrl = (hasVideo && !isEmbedUrl(window.location.href)) ? window.location.href : '';
           roomRef.set({
             password: password,
             hostId: userId,
@@ -303,7 +305,7 @@ function initializeFirebase(config) {
             lastState: {
               isPlaying: false,
               currentTime: 0,
-              url: hasVideo ? window.location.href : '',
+              url: initialUrl,
               lastUpdated: firebase.database.ServerValue.TIMESTAMP
             }
           });
@@ -594,8 +596,8 @@ function sendMediaEvent(isPlaying, currentTime) {
     lastUpdated: firebase.database.ServerValue.TIMESTAMP
   };
 
-  // URL güncelleme yetkisi sadece oda sahibine (host) aittir.
-  if (userId === hostId) {
+  // URL güncelleme yetkisi sadece oda sahibine (host), ana pencereye (window.top) ve embed olmayan adreslere aittir.
+  if (userId === hostId && window === window.top && !isEmbedUrl(window.location.href)) {
     updatePayload.url = window.location.href;
   }
 
@@ -1654,6 +1656,10 @@ function showNotificationToast(sender, text) {
 
 // --- 🎬 YÖNLENDİRME BİLDİRİM TOASTI ---
 function showMovieRedirectNotification(targetUrl) {
+  if (isEmbedUrl(targetUrl)) {
+    console.log('[FilmSync] Hedef URL bir embed adresi olduğundan yönlendirme toastu engellendi:', targetUrl);
+    return;
+  }
   // Eğer sayfada zaten video/film oynatıcısı varsa veya toast zaten açık ise gösterme
   if (videoElement || document.querySelector('video')) {
     console.log('[FilmSync] Sayfada zaten video/film oynatıcısı var, yeni film bildirim toastu atlanıyor.');
@@ -2086,5 +2092,19 @@ function formatTime(seconds) {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+function isEmbedUrl(urlStr) {
+  if (!urlStr) return false;
+  const lower = urlStr.toLowerCase();
+  return (
+    lower.includes('/embed') ||
+    lower.includes('embed-') ||
+    lower.includes('embed.') ||
+    lower.includes('vidsrc') ||
+    lower.includes('player.php') ||
+    lower.includes('video.php') ||
+    lower.includes('stream.php')
+  );
 }
 
