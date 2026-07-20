@@ -778,10 +778,11 @@ function createChatUI() {
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       z-index: 2147483647 !important;
       pointer-events: auto !important;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease !important;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease !important;
+      will-change: transform, opacity;
     }
     #filmsync-mini-toolbar.panel-active {
-      right: 282px !important; /* Panel genişliği (270px) + boşluk */
+      transform: translateX(-270px) !important; /* Panel genişliği kadar sola kaydır */
     }
     .filmsync-tool-btn {
       width: 32px;
