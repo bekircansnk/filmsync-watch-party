@@ -1974,11 +1974,16 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let lastMouseMoveTime = 0;
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
-    showPanelAndToolbar();
-    resetIdleTimer(isInputFocused ? 5000 : 3000);
+    const now = Date.now();
+    if (now - lastMouseMoveTime > 250) {
+      lastMouseMoveTime = now;
+      showPanelAndToolbar();
+      resetIdleTimer(isInputFocused ? 5000 : 3000);
+    }
   };
 
   document.addEventListener('mousemove', handleMouseMove);
