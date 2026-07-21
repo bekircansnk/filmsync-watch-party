@@ -9,7 +9,6 @@ let hostOnly = false;
 let db = null;
 
 let videoElement = null;
-let isSyncing = false;
 let chatPanel = null;
 let messageInput = null;
 let messageList = null;
@@ -51,25 +50,48 @@ const PlayerAdapter = {
   isNetflix: () => window.location.host.includes('netflix.com'),
   isYouTube: () => window.location.host.includes('youtube.com'),
   isDisney: () => window.location.host.includes('disneyplus.com'),
+  isLocked: false,
+  lockTimeout: null,
 
-  play: () => {
-    if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
+  lockEvents: function(duration = 1000) {
+    this.isLocked = true;
+    if (this.lockTimeout) clearTimeout(this.lockTimeout);
+    this.lockTimeout = setTimeout(() => {
+      this.isLocked = false;
+      isFirstSync = false; // İlk senkronizasyon kilidini kaldır
+      // Kilit açıldığında sıradaki bekleyen durum varsa onu uygula
+      if (pendingState) {
+        const nextState = pendingState;
+        pendingState = null;
+        applyRemoteState(nextState);
+      }
+    }, duration);
+  },
+
+  play: function() {
+    this.lockEvents(1000);
+    if (this.isNetflix() || this.isDisney() || this.isYouTube()) {
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
     } else if (videoElement) {
-      videoElement.play();
+      const playPromise = videoElement.play();
+      if (playPromise !== undefined) {
+          playPromise.catch(err => console.error('[FilmSync] Player play hatası:', err));
+      }
     }
   },
 
-  pause: () => {
-    if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
+  pause: function() {
+    this.lockEvents(1000);
+    if (this.isNetflix() || this.isDisney() || this.isYouTube()) {
       window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
     } else if (videoElement) {
       videoElement.pause();
     }
   },
 
-  seek: (seconds) => {
-    if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
+  seek: function(seconds) {
+    this.lockEvents(1000);
+    if (this.isNetflix() || this.isDisney() || this.isYouTube()) {
       window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
     } else if (videoElement) {
       videoElement.currentTime = seconds;
@@ -357,7 +379,7 @@ function setupFirebaseListeners() {
     if (!state) return;
     if (state.senderId === userId) return;
 
-    if (isSyncing) {
+    if (PlayerAdapter.isLocked) {
       // Kilit aktifken gelen son durumu sıraya al (yutulmasını önle)
       pendingState = state;
       return;
@@ -460,13 +482,9 @@ function applyRemoteState(state) {
   ensureVideoReady((isReady) => {
     if (!isReady || !videoElement) return;
 
-    isSyncing = true;
     try {
       const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
       const targetTime = state.currentTime + timeDiff;
-
-      // Programatik eylem öncesi yerel dinleyicileri kaldır
-      removeVideoListeners();
 
       if (state.isPlaying && videoElement.paused) {
         PlayerAdapter.seek(targetTime);
@@ -481,19 +499,6 @@ function applyRemoteState(state) {
       console.error('[FilmSync] Medya eşileme hatası:', e);
     }
     
-    // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
-    setTimeout(() => {
-      setupVideoListeners();
-      isSyncing = false;
-      isFirstSync = false; // İlk senkronizasyon kilidini kaldır
-      
-      // Kilit açıldığında sıradaki bekleyen durum varsa onu uygula
-      if (pendingState) {
-        const nextState = pendingState;
-        pendingState = null;
-        applyRemoteState(nextState);
-      }
-    }, 1000);
   });
 }
 
@@ -516,12 +521,10 @@ function forceSync() {
         return;
       }
 
-      isSyncing = true;
       try {
         const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
         const targetTime = state.currentTime + timeDiff;
 
-        removeVideoListeners(); // Dinleyicileri kaldır
         PlayerAdapter.seek(targetTime);
         if (state.isPlaying) {
           PlayerAdapter.play();
@@ -531,9 +534,7 @@ function forceSync() {
       } catch (e) {
         console.error(e);
       }
-      setTimeout(() => { 
-        setupVideoListeners(); // Dinleyicileri geri tak
-        isSyncing = false; 
+      setTimeout(() => {
         isFirstSync = false; // İlk senkronizasyon kilidini kaldır
         console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
       }, 2000);
@@ -568,7 +569,7 @@ function cleanupFirebase() {
 
 // Medya Olayını Gönderme
 function sendMediaEvent(isPlaying, currentTime) {
-  if (!db || !roomId || isSyncing || isFirstSync) return;
+  if (!db || !roomId || PlayerAdapter.isLocked || isFirstSync) return;
   
   // Sadece host kontrolü aktifse ve ben host değilsem engelle
   if (hostOnly && userId !== hostId) {
@@ -639,7 +640,7 @@ function startVideoTracking() {
 // Akıllı Eşitleme ve Sağlık Denetleyicisi (Heartbeat & Auto-Sync)
 function startDriftCorrection() {
   setInterval(() => {
-    if (!db || !roomId || !videoElement || isSyncing) return;
+    if (!db || !roomId || !videoElement || PlayerAdapter.isLocked) return;
     if (videoElement.readyState < 3) return; // Oynatıcı hazır değilse bekle
 
     // 1. BEN HOST (ODA SAHİBİ) İSEM: Firebase'deki durumu periyodik güncelle (Heartbeat)
@@ -658,7 +659,7 @@ function startDriftCorrection() {
     // 2. BEN GUEST (KATILAN KİŞİ) İSEM: Host durumunu oku ve sapma varsa otomatik düzelt
     db.ref(`rooms/${roomId}/lastState`).once('value').then((snapshot) => {
       const state = snapshot.val();
-      if (!state || state.senderId === userId || isSyncing) return;
+      if (!state || state.senderId === userId || PlayerAdapter.isLocked) return;
 
       const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
       const expectedTime = state.currentTime + timeDiff;
@@ -669,20 +670,13 @@ function startDriftCorrection() {
 
       if (playStateMismatch || drift > 2.5) {
         console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
-        isSyncing = true;
         
-        removeVideoListeners(); // Dinleyicileri kaldır
         PlayerAdapter.seek(expectedTime);
         if (state.isPlaying && videoElement.paused) {
           PlayerAdapter.play();
         } else if (!state.isPlaying && !videoElement.paused) {
           PlayerAdapter.pause();
         }
-        
-        setTimeout(() => {
-          setupVideoListeners(); // Dinleyicileri geri tak
-          isSyncing = false;
-        }, 1500);
       }
     });
   }, 4000);
@@ -708,7 +702,7 @@ function removeVideoListeners() {
 
 function handlePlayEvent(e) {
   // Eğer bu olay programatik bir senkronizasyon ise veya event isTrusted değilse yut
-  const isProgrammatic = isSyncing || (e && e.isTrusted === false);
+  const isProgrammatic = PlayerAdapter.isLocked || (e && e.isTrusted === false);
   if (isProgrammatic) return;
 
   sendMediaEvent(true, videoElement.currentTime);
@@ -716,7 +710,7 @@ function handlePlayEvent(e) {
 
 function handlePauseEvent(e) {
   // Eğer bu olay programatik bir senkronizasyon ise veya event isTrusted değilse yut
-  const isProgrammatic = isSyncing || (e && e.isTrusted === false);
+  const isProgrammatic = PlayerAdapter.isLocked || (e && e.isTrusted === false);
   if (isProgrammatic) return;
 
   sendMediaEvent(false, videoElement.currentTime);
@@ -724,7 +718,7 @@ function handlePauseEvent(e) {
 
 function handleSeekEvent(e) {
   // Eğer bu olay programatik bir senkronizasyon ise veya event isTrusted değilse yut
-  const isProgrammatic = isSyncing || (e && e.isTrusted === false);
+  const isProgrammatic = PlayerAdapter.isLocked || (e && e.isTrusted === false);
   if (isProgrammatic) return;
 
   sendMediaEvent(!videoElement.paused, videoElement.currentTime);
