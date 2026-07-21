@@ -1363,7 +1363,7 @@ function createChatUI() {
     db.ref(`rooms/${roomId}/messages`).limitToLast(50).once('value').then((snapshot) => {
       const messages = snapshot.val();
       if (messages) {
-        if (messageList) messageList.innerHTML = '';
+        if (messageList) messageList.textContent = '';
         Object.entries(messages).forEach(([key, msg]) => {
           // child_added ile çakışmayı önlemek için renderedMessageKeys kontrolü ekle
           if (!renderedMessageKeys.has(key)) {
@@ -1570,7 +1570,7 @@ function appendMessage({ username: msgUser, message, isSystem, timestamp }) {
 
 function updateUsersDisplay(usersList) {
   if (!userListDisplay) return;
-  userListDisplay.innerHTML = '';
+  userListDisplay.textContent = '';
   
   usersList.forEach(u => {
     const userBadge = document.createElement('span');
@@ -1772,15 +1772,18 @@ function showAutoJoinOverlay(roomName) {
 
   overlay.innerHTML = `
     <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 10px;">FilmSync 🍿</div>
-    <div style="font-size: 1.2rem; color: #45f3ff; font-weight: 600; margin-bottom: 20px;">
-      "${roomName}" Odasına Katılınıyor...
-    </div>
+    <div id="filmsync-autojoin-text" style="font-size: 1.2rem; color: #45f3ff; font-weight: 600; margin-bottom: 20px;"></div>
     <div style="width: 40px; height: 40px; border: 4px solid rgba(69, 243, 255, 0.1); border-top-color: #45f3ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
     <style>
       @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
   `;
   document.body.appendChild(overlay);
+
+  const textEl = document.getElementById('filmsync-autojoin-text');
+  if (textEl) {
+    textEl.textContent = `"${roomName}" Odasına Katılınıyor...`;
+  }
 }
 
 // --- 🏷️ İSİM PROMPT MODALI ---
@@ -1794,7 +1797,7 @@ function showNamePromptModal(roomName, callback) {
   modal.innerHTML = `
     <div style="width: 320px; background: rgba(31, 40, 51, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; color: #fff;">
       <div style="font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; color: #fff;">FilmSync <span>Partisi</span> 🍿</div>
-      <div style="font-size: 0.85rem; color: #66fcf1; margin-bottom: 20px;">"${roomName}" odasına katılacaksınız.</div>
+      <div id="filmsync-prompt-room-text" style="font-size: 0.85rem; color: #66fcf1; margin-bottom: 20px;"></div>
       
       <div style="text-align: left; margin-bottom: 15px;">
         <label style="font-size: 0.75rem; text-transform: uppercase; color: #45f3ff; font-weight: 600; display: block; margin-bottom: 5px;">Adınız</label>
@@ -1806,6 +1809,11 @@ function showNamePromptModal(roomName, callback) {
   `;
 
   document.body.appendChild(modal);
+
+  const roomTextEl = document.getElementById('filmsync-prompt-room-text');
+  if (roomTextEl) {
+    roomTextEl.textContent = `"${roomName}" odasına katılacaksınız.`;
+  }
 
   const nameInput = document.getElementById('promptNameInput');
   const joinBtn = document.getElementById('promptJoinBtn');
