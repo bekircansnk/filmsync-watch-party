@@ -1,0 +1,3 @@
+## 2024-07-21 - Unthrottled Global Mouse Events Over Video Players
+**Learning:** Attaching unthrottled global mouse events (like `mousemove`) directly to `document` in an environment heavily reliant on video playback causes severe main thread contention. When elements are continuously queried via DOM API (`getElementById`) and style mutations are pushed thousands of times per minute during simple cursor movements, it leads to massive frame dropping in browsers during video decoding.
+**Action:** Always throttle or debounce frequent continuous events (`mousemove`, `scroll`, `resize`). For simple visibility toggles on cursor movement, a timestamp-based basic throttle (~250ms) effectively mitigates DOM recalculation storms without perceivable UX degradation.
