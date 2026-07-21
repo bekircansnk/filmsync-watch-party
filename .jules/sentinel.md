@@ -1,0 +1,5 @@
+# Sentinel Security Journal
+
+## YYYY-MM-DD - Firebase API Key Scan
+**Learning:** In purely frontend-based browser extensions (like Vanilla JS without a build step or bundler), public Firebase Web SDK keys (`apiKey`, `databaseURL`, `projectId`, etc.) must be hardcoded by design as they need to be evaluated by the client's browser. While exposing API keys is typically a vulnerability in server-side apps, in this client-side architectural context, it is the standard and required implementation to connect to Firebase services directly from the frontend without a proxy backend.
+**Action:** Confirmed that no sensitive administrative credentials, service account JSON files, or private keys were leaked in the extension configuration or source files (`manifest.json`, `content.js`, `popup.js`, `background.js`). Analyzed the Firebase architecture context and concluded that the current state is safe within its expected bounds (test mode database as per README, utilizing only Web SDK credentials). No code changes were strictly necessary as no actual vulnerabilities related to admin secrets were present.
