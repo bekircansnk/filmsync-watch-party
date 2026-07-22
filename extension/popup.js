@@ -118,11 +118,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Platform Butonları Yönlendirme Olayı
+  const handlePlatformCardTrigger = (card) => {
+    const url = card.getAttribute('data-url');
+    if (url) {
+      chrome.tabs.create({ url });
+    }
+  };
+
   platformCards.forEach(card => {
-    card.addEventListener('click', () => {
-      const url = card.getAttribute('data-url');
-      if (url) {
-        chrome.tabs.create({ url });
+    card.addEventListener('click', () => handlePlatformCardTrigger(card));
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handlePlatformCardTrigger(card);
       }
     });
   });
