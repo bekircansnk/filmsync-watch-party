@@ -1215,7 +1215,8 @@ function createChatUI() {
     }
   `;
 
-  root.innerHTML = `
+  const parser = new DOMParser();
+  const parsedHTML = parser.parseFromString(`
     <!-- Dikey Araç Çubuğu (Mini-Toolbar) -->
     <div id="filmsync-mini-toolbar" class="panel-active">
       <button class="filmsync-tool-btn tp-logo" data-tooltip="Evo & Beko Partisi">
@@ -1266,7 +1267,10 @@ function createChatUI() {
 
     <!-- Reaksiyon Katmanı -->
     <div id="filmsync-reaction-layer"></div>
-  `;
+  `, 'text/html');
+  Array.from(parsedHTML.body.childNodes).forEach(node => {
+    root.appendChild(node);
+  });
 
   document.body.appendChild(root);
   document.head.appendChild(style);
@@ -1363,7 +1367,7 @@ function createChatUI() {
     db.ref(`rooms/${roomId}/messages`).limitToLast(50).once('value').then((snapshot) => {
       const messages = snapshot.val();
       if (messages) {
-        if (messageList) messageList.innerHTML = '';
+        if (messageList) messageList.textContent = '';
         Object.entries(messages).forEach(([key, msg]) => {
           // child_added ile çakışmayı önlemek için renderedMessageKeys kontrolü ekle
           if (!renderedMessageKeys.has(key)) {
@@ -1436,14 +1440,20 @@ function toggleChatPanel() {
     if (messageList) messageList.scrollTop = messageList.scrollHeight;
     if (chatToggleBtn) {
       chatToggleBtn.setAttribute('data-tooltip', 'Sohbeti Gizle');
-      chatToggleBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>';
+      chatToggleBtn.textContent = '';
+      const parser = new DOMParser();
+      const svgDoc1 = parser.parseFromString('<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>', 'text/html');
+      chatToggleBtn.appendChild(svgDoc1.body.firstChild);
     }
   } else {
     document.body.classList.remove('filmsync-sidebar-open');
     if (miniToolbar) miniToolbar.classList.remove('panel-active');
     if (chatToggleBtn) {
       chatToggleBtn.setAttribute('data-tooltip', 'Sohbeti Göster');
-      chatToggleBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>';
+      chatToggleBtn.textContent = '';
+      const parser = new DOMParser();
+      const svgDoc2 = parser.parseFromString('<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>', 'text/html');
+      chatToggleBtn.appendChild(svgDoc2.body.firstChild);
     }
   }
   
@@ -1570,7 +1580,7 @@ function appendMessage({ username: msgUser, message, isSystem, timestamp }) {
 
 function updateUsersDisplay(usersList) {
   if (!userListDisplay) return;
-  userListDisplay.innerHTML = '';
+  userListDisplay.textContent = '';
   
   usersList.forEach(u => {
     const userBadge = document.createElement('span');
@@ -1770,16 +1780,24 @@ function showAutoJoinOverlay(roomName) {
   overlay.id = 'filmsync-autojoin-overlay';
   overlay.setAttribute('style', 'position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11, 12, 16, 0.9); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2147483647 !important; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;');
 
-  overlay.innerHTML = `
-    <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 10px;">FilmSync 🍿</div>
-    <div style="font-size: 1.2rem; color: #45f3ff; font-weight: 600; margin-bottom: 20px;">
-      "${roomName}" Odasına Katılınıyor...
-    </div>
-    <div style="width: 40px; height: 40px; border: 4px solid rgba(69, 243, 255, 0.1); border-top-color: #45f3ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-    <style>
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
-  `;
+  const titleDiv = document.createElement('div');
+  titleDiv.setAttribute('style', 'font-size: 2.5rem; font-weight: 700; margin-bottom: 10px;');
+  titleDiv.textContent = 'FilmSync 🍿';
+
+  const subtitleDiv = document.createElement('div');
+  subtitleDiv.setAttribute('style', 'font-size: 1.2rem; color: #45f3ff; font-weight: 600; margin-bottom: 20px;');
+  subtitleDiv.textContent = `"${roomName}" Odasına Katılınıyor...`;
+
+  const spinnerDiv = document.createElement('div');
+  spinnerDiv.setAttribute('style', 'width: 40px; height: 40px; border: 4px solid rgba(69, 243, 255, 0.1); border-top-color: #45f3ff; border-radius: 50%; animation: spin 1s linear infinite;');
+
+  const styleEl = document.createElement('style');
+  styleEl.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+
+  overlay.appendChild(titleDiv);
+  overlay.appendChild(subtitleDiv);
+  overlay.appendChild(spinnerDiv);
+  overlay.appendChild(styleEl);
   document.body.appendChild(overlay);
 }
 
@@ -1791,19 +1809,48 @@ function showNamePromptModal(roomName, callback) {
   modal.id = 'filmsync-name-prompt-modal';
   modal.setAttribute('style', 'position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11, 12, 16, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 2147483647 !important; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;');
 
-  modal.innerHTML = `
-    <div style="width: 320px; background: rgba(31, 40, 51, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; color: #fff;">
-      <div style="font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; color: #fff;">FilmSync <span>Partisi</span> 🍿</div>
-      <div style="font-size: 0.85rem; color: #66fcf1; margin-bottom: 20px;">"${roomName}" odasına katılacaksınız.</div>
-      
-      <div style="text-align: left; margin-bottom: 15px;">
-        <label style="font-size: 0.75rem; text-transform: uppercase; color: #45f3ff; font-weight: 600; display: block; margin-bottom: 5px;">Adınız</label>
-        <input type="text" id="promptNameInput" placeholder="Kullanıcı adınızı yazın" style="width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 0.85rem; outline: none; transition: border 0.3s;" />
-      </div>
-      
-      <button id="promptJoinBtn" style="width: 100%; padding: 11px; border: none; border-radius: 8px; background: linear-gradient(135deg, #45f3ff, #66fcf1); color: #0b0c10; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: transform 0.2s;">Odaya Katıl</button>
-    </div>
-  `;
+  const container = document.createElement('div');
+  container.setAttribute('style', 'width: 320px; background: rgba(31, 40, 51, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; color: #fff;');
+
+  const titleDiv = document.createElement('div');
+  titleDiv.setAttribute('style', 'font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; color: #fff;');
+
+  const titleSpan = document.createElement('span');
+  titleSpan.textContent = 'Partisi';
+  titleDiv.textContent = 'FilmSync ';
+  titleDiv.appendChild(titleSpan);
+  titleDiv.appendChild(document.createTextNode(' 🍿'));
+
+  const subtitleDiv = document.createElement('div');
+  subtitleDiv.setAttribute('style', 'font-size: 0.85rem; color: #66fcf1; margin-bottom: 20px;');
+  subtitleDiv.textContent = `"${roomName}" odasına katılacaksınız.`;
+
+  const inputWrapper = document.createElement('div');
+  inputWrapper.setAttribute('style', 'text-align: left; margin-bottom: 15px;');
+
+  const label = document.createElement('label');
+  label.setAttribute('style', 'font-size: 0.75rem; text-transform: uppercase; color: #45f3ff; font-weight: 600; display: block; margin-bottom: 5px;');
+  label.textContent = 'Adınız';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.id = 'promptNameInput';
+  input.placeholder = 'Kullanıcı adınızı yazın';
+  input.setAttribute('style', 'width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 0.85rem; outline: none; transition: border 0.3s; box-sizing: border-box;');
+
+  inputWrapper.appendChild(label);
+  inputWrapper.appendChild(input);
+
+  const modalJoinBtn = document.createElement('button');
+  modalJoinBtn.id = 'promptJoinBtn';
+  modalJoinBtn.setAttribute('style', 'width: 100%; padding: 11px; border: none; border-radius: 8px; background: linear-gradient(135deg, #45f3ff, #66fcf1); color: #0b0c10; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: transform 0.2s;');
+  modalJoinBtn.textContent = 'Odaya Katıl';
+
+  container.appendChild(titleDiv);
+  container.appendChild(subtitleDiv);
+  container.appendChild(inputWrapper);
+  container.appendChild(modalJoinBtn);
+  modal.appendChild(container);
 
   document.body.appendChild(modal);
 
@@ -1856,7 +1903,11 @@ function injectNetflixStartButton() {
       transition: all 0.2s ease;
       font-family: inherit;
     `);
-    startBtn.innerHTML = '<span>Evo & Beko Partisi Başlat</span> 🍿';
+    startBtn.textContent = '';
+    const startSpan = document.createElement('span');
+    startSpan.textContent = 'Evo & Beko Partisi Başlat';
+    startBtn.appendChild(startSpan);
+    startBtn.appendChild(document.createTextNode(' 🍿'));
 
     startBtn.addEventListener('mouseover', () => {
       startBtn.style.transform = 'scale(1.04)';
