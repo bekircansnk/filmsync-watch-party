@@ -1,0 +1,3 @@
+## 2026-07-22 - [Interactive Non-Button Component Accessibility]
+**Learning:** When adding keyboard functionality to custom interactive elements (like the `.platform-card` div list acting as navigation shortcuts), setting just `role="button"` and `tabindex="0"` is insufficient. The `keydown` event must explicitly be bound to capture 'Enter' and 'Space' actions to achieve functional parity with the `click` event for complete keyboard usability.
+**Action:** Always ensure that custom div/span elements behaving as interactive triggers are paired with both an ARIA role/tabindex AND explicit keydown handlers covering 'Enter' and 'Space'.
