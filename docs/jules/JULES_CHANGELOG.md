@@ -3,6 +3,12 @@
 Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm otonom bakım, iyileştirme ve hata giderme seanslarının kaydını tutar.
 
 ---
+## [22.07.2026] - Performans Optimizasyonları (Bolt Agent)
+- **Performans İyileştirmeleri:**
+  - Sidebar açılıp kapanırken video kare hızını (FPS) düşüren DOM reflow sorununu çözmek için `body.filmsync-sidebar-open` sınıfından `transition: width` kaldırıldı. Sidebar artık akıcı bir şekilde anında yeniden boyutlandırılıyor.
+  - `#filmsync-mini-toolbar` bileşeninin durum değişimleri, DOM düzenini bozan `right` özelliği yerine GPU hızlandırmalı `transform: translateX()` kullanılarak yeniden yazıldı.
+  - Genel performans düşüşünü engellemek için CSS'teki tüm `transition: all` kullanımları spesifik özelliklerle (ör. `transition: transform`) değiştirildi ve tarayıcı optimizasyonu için ilgili yerlere `will-change` özelliği eklendi.
+
 
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
