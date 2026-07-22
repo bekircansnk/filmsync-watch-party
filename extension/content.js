@@ -1972,10 +1972,16 @@ function startButtonObserver() {
 // --- 🖥️ TAM EKRAN IDLE GİZLEME MOTORU (FARE HAREKET ETMEDİĞİNDE GİZLE) ---
 let idleTimer = null;
 let isFullscreen = false;
+let lastMoveTime = 0;
 
 function setupFullscreenIdleDetector() {
   const handleMouseMove = () => {
     if (!isFullscreen) return;
+
+    // Throttle: Saniyede çok fazla tetiklenmeyi önle (200ms)
+    const now = Date.now();
+    if (now - lastMoveTime < 200) return;
+    lastMoveTime = now;
     
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
