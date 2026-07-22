@@ -4,6 +4,15 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [22.07.2026] - Log Temizliği ve Medya API Güvenliği (Jules Otonom İşlemi)
+- **Log Temizliği:**
+  - `extension/content.js` ve `extension/popup.js` içerisindeki düz `console.log`, `console.error` ve `console.warn` kullanımları kaldırılarak, yerine yapılandırılmış bir `Logger` nesnesi eklendi.
+- **Hata Düzeltmeleri & Güvenlik:**
+  - `PlayerAdapter` içerisindeki medya API hook'larına (`play`, `pause`, `seek`) olası çökmeleri önlemek amacıyla `try-catch` blokları eklendi.
+  - Oynatıcı başlatılırken oluşabilecek promise rejection hatalarını (özellikle custom oynatıcılara sahip Netflix, Disney+ vb. platformlarda) yakalamak için `.catch()` metodu eklendi.
+
+---
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
