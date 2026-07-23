@@ -1,3 +1,9 @@
+
+const Logger = {
+  info: (...args) => console.log('[FilmSync Info]', ...args),
+  warn: (...args) => console.warn('[FilmSync Warn]', ...args),
+  error: (...args) => console.error('[FilmSync Error]', ...args)
+};
 // Evo ve Beko Film Partisi Popup JS 🍿
 const firebaseConfig = {
   apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
@@ -35,9 +41,9 @@ function copyToClipboard(text) {
     document.body.removeChild(dummy);
     return true;
   } catch (err) {
-    console.error("[FilmSync] execCommand kopyalama hatası, API denenecek:", err);
+    Logger.error("[FilmSync] execCommand kopyalama hatası, API denenecek:", err);
     navigator.clipboard.writeText(text).catch(e => {
-      console.error("[FilmSync] Kopyalama tamamen başarısız oldu:", e);
+      Logger.error("[FilmSync] Kopyalama tamamen başarısız oldu:", e);
     });
     return false;
   }
@@ -209,21 +215,21 @@ document.addEventListener('DOMContentLoaded', () => {
               // Content script'e hemen bağlanma mesajı gönder
               chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, (response) => {
                 if (chrome.runtime.lastError) {
-                  console.log("[Evo ve Beko Film Partisi] Content script mesaj alma hatası.");
+                  Logger.info("[Evo ve Beko Film Partisi] Content script mesaj alma hatası.");
                 }
               });
             });
           }).catch(e => {
             if (isTimeout) return;
             clearTimeout(connectionTimeout);
-            console.error(e);
+            Logger.error(e);
             showGlobalToast('Oda kurulumu başarısız.');
             resetStatus();
           });
 
         } catch (e) {
           clearTimeout(connectionTimeout);
-          console.error(e);
+          Logger.error(e);
           resetStatus();
         }
       });
@@ -303,13 +309,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }).catch(err => {
         if (isTimeout) return;
         clearTimeout(joinTimeout);
-        console.error(err);
+        Logger.error(err);
         showGlobalToast('Bağlantı hatası yaşandı.');
         resetStatus();
       });
     } catch (e) {
       clearTimeout(joinTimeout);
-      console.error(e);
+      Logger.error(e);
       resetStatus();
     }
   }
@@ -535,7 +541,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
     } catch (e) {
-      console.error(e);
+      Logger.error(e);
     }
   }
 
