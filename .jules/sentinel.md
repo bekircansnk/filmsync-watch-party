@@ -1,0 +1,4 @@
+## 2024-11-20 - [DOM-Based XSS in UI Overlays]
+**Vulnerability:** Found unescaped variable injections (`${roomName}`) being directly interpolated inside `.innerHTML` strings used to dynamically render `showAutoJoinOverlay` and `showNamePromptModal` elements in `content.js`.
+**Learning:** Due to the reliance on raw string templating for DOM construction without using intermediate encoding steps or safe node assignment, maliciously crafted URLs parameter (e.g. `roomName` from `?join=...`) could directly execute arbitrary script upon the page rendering.
+**Prevention:** Instead of using `.innerHTML` to insert dynamic variables, either use `document.createElement()` explicitly or first render static templates via `.innerHTML` and then populate values using `.textContent` on targeted child elements to ensure input is always treated as string data.
