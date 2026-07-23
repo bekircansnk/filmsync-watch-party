@@ -1,0 +1,3 @@
+## 2024-03-24 - Added keyboard and screen reader support for platform cards
+**Learning:** In this extension's UI, `div` elements are frequently used as interactive cards (like the platform selection cards). These custom UI elements lack native button accessibility out-of-the-box.
+**Action:** When creating or modifying such `div`-based interactive elements, always ensure to manually add `role="button"`, `tabindex="0"`, an appropriate `aria-label`, a visual `:focus-visible` state, and a `keydown` event listener to trigger the action on 'Enter' and 'Space' key presses, mirroring native `<button>` behavior. Additionally, decorative elements within these cards (like emojis) should be hidden from screen readers using `aria-hidden="true"`.

@@ -309,6 +309,11 @@
       transform: translateY(-1px);
     }
 
+    .platform-card:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
     .platform-icon {
       font-size: 1.5rem;
       margin-bottom: 4px;
@@ -545,28 +550,28 @@
 
       <div class="platform-section-header">Ücretsiz Servisler</div>
       <div class="platform-grid" style="margin-bottom: 14px;">
-        <div class="platform-card" data-url="https://www.netflix.com">
-          <span class="platform-icon">🍿</span>
+        <div class="platform-card" data-url="https://www.netflix.com" role="button" tabindex="0" aria-label="Netflix">
+          <span class="platform-icon" aria-hidden="true">🍿</span>
           <span class="platform-name">Netflix</span>
         </div>
-        <div class="platform-card" data-url="https://www.youtube.com">
-          <span class="platform-icon">📺</span>
+        <div class="platform-card" data-url="https://www.youtube.com" role="button" tabindex="0" aria-label="YouTube">
+          <span class="platform-icon" aria-hidden="true">📺</span>
           <span class="platform-name">YouTube</span>
         </div>
-        <div class="platform-card" data-url="https://www.disneyplus.com">
-          <span class="platform-icon">✨</span>
+        <div class="platform-card" data-url="https://www.disneyplus.com" role="button" tabindex="0" aria-label="Disney+">
+          <span class="platform-icon" aria-hidden="true">✨</span>
           <span class="platform-name">Disney+</span>
         </div>
-        <div class="platform-card" data-url="https://www.amazon.com/Prime-Video">
-          <span class="platform-icon">📦</span>
+        <div class="platform-card" data-url="https://www.amazon.com/Prime-Video" role="button" tabindex="0" aria-label="Prime Video">
+          <span class="platform-icon" aria-hidden="true">📦</span>
           <span class="platform-name">Prime Video</span>
         </div>
-        <div class="platform-card" data-url="https://www.max.com">
-          <span class="platform-icon">🎬</span>
+        <div class="platform-card" data-url="https://www.max.com" role="button" tabindex="0" aria-label="HBO Max">
+          <span class="platform-icon" aria-hidden="true">🎬</span>
           <span class="platform-name">HBO Max</span>
         </div>
-        <div class="platform-card" data-url="https://www.hulu.com">
-          <span class="platform-icon">🟢</span>
+        <div class="platform-card" data-url="https://www.hulu.com" role="button" tabindex="0" aria-label="Hulu">
+          <span class="platform-icon" aria-hidden="true">🟢</span>
           <span class="platform-name">Hulu</span>
         </div>
       </div>
