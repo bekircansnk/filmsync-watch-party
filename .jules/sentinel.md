@@ -1,0 +1,3 @@
+## 2026-07-23 - Firebase Security Analysis
+**Learning:** Firebase API keys (`AIzaSy...`) found in client-side code (`extension/content.js`, `extension/popup.js`) are strictly Web API keys intended for public configuration. They are not administrative credentials and do not grant secret access to the project. Furthermore, the background script (`extension/background.js`) interacts with the RTDB via standard REST API `fetch` requests without appending any `?auth=` administrative tokens.
+**Action:** Confirmed that the client architecture correctly relies on public web keys without leaking service account credentials, admin tokens, or database secrets. No source code modifications are required for credential safety.
