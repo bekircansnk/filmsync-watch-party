@@ -4,6 +4,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [23.07.2026] - Drift Eşiği Optimizasyonu
+- **Hata/Optimizasyon Düzeltmeleri:**
+  - `startDriftCorrection` fonksiyonundaki sapma eşiği 2.5s'lik statik değerden çıkarılıp, ağ gecikmesine (`timeDiff`) ve oynatma durumu farklılıklarına dayalı olarak kendini ayarlayan dinamik bir `dynamicThreshold` yapısına geçirildi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
