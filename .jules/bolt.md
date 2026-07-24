@@ -1,0 +1,3 @@
+## 2024-07-24 - Throttle Global Events for Video Player Performance
+**Learning:** Frequent continuous global events like `mousemove` can cause severe DOM recalculation storms and main thread contention, especially over intensive video players. Unthrottled mouse move listeners updating UI visibility variables hundreds of times per second create unnecessary overhead.
+**Action:** Always wrap `mousemove`, `scroll`, or `resize` event handlers with a timestamp-based throttle (e.g., `Date.now() - lastMoveTime > 100`) when triggering UI state changes or layout calculations in the extension to maintain high video playback frame rates.
