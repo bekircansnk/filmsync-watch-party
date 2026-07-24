@@ -1,0 +1,3 @@
+## 2026-07-24 - Optimize Sidebar Injection and Resizing Layouts
+**Learning:** Using layout-triggering properties like `right`, `width`, and `transition: all` on continuous CSS transitions or state changes severely impacts frame rates on DOM-heavy streaming pages (Netflix, YouTube).
+**Action:** Replaced `right` with `transform: translateX` and added `will-change: transform` to the sidebar animations. Removed `transition: width` from the body container class to force an immediate resizing "snap", and eliminated all instances of `transition: all` by breaking them into explicit GPU-friendly animated properties (e.g. `transform`, `opacity`, `background-color`, `box-shadow`).
