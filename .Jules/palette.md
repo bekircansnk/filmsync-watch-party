@@ -1,0 +1,4 @@
+## 2024-03-24 - Accessibility for div buttons
+
+**Learning:** When using `div` elements as interactive UI components (like the platform cards in popup.html), they inherently lack keyboard focus and semantic meaning, making them inaccessible to keyboard and screen reader users. Simply adding CSS hover states is insufficient.
+**Action:** Always add `tabindex="0"`, an appropriate `role` (e.g., `link` or `button`), and an `aria-label` to such elements. Furthermore, ensure decorative inner elements (like emojis) are hidden from screen readers using `aria-hidden="true"`, provide clear `:focus-visible` styles, and implement `keydown` event listeners to support 'Enter' and 'Space' activation.
