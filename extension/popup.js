@@ -119,10 +119,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Platform Butonları Yönlendirme Olayı
   platformCards.forEach(card => {
-    card.addEventListener('click', () => {
+    const handlePlatformNavigation = () => {
       const url = card.getAttribute('data-url');
       if (url) {
         chrome.tabs.create({ url });
+      }
+    };
+
+    card.addEventListener('click', handlePlatformNavigation);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handlePlatformNavigation();
       }
     });
   });

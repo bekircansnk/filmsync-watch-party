@@ -456,6 +456,19 @@
     .hidden {
       display: none !important;
     }
+
+    button:focus-visible,
+    .avatar-btn:focus-visible,
+    .room-id-display:focus-visible,
+    .platform-card:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .switch input:focus-visible + .slider {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
   </style>
 </head>
 <body>
@@ -545,28 +558,28 @@
 
       <div class="platform-section-header">Ücretsiz Servisler</div>
       <div class="platform-grid" style="margin-bottom: 14px;">
-        <div class="platform-card" data-url="https://www.netflix.com">
-          <span class="platform-icon">🍿</span>
+        <div class="platform-card" data-url="https://www.netflix.com" tabindex="0" role="link" aria-label="Netflix platformuna git">
+          <span class="platform-icon" aria-hidden="true">🍿</span>
           <span class="platform-name">Netflix</span>
         </div>
-        <div class="platform-card" data-url="https://www.youtube.com">
-          <span class="platform-icon">📺</span>
+        <div class="platform-card" data-url="https://www.youtube.com" tabindex="0" role="link" aria-label="YouTube platformuna git">
+          <span class="platform-icon" aria-hidden="true">📺</span>
           <span class="platform-name">YouTube</span>
         </div>
-        <div class="platform-card" data-url="https://www.disneyplus.com">
-          <span class="platform-icon">✨</span>
+        <div class="platform-card" data-url="https://www.disneyplus.com" tabindex="0" role="link" aria-label="Disney+ platformuna git">
+          <span class="platform-icon" aria-hidden="true">✨</span>
           <span class="platform-name">Disney+</span>
         </div>
-        <div class="platform-card" data-url="https://www.amazon.com/Prime-Video">
-          <span class="platform-icon">📦</span>
+        <div class="platform-card" data-url="https://www.amazon.com/Prime-Video" tabindex="0" role="link" aria-label="Prime Video platformuna git">
+          <span class="platform-icon" aria-hidden="true">📦</span>
           <span class="platform-name">Prime Video</span>
         </div>
-        <div class="platform-card" data-url="https://www.max.com">
-          <span class="platform-icon">🎬</span>
+        <div class="platform-card" data-url="https://www.max.com" tabindex="0" role="link" aria-label="HBO Max platformuna git">
+          <span class="platform-icon" aria-hidden="true">🎬</span>
           <span class="platform-name">HBO Max</span>
         </div>
-        <div class="platform-card" data-url="https://www.hulu.com">
-          <span class="platform-icon">🟢</span>
+        <div class="platform-card" data-url="https://www.hulu.com" tabindex="0" role="link" aria-label="Hulu platformuna git">
+          <span class="platform-icon" aria-hidden="true">🟢</span>
           <span class="platform-name">Hulu</span>
         </div>
       </div>
