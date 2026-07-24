@@ -11,3 +11,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [24.07.2026] - Hata Yönetimi ve Loglama İyileştirmeleri
+- **Loglama:**
+  - `console.log`, `console.error` ve `console.warn` kullanımları `Logger.info`, `Logger.error` ve `Logger.warn` olarak değiştirilerek yapılandırılmış loglama sistemine geçildi.
+- **Hata Yönetimi:**
+  - Netflix, Disney+ ve YouTube API kancalarındaki (hook) asenkron `.play()` ve oynatma komutları, eklenti çökmelerini önlemek amacıyla `try-catch` blokları içine alındı ve `.catch()` metodları ile iyileştirildi.
+  - Video oynatıcı (PlayerAdapter) etkileşimleri sırasında oluşabilecek hataların daha iyi yakalanması ve kontrol altına alınması sağlandı.
