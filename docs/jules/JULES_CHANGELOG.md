@@ -4,6 +4,14 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [24.07.2026] - Dinamik Sapma Düzeltme Mantığı (Dynamic Drift Correction)
+- **Geliştirmeler:**
+  - `startDriftCorrection` fonksiyonundaki sapma düzeltme eşiği statik 2.5 saniyeden dinamik bir hesaplamaya (ağ gecikmesine bağlı olarak değişen) geçirildi.
+  - Ağ gecikmesi `Date.now() - state.lastUpdated` kullanılarak hesaplanıp dinamik sapma toleransını belirliyor, böylece bağlantı durumuna göre senkronizasyon pürüzsüzleştiriliyor.
+  - Oynatma durumu uyuşmazlığı anında veya yeni hesaplanan dinamik eşik aşıldığında düzeltmenin hemen devreye girmesi sağlandı.
+
+---
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
