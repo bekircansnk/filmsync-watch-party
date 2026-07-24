@@ -1974,9 +1974,15 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  // ⚡ Bolt: Throttled mouse move listener to prevent main thread contention
+  let lastMoveTime = 0;
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    const now = Date.now();
+    if (now - lastMoveTime < 100) return; // Throttle to max 10 calls/sec
+    lastMoveTime = now;
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
   };
