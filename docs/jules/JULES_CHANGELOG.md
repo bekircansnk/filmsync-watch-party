@@ -4,6 +4,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [25.07.2026] - Sapma Düzeltme Mantığı Geliştirmesi
+- **İyileştirmeler:**
+  - `startDriftCorrection` içerisindeki sapma eşiği mantığı (drift correction threshold logic) dinamik hale getirildi. Artık sabit 2.5 saniye yerine, ağ gecikmesi (network latency) ve oynatma durumu uyumsuzluğuna (play state mismatch) bağlı olarak eşik değerleri ayarlanıyor. Bu sayede senkronizasyon deneyimi iyileştirildi ve gereksiz atlamalar engellendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
