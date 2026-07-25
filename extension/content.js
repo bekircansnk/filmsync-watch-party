@@ -1974,9 +1974,17 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let lastMoveTime = 0;
+
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    // ⚡ Bolt: Throttle global events (mousemove/keydown) to max once per 200ms
+    // Reduces DOM reflows and main thread contention from frequent state updates
+    const now = Date.now();
+    if (now - lastMoveTime < 200) return;
+    lastMoveTime = now;
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
   };
