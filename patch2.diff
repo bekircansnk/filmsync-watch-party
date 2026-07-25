@@ -1,0 +1,42 @@
+<<<<<<< SEARCH
+// Video elementinin hazır olup olmadığını sorgulayan ve bekleyen mekanizma
+function ensureVideoReady(callback, retriesLeft = 10) {
+  const activeVideo = document.querySelector('video');
+  if (activeVideo) videoElement = activeVideo;
+
+  if (videoElement && videoElement.readyState >= 1) {
+    callback(true);
+  } else if (retriesLeft > 0) {
+    console.log(`[FilmSync] Video elementinin hazır olması bekleniyor... Kalan deneme: ${retriesLeft}`);
+    setTimeout(() => {
+      ensureVideoReady(callback, retriesLeft - 1);
+    }, 500);
+  } else {
+    console.log('[FilmSync] Video elementi zaman aşımına uğradı veya bulunamadı.');
+    callback(false);
+  }
+}
+=======
+// Video elementinin hazır olup olmadığını sorgulayan ve bekleyen mekanizma
+function ensureVideoReady(callback, retriesLeft = 10) {
+  try {
+    const activeVideo = document.querySelector('video');
+    if (activeVideo) videoElement = activeVideo;
+
+    if (videoElement && videoElement.readyState >= 1) {
+      callback(true);
+    } else if (retriesLeft > 0) {
+      console.log(`[FilmSync] Video elementinin hazır olması bekleniyor... Kalan deneme: ${retriesLeft}`);
+      setTimeout(() => {
+        ensureVideoReady(callback, retriesLeft - 1);
+      }, 500);
+    } else {
+      console.log('[FilmSync] Video elementi zaman aşımına uğradı veya bulunamadı.');
+      callback(false);
+    }
+  } catch (e) {
+    console.error('[FilmSync] ensureVideoReady error:', e);
+    callback(false);
+  }
+}
+>>>>>>> REPLACE

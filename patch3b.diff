@@ -1,0 +1,45 @@
+<<<<<<< SEARCH
+function setupVideoListeners() {
+  if (!videoElement) return;
+  videoElement.addEventListener('play', handlePlayEvent);
+  videoElement.addEventListener('pause', handlePauseEvent);
+  videoElement.addEventListener('seeked', handleSeekEvent);
+  videoElement.addEventListener('waiting', handleWaitingEvent);
+  videoElement.addEventListener('playing', handlePlayingEvent);
+}
+
+function removeVideoListeners() {
+  if (!videoElement) return;
+  videoElement.removeEventListener('play', handlePlayEvent);
+  videoElement.removeEventListener('pause', handlePauseEvent);
+  videoElement.removeEventListener('seeked', handleSeekEvent);
+  videoElement.removeEventListener('waiting', handleWaitingEvent);
+  videoElement.removeEventListener('playing', handlePlayingEvent);
+}
+=======
+function setupVideoListeners() {
+  try {
+    if (!videoElement) return;
+    videoElement.addEventListener('play', handlePlayEvent);
+    videoElement.addEventListener('pause', handlePauseEvent);
+    videoElement.addEventListener('seeked', handleSeekEvent);
+    videoElement.addEventListener('waiting', handleWaitingEvent);
+    videoElement.addEventListener('playing', handlePlayingEvent);
+  } catch (err) {
+    console.error('[FilmSync] setupVideoListeners error:', err);
+  }
+}
+
+function removeVideoListeners() {
+  try {
+    if (!videoElement) return;
+    videoElement.removeEventListener('play', handlePlayEvent);
+    videoElement.removeEventListener('pause', handlePauseEvent);
+    videoElement.removeEventListener('seeked', handleSeekEvent);
+    videoElement.removeEventListener('waiting', handleWaitingEvent);
+    videoElement.removeEventListener('playing', handlePlayingEvent);
+  } catch (err) {
+    console.error('[FilmSync] removeVideoListeners error:', err);
+  }
+}
+>>>>>>> REPLACE
