@@ -1,0 +1,4 @@
+## 2024-07-26 - Path Traversal in Firebase REST API
+**Vulnerability:** Untrusted `roomId` payload from Chrome messaging was directly concatenated into the Firebase Realtime Database REST API path (`fetch(https://.../rooms/${roomId}/...)`) in `background.js` without validation, allowing path traversal attacks via inputs like `../../`.
+**Learning:** Chrome messaging inputs from content scripts should be treated as untrusted, especially when used in backend/REST API paths.
+**Prevention:** Always use strict regex validation masks (e.g., `/^[A-Za-z0-9_-]+$/`) on dynamic path parameters derived from untrusted inputs before URL concatenation.

@@ -20,7 +20,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId } = message;
-    if (roomId && username) {
+    if (roomId && typeof roomId === 'string' && /^[A-Za-z0-9_-]+$/.test(roomId) && username) {
       // 1. lastState nesnesini duraklatıldı olarak güncelle
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
         method: 'PATCH',
