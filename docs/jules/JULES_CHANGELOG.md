@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [26.07.2026] - Bellek Sızıntısı ve Kapanış İşlemleri İyileştirmeleri
+- Uzun süreli video sekmelerindeki bellek sızıntılarını önlemek için interval atamaları takip edilecek şekilde güncellendi ve yeni atamalar öncesi eskileri `clearInterval()` ile temizlendi.
+- `cleanupFirebase()` içindeki `messages` ve `reactions` dinleyici temizlikleri (`.off()` çağrıları), sorgu limitleri (`.limitToLast()`) ile tam eşleşecek şekilde düzenlendi, böylece hatalı serbest bırakmalar önlendi. Ayrıca `hostId` ve `hostOnly` dinleyicileri için `.off()` çağrıları eklendi.
+- Sayfa kapatma (teardown) mantığı `handlePageTeardown` fonksiyonuna çıkarıldı ve sekmeler arası geçiş/iframe yenilenmelerinde daha güvenilir çalışması için `pagehide` ve `beforeunload` olaylarına bağlandı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
