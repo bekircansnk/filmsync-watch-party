@@ -9,5 +9,7 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
   - Video elementinin hazır olmasını (readyState >= 1) bekleyen `ensureVideoReady` fonksiyonu entegre edildi.
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
+- **Güvenlik İyileştirmeleri (Sentinel):**
+  - Service Worker (`background.js`) içerisinde dışarıdan gelen `roomId` değerinin kontrolsüz bir şekilde veritabanı REST API'sine parametre olarak verilmesi engellendi. Path Traversal ataklarını önlemek amacıyla regex tabanlı kontrol eklendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
