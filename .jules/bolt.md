@@ -1,0 +1,3 @@
+## 2024-07-26 - Mousemove Throttling for Idle Detectors
+**Learning:** Attaching unbounded `mousemove` event listeners to the global document object for idle-timeout features (especially during video playback) can result in an overwhelming number of function calls (often hundreds per second). This leads to excessive CPU wakeups, potentially drops video frame rates, and slows down interaction.
+**Action:** Always implement a simple timestamp-based check (e.g., executing the actual handler logic only if `Date.now() - lastExecutionTime > 100`) to throttle continuously emitted UI events like `mousemove`, `scroll`, or `resize`. Also append `{ passive: true }` to such generic event listeners to guarantee they won't block the browser's default thread scroll/interaction handlers.
