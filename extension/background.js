@@ -20,6 +20,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId } = message;
+
+    // Gelen roomId'nin geçerli olup olmadığını kontrol et (Path Traversal önlemi)
+    if (!/^[A-Z0-9_-]{4,20}$/i.test(roomId)) {
+      console.warn('[FilmSync Security] Geçersiz oda kimliği reddedildi:', roomId);
+      sendResponse({ status: 'error', error: 'Invalid roomId' });
+      return true;
+    }
+
     if (roomId && username) {
       // 1. lastState nesnesini duraklatıldı olarak güncelle
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
