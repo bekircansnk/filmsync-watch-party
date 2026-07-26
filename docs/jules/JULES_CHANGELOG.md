@@ -4,6 +4,15 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [26.07.2026] - Medya Eşzamanlama (Senkronizasyon) ve Hata Yönetimi İyileştirmeleri
+- **Hata Düzeltmeleri ve Optimizasyonlar:**
+  - `extension/content.js` dosyasındaki `PlayerAdapter` yapısı yeniden düzenlendi.
+  - Olası eşzamanlama döngülerini (race conditions) ve video kekemeliğini önlemek amacıyla global `isSyncing` bayrağı yerine doğrudan `PlayerAdapter.lockEvents` ve entegre `lock()` metodu devreye alındı.
+  - Özel oynatıcıya sahip platformlarda (örn. Netflix, Disney+, YouTube) uzantı çökmesini engellemek için medya komutları (`play`, `pause`, `seek`) `try...catch` blokları içine alındı.
+  - Yerel asenkron `.play()` işlemleri için Promise retleri (rejection) yakalanarak stabilitesi artırıldı.
+
+---
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
