@@ -113,7 +113,7 @@
       if (player) {
         try {
           if (action === 'play') {
-            player.play();
+            player.play().catch(e => console.error("Play error:", e));
           } else if (action === 'pause') {
             player.pause();
           } else if (action === 'seek') {
@@ -132,7 +132,7 @@
       if (player) {
         try {
           if (action === 'play') {
-            player.play();
+            player.play().catch(e => console.error("Play error:", e));
           } else if (action === 'pause') {
             player.pause();
           } else if (action === 'seek') {
