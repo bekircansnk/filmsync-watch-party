@@ -1,5 +1,10 @@
 # 📝 Jules Otonom Görev Değişiklik Günlüğü (JULES_CHANGELOG.md)
 
+## 2026-07-26
+
+* Eklenti genelindeki `console.log` çıktıları `Logger` yapısı kullanılarak düzenlendi.
+* Medya oynatıcı API kancalarında (Netflix, Disney+, YouTube) oluşabilecek çökmeleri önlemek için `try-catch` blokları eklendi ve `play()` gibi asenkron metotlara `.catch()` zinciri eklendi.
+
 Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm otonom bakım, iyileştirme ve hata giderme seanslarının kaydını tutar.
 
 ---
