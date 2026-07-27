@@ -488,7 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // 1. Canlı Kullanıcıları ve Avatarları Dinle (Map isim çakışma hatası giderildi!)
       db.ref(`rooms/${roomId}/users`).on('value', (snapshot) => {
         const usersData = snapshot.val();
-        activeUsersList.innerHTML = '';
+        activeUsersList.textContent = '';
         
         let count = 0;
         if (usersData) {
