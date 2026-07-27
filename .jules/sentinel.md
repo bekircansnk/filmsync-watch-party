@@ -1,0 +1,4 @@
+## 2026-07-19 - Path Traversal in Untrusted Chrome Messaging Payloads
+ **Vulnerability:** Unvalidated parameters (`roomId`) passed from a frontend Chrome extension script via messaging payloads directly into backend Firebase REST API fetch requests. This created a potential path traversal vulnerability where malicious inputs could modify unassociated database nodes (e.g., `../../../users/`).
+ **Learning:** Values passed through `chrome.runtime.sendMessage` from untrusted content scripts or popup contexts should never be implicitly trusted in the background service worker, especially when used in URL construction for APIs.
+ **Prevention:** Validate all dynamic path parameters derived from untrusted Chrome messaging payloads strictly against an explicit regex mask before URL concatenation.
