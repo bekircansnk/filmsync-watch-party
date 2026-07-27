@@ -1,0 +1,3 @@
+## 2026-07-27 - Optimize Sidebar DOM Reflows
+ **Learning:** Animating layout-triggering properties like `width` or `right` causes continuous main-thread DOM recalculations (reflows) on every animation frame, which drops the frame rate of native video players like those on Netflix, Disney+, and YouTube. Using `transition: all` exacerbates this by attempting to animate layout properties inadvertently.
+ **Action:** Refactored `#filmsync-mini-toolbar` to use GPU-accelerated `transform: translateX` with explicit `will-change: transform, opacity` and `transition` targeting specific properties, avoiding `right` changes. Also removed the `transition: width` animation on `body.filmsync-sidebar-open` to eliminate DOM reflow storms when injecting or resizing the sidebar UI.

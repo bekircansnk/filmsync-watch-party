@@ -780,10 +780,12 @@ function createChatUI() {
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       z-index: 2147483647 !important;
       pointer-events: auto !important;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease !important;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease !important;
+      will-change: transform, opacity;
+      transform: translateX(0);
     }
     #filmsync-mini-toolbar.panel-active {
-      right: 282px !important; /* Panel genişliği (270px) + boşluk */
+      transform: translateX(-270px) !important; /* Panel genişliği kadar kaydır */
     }
     .filmsync-tool-btn {
       width: 32px;
@@ -1178,7 +1180,6 @@ function createChatUI() {
     /* Sayfa Daraltma & Kaydırma Kuralları */
     body.filmsync-sidebar-open {
       width: calc(100% - 270px) !important;
-      transition: width 0.3s ease;
     }
     /* Netflix, YouTube, Disney+ Player İzolasyonları */
     body.filmsync-sidebar-open .watch-video,
