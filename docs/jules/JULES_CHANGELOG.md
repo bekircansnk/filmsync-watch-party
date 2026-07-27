@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [27.07.2026] - Performans ve Bellek Sızıntısı İyileştirmeleri
+- **Firebase Dinleyici Temizliği:** `extension/content.js` dosyasında `cleanupFirebase()` fonksiyonu güncellendi. `hostId` ve `hostOnly` dinleyicileri `.off()` çağrılarına eklendi, mesajlar (`.limitToLast(50)`) ve reaksiyonlar (`.limitToLast(5)`) için `.off()` temizlik limitleri düzeltildi.
+- **Interval Sızıntısı Çözümü:** `extension/content.js` dosyasında interval'lar global değişkenlere (videoTrackingInterval, vb.) atandı ve `setInterval` atamalarından önce `clearInterval` kullanıldı. Temizleme (cleanup) aşamasına bu interval'ların temizlenmesi eklendi.
+- **Daha Güvenilir Teardown:** Sayfa yenilenmesi (veya arka plana atılması) esnasında durumun güvenli bir şekilde sunucuya/Service Worker'a bildirilmesi için `beforeunload` işlemine ek olarak `pagehide` eventi dinlenmeye başlandı.
+
+---
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
