@@ -9,5 +9,7 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
   - Video elementinin hazır olmasını (readyState >= 1) bekleyen `ensureVideoReady` fonksiyonu entegre edildi.
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
+- **Performans İyileştirmeleri (Bolt ⚡):**
+  - Netflix, YouTube ve Disney+ üzerinde izleme partilerinde video kare hızı (frame rate) düşüşlerini önlemek için kenar çubuğu (sidebar) DOM reflow işlemleri optimize edildi. CSS animasyonları GPU hızlandırmalı `transform` özellikleriyle değiştirildi ve düzen tetikleyen özelliklerden (`width`, `right`) kaçınıldı.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
