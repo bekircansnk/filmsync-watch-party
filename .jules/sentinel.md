@@ -1,0 +1,4 @@
+## 2024-05-24 - Fix Path Traversal in Firebase REST API Calls
+**Vulnerability:** The `background.js` script accepted a `roomId` from a content script message (`page-unload`) and directly concatenated it into a Firebase Realtime Database REST API path (`https://.../rooms/${roomId}/...`). Content scripts are untrusted and can be manipulated by a malicious webpage to send a crafted `roomId` like `../../users/admin`, causing the extension to overwrite arbitrary database nodes.
+**Learning:** Even internal extension messaging (from content script to background) must be treated as untrusted input. Directly interpolating user-controlled data into URLs or paths without validation is a critical path traversal risk.
+**Prevention:** Always apply strict regex validation masks (e.g., `/^[A-Za-z0-9_-]{1,64}$/`) to parameters before interpolating them into paths or URLs.

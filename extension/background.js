@@ -20,7 +20,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId } = message;
-    if (roomId && username) {
+
+    // Strict regex validation for roomId to prevent path traversal
+    const roomIdPattern = /^[A-Za-z0-9_-]{1,64}$/;
+
+    if (roomId && username && roomIdPattern.test(roomId)) {
       // 1. lastState nesnesini duraklatıldı olarak güncelle
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
         method: 'PATCH',
