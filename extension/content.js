@@ -53,27 +53,93 @@ const PlayerAdapter = {
   isDisney: () => window.location.host.includes('disneyplus.com'),
 
   play: () => {
-    if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-    } else if (videoElement) {
-      videoElement.play();
+    try {
+      if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
+        window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
+      } else if (videoElement) {
+        const playPromise = videoElement.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.error('[FilmSync] Oynatma hatası:', error);
+          });
+        }
+      }
+    } catch (error) {
+      console.error('[FilmSync] Play adapter hatası:', error);
     }
   },
 
   pause: () => {
-    if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-    } else if (videoElement) {
-      videoElement.pause();
+    try {
+      if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
+        window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
+      } else if (videoElement) {
+        videoElement.pause();
+      }
+    } catch (error) {
+      console.error('[FilmSync] Pause adapter hatası:', error);
     }
   },
 
   seek: (seconds) => {
-    if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-    } else if (videoElement) {
-      videoElement.currentTime = seconds;
+    try {
+      if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
+        window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
+      } else if (videoElement) {
+        videoElement.currentTime = seconds;
+      }
+    } catch (error) {
+      console.error('[FilmSync] Seek adapter hatası:', error);
     }
+  },
+
+  ensureVideoReady: (callback, retriesLeft = 10) => {
+    try {
+      const activeVideo = document.querySelector('video');
+      if (activeVideo) videoElement = activeVideo;
+
+      if (videoElement && videoElement.readyState >= 1) {
+        callback(true);
+      } else if (retriesLeft > 0) {
+        console.log(`[FilmSync] Video elementinin hazır olması bekleniyor... Kalan deneme: ${retriesLeft}`);
+        setTimeout(() => {
+          PlayerAdapter.ensureVideoReady(callback, retriesLeft - 1);
+        }, 500);
+      } else {
+        console.log('[FilmSync] Video elementi zaman aşımına uğradı veya bulunamadı.');
+        callback(false);
+      }
+    } catch (error) {
+      console.error('[FilmSync] ensureVideoReady hatası:', error);
+      callback(false);
+    }
+  },
+
+  lockEvents: (duration, actionCallback) => {
+    isSyncing = true;
+    try {
+      removeVideoListeners();
+      actionCallback();
+    } catch (e) {
+      console.error('[FilmSync] Medya olay kilitleme hatası:', e);
+    }
+
+    setTimeout(() => {
+      try {
+        setupVideoListeners();
+      } catch (e) {
+        console.error('[FilmSync] Dinleyicileri geri takma hatası:', e);
+      }
+      isSyncing = false;
+      isFirstSync = false; // İlk senkronizasyon kilidini kaldır
+
+      // Kilit açıldığında sıradaki bekleyen durum varsa onu uygula
+      if (pendingState) {
+        const nextState = pendingState;
+        pendingState = null;
+        applyRemoteState(nextState);
+      }
+    }, duration);
   }
 };
 
@@ -429,24 +495,6 @@ function setupFirebaseListeners() {
   });
 }
 
-// Video elementinin hazır olup olmadığını sorgulayan ve bekleyen mekanizma
-function ensureVideoReady(callback, retriesLeft = 10) {
-  const activeVideo = document.querySelector('video');
-  if (activeVideo) videoElement = activeVideo;
-
-  if (videoElement && videoElement.readyState >= 1) {
-    callback(true);
-  } else if (retriesLeft > 0) {
-    console.log(`[FilmSync] Video elementinin hazır olması bekleniyor... Kalan deneme: ${retriesLeft}`);
-    setTimeout(() => {
-      ensureVideoReady(callback, retriesLeft - 1);
-    }, 500);
-  } else {
-    console.log('[FilmSync] Video elementi zaman aşımına uğradı veya bulunamadı.');
-    callback(false);
-  }
-}
-
 // Uzak Durumu Videoya Uygula
 function applyRemoteState(state) {
   if (!state) return;
@@ -457,16 +505,12 @@ function applyRemoteState(state) {
     return;
   }
 
-  ensureVideoReady((isReady) => {
+  PlayerAdapter.ensureVideoReady((isReady) => {
     if (!isReady || !videoElement) return;
 
-    isSyncing = true;
-    try {
+    PlayerAdapter.lockEvents(1000, () => {
       const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
       const targetTime = state.currentTime + timeDiff;
-
-      // Programatik eylem öncesi yerel dinleyicileri kaldır
-      removeVideoListeners();
 
       if (state.isPlaying && videoElement.paused) {
         PlayerAdapter.seek(targetTime);
@@ -477,23 +521,7 @@ function applyRemoteState(state) {
       } else if (Math.abs(videoElement.currentTime - targetTime) > 1.5) {
         PlayerAdapter.seek(targetTime);
       }
-    } catch (e) {
-      console.error('[FilmSync] Medya eşileme hatası:', e);
-    }
-    
-    // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
-    setTimeout(() => {
-      setupVideoListeners();
-      isSyncing = false;
-      isFirstSync = false; // İlk senkronizasyon kilidini kaldır
-      
-      // Kilit açıldığında sıradaki bekleyen durum varsa onu uygula
-      if (pendingState) {
-        const nextState = pendingState;
-        pendingState = null;
-        applyRemoteState(nextState);
-      }
-    }, 1000);
+    });
   });
 }
 
@@ -510,33 +538,24 @@ function forceSync() {
       return;
     }
 
-    ensureVideoReady((isReady) => {
+    PlayerAdapter.ensureVideoReady((isReady) => {
       if (!isReady || !videoElement) {
         isFirstSync = false;
         return;
       }
 
-      isSyncing = true;
-      try {
+      PlayerAdapter.lockEvents(2000, () => {
         const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
         const targetTime = state.currentTime + timeDiff;
 
-        removeVideoListeners(); // Dinleyicileri kaldır
         PlayerAdapter.seek(targetTime);
         if (state.isPlaying) {
           PlayerAdapter.play();
         } else {
           PlayerAdapter.pause();
         }
-      } catch (e) {
-        console.error(e);
-      }
-      setTimeout(() => { 
-        setupVideoListeners(); // Dinleyicileri geri tak
-        isSyncing = false; 
-        isFirstSync = false; // İlk senkronizasyon kilidini kaldır
         console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
-      }, 2000);
+      });
     });
   });
 }
@@ -669,20 +688,15 @@ function startDriftCorrection() {
 
       if (playStateMismatch || drift > 2.5) {
         console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
-        isSyncing = true;
         
-        removeVideoListeners(); // Dinleyicileri kaldır
-        PlayerAdapter.seek(expectedTime);
-        if (state.isPlaying && videoElement.paused) {
-          PlayerAdapter.play();
-        } else if (!state.isPlaying && !videoElement.paused) {
-          PlayerAdapter.pause();
-        }
-        
-        setTimeout(() => {
-          setupVideoListeners(); // Dinleyicileri geri tak
-          isSyncing = false;
-        }, 1500);
+        PlayerAdapter.lockEvents(1500, () => {
+          PlayerAdapter.seek(expectedTime);
+          if (state.isPlaying && videoElement.paused) {
+            PlayerAdapter.play();
+          } else if (!state.isPlaying && !videoElement.paused) {
+            PlayerAdapter.pause();
+          }
+        });
       }
     });
   }, 4000);
@@ -690,20 +704,28 @@ function startDriftCorrection() {
 
 function setupVideoListeners() {
   if (!videoElement) return;
-  videoElement.addEventListener('play', handlePlayEvent);
-  videoElement.addEventListener('pause', handlePauseEvent);
-  videoElement.addEventListener('seeked', handleSeekEvent);
-  videoElement.addEventListener('waiting', handleWaitingEvent);
-  videoElement.addEventListener('playing', handlePlayingEvent);
+  try {
+    videoElement.addEventListener('play', handlePlayEvent);
+    videoElement.addEventListener('pause', handlePauseEvent);
+    videoElement.addEventListener('seeked', handleSeekEvent);
+    videoElement.addEventListener('waiting', handleWaitingEvent);
+    videoElement.addEventListener('playing', handlePlayingEvent);
+  } catch (error) {
+    console.error('[FilmSync] Video dinleyicileri eklenirken hata oluştu:', error);
+  }
 }
 
 function removeVideoListeners() {
   if (!videoElement) return;
-  videoElement.removeEventListener('play', handlePlayEvent);
-  videoElement.removeEventListener('pause', handlePauseEvent);
-  videoElement.removeEventListener('seeked', handleSeekEvent);
-  videoElement.removeEventListener('waiting', handleWaitingEvent);
-  videoElement.removeEventListener('playing', handlePlayingEvent);
+  try {
+    videoElement.removeEventListener('play', handlePlayEvent);
+    videoElement.removeEventListener('pause', handlePauseEvent);
+    videoElement.removeEventListener('seeked', handleSeekEvent);
+    videoElement.removeEventListener('waiting', handleWaitingEvent);
+    videoElement.removeEventListener('playing', handlePlayingEvent);
+  } catch (error) {
+    console.error('[FilmSync] Video dinleyicileri kaldırılırken hata oluştu:', error);
+  }
 }
 
 function handlePlayEvent(e) {
