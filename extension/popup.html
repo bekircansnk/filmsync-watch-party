@@ -190,6 +190,7 @@
       font-size: 0.8rem;
       color: var(--text);
       font-weight: 600;
+      cursor: pointer;
     }
 
     .switch {
@@ -437,6 +438,10 @@
       background: rgba(229, 9, 20, 0.25);
     }
 
+    .clickable-label {
+      cursor: pointer;
+    }
+
     .toast-popup {
       position: fixed;
       bottom: 20px;
@@ -475,14 +480,14 @@
     <!-- ORTAK KULLANICI ADI VE AVATAR ALANI (Aktif bir oda yokken her zaman görünür) -->
     <div id="commonUserConfig" class="form-section">
       <div class="form-group" style="margin-bottom: 10px;">
-        <label>Kullanıcı Adınız</label>
+        <label for="usernameInput" class="clickable-label">Kullanıcı Adınız</label>
         <input type="text" id="usernameInput" placeholder="Kullanıcı adınızı girin">
       </div>
 
       <!-- Profil Simgesi Seçici -->
       <div class="form-group" style="margin-bottom: 0;">
-        <label>Profil Simgesi</label>
-        <div class="avatar-list" id="avatarList">
+        <label id="avatarLabel">Profil Simgesi</label>
+        <div class="avatar-list" id="avatarList" role="group" aria-labelledby="avatarLabel">
           <button class="avatar-btn selected" data-avatar="🍿">🍿</button>
           <button class="avatar-btn" data-avatar="🍕">🍕</button>
           <button class="avatar-btn" data-avatar="🍔">🍔</button>
@@ -518,7 +523,7 @@
       
       <!-- Sadece Host Kontrolü Switch -->
       <div class="switch-group">
-        <span class="switch-text">Sadece Bende Kontrol Olsun</span>
+        <label class="switch-text clickable-label" for="hostOnlySwitch">Sadece Bende Kontrol Olsun</label>
         <label class="switch">
           <input type="checkbox" id="hostOnlySwitch">
           <span class="slider"></span>
@@ -529,7 +534,7 @@
 
       <!-- Oda Koduyla Katılma Bölümü (Film Sayfasındayken) -->
       <div style="padding-top: 15px; border-top: 1px solid var(--border);">
-        <div class="section-title" style="font-size: 0.85rem; margin-bottom: 10px;">Bir Odaya Katıl</div>
+        <label class="section-title clickable-label" style="font-size: 0.85rem; margin-bottom: 10px; display: block;" for="joinRoomCodeInput">Bir Odaya Katıl</label>
         <div class="form-group" style="margin-bottom: 8px;">
           <input type="text" id="joinRoomCodeInput" placeholder="4 Haneli Oda Kodu (Örn: ABCD)" maxlength="4" style="text-transform: uppercase; text-align: center; font-weight: bold; letter-spacing: 2px;">
         </div>
@@ -574,7 +579,7 @@
 
       <!-- Oda Koduyla Katılma Bölümü (Desteklenmeyen Sayfadayken) -->
       <div style="padding-top: 15px; border-top: 1px solid var(--border);">
-        <div class="section-title" style="font-size: 0.85rem; margin-bottom: 10px;">Bir Odaya Katıl</div>
+        <label class="section-title clickable-label" style="font-size: 0.85rem; margin-bottom: 10px; display: block;" for="joinRoomCodeInputSelector">Bir Odaya Katıl</label>
         <div class="form-group" style="margin-bottom: 8px;">
           <input type="text" id="joinRoomCodeInputSelector" placeholder="4 Haneli Oda Kodu (Örn: ABCD)" maxlength="4" style="text-transform: uppercase; text-align: center; font-weight: bold; letter-spacing: 2px;">
         </div>
