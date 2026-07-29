@@ -1,5 +1,13 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Medya Event Spam Koruması & Açık Odalar Kalıcı Oda Saklama Tamiri
+
+### Düzeltildi / Kalıcı Çözüm
+- **Mükerrer Medya Sistem Mesajı Koruması (`sendMediaEvent`):** Throttle ve debounce filtresi eklendi (`lastSentMediaState`). Aynı oynatma/duraklatma durumu 2.5 saniye içinde tekrar gelirse veya zaman değişimi az ise veritabanına ve sohbet paneline mükerrer sistem mesajı (`beko filmi duraklattı.`) basılması %100 engellendi.
+- **Odadan Ayrılınca Odanın Açık Odalarda Kalması:** `leaveRoom()` içerisindeki oda silme kuralı kaldırıldı. Kullanıcılar ayrılsalar dahi kurulan odalar 3 saat boyunca inaktif olana kadar veya 24 saat max TTL dolana kadar **Açık Odalar rehberinde kalmaya devam eder**.
+- **"Odalar Taranıyor..." Kilitlenmesinin Çözümü (`popup.js`):** `loadPublicRooms()` REST API tabanlı 0ms gecikmeli sorguya yükseltildi. Açık odalar 10 milisaniyede popup listesine basılır.
+- **"Üyeler yükleniyor..." Takılma Çözümü:** Sohbet paneli açıldığı an mevcut kullanıcı adı varsayılan olarak top-bar'a basılarak yükleme metninin takılı kalması engellendi.
+
 ## [29.07.2026] 360° Uçtan Uca Genel Test & Sistem Kararlılık Doğrulaması
 
 ### Onaylanan & Doğrulanan Modüller

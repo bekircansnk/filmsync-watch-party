@@ -530,26 +530,20 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   }
 
-  // 🍿 CANLI AÇIK ODALARI LİSTELEME VE ZAMAN AŞIMI TEMİZLİK (3 Saat İnaktif / 24 Saat Max TTL)
+  // Açık Odaları Yükleme (REST API ile 0ms Latency)
   function loadPublicRooms() {
     const publicRoomList = document.getElementById('publicRoomList');
     const publicRoomCountBadge = document.getElementById('publicRoomCountBadge');
     if (!publicRoomList || !publicRoomCountBadge) return;
 
-    try {
-      if (typeof firebase === 'undefined') return;
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-      const tempDb = firebase.database();
-
-      tempDb.ref('rooms').on('value', (snapshot) => {
-        const rooms = snapshot.val();
+    fetch('https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json')
+      .then(res => res.json())
+      .then(rooms => {
         publicRoomList.innerHTML = '';
 
         if (!rooms) {
           publicRoomCountBadge.textContent = '0 Aktif Oda';
-          publicRoomList.innerHTML = '<div style="font-size: 0.75rem; color: #888; text-align: center; padding: 10px 0;">Şu anda açık oda bulunmuyor. Hemen yukarıdan parti başlatın! 🍿</div>';
+          publicRoomList.innerHTML = '<div style="font-size: 0.72rem; color: #888; text-align: center; padding: 6px 0;">Şu anda açık oda bulunmuyor. Hemen yukarıdan parti başlatın! 🍿</div>';
           return;
         }
 
@@ -575,22 +569,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           });
 
-          // 🚨 ZAMAN AŞIMI VE İMHA KURALLARI:
-          // Kural A: 24 saati (1 gün) aştıysa otomatik imha et
-          // Kural B: Üye sayısı 0 ise veya 3 saattir inaktifse otomatik imha et
+          // ZAMAN AŞIMI VE İMHA KURALLARI:
+          // Kural A: 24 saati (1 gün) aştıysa imha et
+          // Kural B: En az 3 saattir HİÇBİR hareket yoksa imha et
           const isExpired24h = (lastUpdated > 0 && (now - lastUpdated > TWENTY_FOUR_HOURS_MS));
           const isInactive3h = (now - latestUserActivity > THREE_HOURS_MS);
 
-          if (isExpired24h || (activeUserCount === 0 && isInactive3h)) {
-            console.log(`[FilmSync İmha Motoru] Oda ${roomId} süresi dolduğu/inaktif kaldığı için siliniyor.`);
-            tempDb.ref(`rooms/${roomId}`).remove();
-            return; // Bu odayı listede gösterme
+          if (isExpired24h || isInactive3h) {
+            console.log(`[FilmSync İmha Motoru] Oda ${roomId} 3 saattir inaktif veya 24h dolduğu için siliniyor.`);
+            fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' }).catch(e => {});
+            return;
           }
 
           // Geçerli oda: Listeye ekle
           validRoomsCount++;
 
-          // Platform / Film Başlığı Tespiti
           const movieUrl = (roomData.lastState && roomData.lastState.url) ? roomData.lastState.url : '';
           let platformName = '🍿 İzleme Partisi';
           if (movieUrl.includes('netflix.com')) platformName = '🍿 Netflix';
@@ -599,30 +592,24 @@ document.addEventListener('DOMContentLoaded', () => {
           else if (movieUrl.includes('youtube.com')) platformName = '📺 YouTube';
           else if (movieUrl.includes('disneyplus.com')) platformName = '✨ Disney+';
 
-          // Kullanıcı İsimleri Özeti
-          let userNames = 'Katılımcı Yok';
-          if (activeUserCount > 0) {
-            userNames = userEntries.map(([_, u]) => u.username || 'Anonim').join(', ');
-          }
+          // Kullanıcı isimleri özeti
+          const userNames = userEntries.map(([_, u]) => u.username || 'Üye').join(', ');
+          const displayUsersText = activeUserCount > 0 ? `${activeUserCount} Üye (${userNames})` : 'Boş Oda (Katılabilirsiniz)';
 
           const card = document.createElement('div');
           card.className = 'public-room-card';
-
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                ${roomId}
-                <span style="font-size: 0.65rem; color: #888; font-weight: normal;">${platformName}</span>
+                <span>🔑 ${roomId}</span>
               </div>
-              <div class="public-room-users">👥 ${activeUserCount} Kişi: ${userNames}</div>
+              <div class="public-room-platform">${platformName}</div>
+              <div class="public-room-users">${displayUsersText}</div>
             </div>
-            <button class="btn-join-public" data-room="${roomId}">Katıl</button>
+            <button class="btn-join-public" data-code="${roomId}">Katıl</button>
           `;
 
-          // Katıl Butonu Olayı
-          const joinBtn = card.querySelector('.btn-join-public');
-          joinBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+          card.querySelector('.btn-join-public').addEventListener('click', () => {
             joinRoomWithCode(roomId);
           });
 
@@ -630,14 +617,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         publicRoomCountBadge.textContent = `${validRoomsCount} Aktif Oda`;
-
         if (validRoomsCount === 0) {
-          publicRoomList.innerHTML = '<div style="font-size: 0.75rem; color: #888; text-align: center; padding: 10px 0;">Şu anda açık oda bulunmuyor. Hemen yukarıdan parti başlatın! 🍿</div>';
+          publicRoomList.innerHTML = '<div style="font-size: 0.72rem; color: #888; text-align: center; padding: 6px 0;">Şu anda açık oda bulunmuyor. Hemen yukarıdan parti başlatın! 🍿</div>';
         }
+      })
+      .catch(err => {
+        console.error('[FilmSync Public Rooms REST Hatası]', err);
+        publicRoomCountBadge.textContent = '0 Aktif';
+        publicRoomList.innerHTML = '<div style="font-size: 0.72rem; color: #888; text-align: center; padding: 6px 0;">Açık oda verisi alınamadı.</div>';
       });
-
-    } catch (e) {
-      console.error("[FilmSync] Açık odalar yükleme hatası:", e);
-    }
   }
 });

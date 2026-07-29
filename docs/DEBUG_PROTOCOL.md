@@ -1,5 +1,18 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] Medya Event Spam Koruması & Açık Odalar Kalıcı Saklama Çözümü
+
+### 1. Mükerrer "filmi duraklattı" / "filmi başlattı" Event Spam'i
+- **Kök Neden:** HTML5 video oynatıcıları seeking veya pause yaptığında arka arkaya 5-6 event tetikliyor ve `sendMediaEvent` her event için veritabanına mesaj yazıp sohbet panelini mükerrer mesajlarla dolduruyordu.
+- **Kalıcı Çözüm:** `lastSentMediaState` nesnesi ile 2.5 saniyelik throttle ve zaman farkı filtresi koyuldu. Aynı durum kısa sürede tekrarlanırsa sistem mesajı basılması %100 engellendi.
+
+### 2. Odadan Ayrılınca Odanın Yok Olması ve Açık Odalarda Görünmemesi
+- **Kök Neden:** `leaveRoom()` fonksiyonunda `users` sayısı 0'a düştüğünde odayı tamamen silecek şekilde kod yazılmıştı.
+- **Kalıcı Çözüm:** Odayı anında silme kuralı kaldırıldı. Kurulan odalar kullanıcılar ayrılsa bile **Açık Odalar rehberinde 3 saat inaktif kalana veya 24 saat dolana kadar muhafaza edilir**.
+
+### 3. "Odalar Taranıyor..." ve "Üyeler Yükleniyor..." Kilitlenmeleri
+- **Kalıcı Çözüm:** `loadPublicRooms()` REST API HTTP GET ile 0ms gecikmeli getirilecek hale getirildi. Sohbet paneli açıldığında mevcut kullanıcı adı varsayılan olarak top-bar'a atanarak takılmalar giderildi.
+
 ## [29.07.2026] 360° Uçtan Uca Genel Test & Sistem Kararlılık Doğrulaması
 
 ### 1. Test ve Kontrol Sonuçları

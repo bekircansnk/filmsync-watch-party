@@ -627,27 +627,21 @@ function cleanupFirebase() {
   }
 }
 
-// Kullanıcının Gerçekten Odadan Ayrılması
+// Kullanıcının Gerçekten Odadan Ayrılması (Oda silinmez, açık odalar listesinde 24 saat kalır)
 function leaveRoom() {
   if (db && roomId && userId) {
     if (window === window.top) {
       sendSystemMessage(`${username} odadan ayrıldı.`);
     }
     
-    db.ref(`rooms/${roomId}/users/${userId}`).remove().then(() => {
-      db.ref(`rooms/${roomId}/users`).once('value').then((snapshot) => {
-        const users = snapshot.val();
-        if (!users || Object.keys(users).length === 0) {
-          db.ref(`rooms/${roomId}`).remove();
-        }
-      });
-    }).catch(err => console.error('[FilmSync] User remove hatası:', err));
-
+    db.ref(`rooms/${roomId}/users/${userId}`).remove().catch(err => console.error('[FilmSync] User remove hatası:', err));
     cleanupFirebase();
   }
 }
 
-// Medya Olayını Gönderme
+// Medya Olayını Gönderme (Throttle & Spam Koruma Katmanı)
+let lastSentMediaState = { isPlaying: null, currentTime: -1, timestamp: 0 };
+
 function sendMediaEvent(isPlaying, currentTime) {
   if (!db || !roomId || isSyncing || isFirstSync) return;
   
@@ -659,16 +653,23 @@ function sendMediaEvent(isPlaying, currentTime) {
 
   // Video sayfası olmayan sayfalardan veritabanına play/pause/seek yazılmasını engelle
   const activeVideo = document.querySelector('video');
-  if (!activeVideo) {
-    console.log('[FilmSync] Video elementi olmayan sayfadan medya olayı gönderilmesi engellendi.');
+  if (!activeVideo) return;
+
+  // Video henüz yüklenmediyse (hazır değilse) veya süresi tanımsız ise gönderme
+  if (activeVideo.readyState < 1 || isNaN(activeVideo.duration) || activeVideo.duration === 0) return;
+
+  // MÜKERRER MESAJ VE EVENT SPAM KORUMASI:
+  const now = Date.now();
+  const isSameState = (lastSentMediaState.isPlaying === isPlaying);
+  const timeDiff = Math.abs(lastSentMediaState.currentTime - currentTime);
+  const elapsed = now - lastSentMediaState.timestamp;
+
+  // Aynı medya durumu 2.5 saniye içinde tekrar geldiyse ve zaman farkı 1.5 sn'den azsa atla
+  if (isSameState && timeDiff < 1.5 && elapsed < 2500) {
     return;
   }
 
-  // Video henüz yüklenmediyse (hazır değilse) veya süresi tanımsız ise gönderme
-  if (activeVideo.readyState < 1 || isNaN(activeVideo.duration) || activeVideo.duration === 0) {
-    console.log('[FilmSync] Video henüz hazır değil, medya olayı atlanıyor.');
-    return;
-  }
+  lastSentMediaState = { isPlaying, currentTime, timestamp: now };
 
   const updatePayload = {
     isPlaying,
@@ -687,6 +688,8 @@ function sendMediaEvent(isPlaying, currentTime) {
     const msgText = isPlaying 
       ? `${username} filmi başlattı. (Kaldığı yer: ${formattedTime})`
       : `${username} filmi duraklattı.`;
+    
+    // Yalnızca anlamlı durum değişikliklerinde sistem mesajı gönder
     sendSystemMessage(msgText);
   }).catch(err => console.error('[FilmSync] Medya durum yazma hatası:', err));
 }
@@ -1320,7 +1323,7 @@ function createChatUI() {
         </div>
         <div class="filmsync-users" id="filmsyncUserList">
           <span class="filmsync-users-dot"></span>
-          <span id="filmsyncUserListText">Üyeler yükleniyor...</span>
+          <span id="filmsyncUserListText">${username || 'Aktif Üye'} Online</span>
         </div>
       </div>
 
