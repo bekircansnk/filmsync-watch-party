@@ -382,6 +382,7 @@ function initializeFirebase(config) {
               isPlaying: false,
               currentTime: 0,
               url: initialUrl,
+              senderId: userId,
               lastUpdated: firebase.database.ServerValue.TIMESTAMP
             }
           });
@@ -676,16 +677,7 @@ function leaveRoom() {
     cleanupFirebase();
     
     // UI'ı ekrandan tamamen kaldır (Phantom mesaj kutusu sorununu çözer)
-    const root = document.getElementById('filmsync-root');
-    if (root) {
-      root.remove();
-    }
-    
-    // Değişkenleri sıfırla
-    chatPanel = null;
-    chatBtn = null;
-    chatCount = null;
-    roomId = null;
+    removeChatUI();
   }
 }
 
@@ -751,7 +743,8 @@ function sendMediaEvent(isPlaying, currentTime, isSeek = false) {
 
 // Videolu Sayfalarda UI Motoru
 function startVideoTracking() {
-  setInterval(() => {
+  if (window.filmsyncVideoTrackingInterval) clearInterval(window.filmsyncVideoTrackingInterval);
+  window.filmsyncVideoTrackingInterval = setInterval(() => {
     const activeVideo = document.querySelector('video');
     if (activeVideo && activeVideo !== videoElement) {
       removeVideoListeners();
@@ -777,7 +770,8 @@ function startVideoTracking() {
 
 // Akıllı Eşitleme ve Sağlık Denetleyicisi (Heartbeat & Auto-Sync)
 function startDriftCorrection() {
-  setInterval(() => {
+  if (window.filmsyncDriftInterval) clearInterval(window.filmsyncDriftInterval);
+  window.filmsyncDriftInterval = setInterval(() => {
     if (!db || !roomId || !videoElement || isSyncing) return;
     if (videoElement.readyState < 3) return; // Oynatıcı hazır değilse bekle
 
@@ -1552,8 +1546,24 @@ function spawnFlyingEmoji(emoji) {
   setTimeout(() => el.remove(), 4000);
 }
 
+function stopAllTimers() {
+  if (window.filmsyncUiKeeperInterval) {
+    clearInterval(window.filmsyncUiKeeperInterval);
+    window.filmsyncUiKeeperInterval = null;
+  }
+  if (window.filmsyncVideoTrackingInterval) {
+    clearInterval(window.filmsyncVideoTrackingInterval);
+    window.filmsyncVideoTrackingInterval = null;
+  }
+  if (window.filmsyncDriftInterval) {
+    clearInterval(window.filmsyncDriftInterval);
+    window.filmsyncDriftInterval = null;
+  }
+}
+
 function startUIKeeper() {
-  setInterval(() => {
+  if (window.filmsyncUiKeeperInterval) clearInterval(window.filmsyncUiKeeperInterval);
+  window.filmsyncUiKeeperInterval = setInterval(() => {
     if (roomId && !document.getElementById('filmsync-root') && window === window.top) {
       console.log('[FilmSync UI Keeper] Arayüz yenileniyor.');
       createChatUI();
@@ -1562,6 +1572,11 @@ function startUIKeeper() {
 }
 
 function removeChatUI() {
+  stopAllTimers();
+  roomId = null;
+  chatPanel = null;
+  chatBtn = null;
+  chatCount = null;
   const root = document.getElementById('filmsync-root');
   if (root) root.remove();
   document.body.classList.remove('filmsync-sidebar-open');
