@@ -250,6 +250,7 @@ function showMovieRedirectBanner(url) {
   });
 
   document.getElementById('fs-btn-banner-close').addEventListener('click', () => {
+    window.filmsyncDismissedUrl = url;
     banner.remove();
   });
 }
@@ -773,11 +774,8 @@ function createChatUI() {
   const miniToolbar = document.createElement('div');
   miniToolbar.id = 'filmsync-mini-toolbar';
   miniToolbar.innerHTML = `
-    <button class="filmsync-tool-btn tp-logo" id="fs-tool-logo" data-tooltip="FilmSync Watch Party">
+    <button class="filmsync-tool-btn tp-logo" id="fs-tool-toggle-chat" data-tooltip="Sohbeti Aç/Kapat">
       <svg viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H9l2 4H8L6 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
-    </button>
-    <button class="filmsync-tool-btn" id="fs-tool-toggle-chat" data-tooltip="Sohbeti Göster">
-      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
     </button>
   `;
   root.appendChild(miniToolbar);
@@ -825,7 +823,6 @@ function createChatUI() {
   messageList = document.getElementById('filmsync-messages');
   reactionContainer = overlay;
 
-  document.getElementById('fs-tool-logo').addEventListener('click', () => toggleChatPanel());
   document.getElementById('fs-tool-toggle-chat').addEventListener('click', () => toggleChatPanel());
   document.getElementById('fs-btn-close').addEventListener('click', () => toggleChatPanel());
 
@@ -983,8 +980,16 @@ function setupFirebaseListeners() {
     const state = snapshot.val();
     if (!state) return;
 
-    if (state.url && state.url !== window.location.href && !isEmbedUrl(state.url)) {
-      showMovieRedirectBanner(state.url);
+    if (window === window.top) {
+      if (state.senderId !== userId && state.url && state.url !== window.location.href) {
+        const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
+        const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+        if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
+          if (window.filmsyncDismissedUrl !== state.url) {
+            showMovieRedirectBanner(state.url);
+          }
+        }
+      }
     }
 
     if (state.senderId === userId) return;
