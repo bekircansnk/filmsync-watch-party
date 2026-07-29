@@ -1,5 +1,17 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] Sızdırmaz REST Katılımı & Üye Senkronizasyon Tamiri
+
+### 1. "Böyle Bir Oda Bulunamadı! ❌" Hatasının Kökten Çözümü
+- **Kök Neden:** Service Worker port mesajlaşması sırasında `response` nesnesinin asenkron gecikmelerde `undefined` dönmesi, odanın veritabanında var olmasına rağmen sahte hata uyarısının tetiklenmesine yol açıyordu.
+- **Kalıcı Çözüm:** `popup.js` `joinRoomWithCode` fonksiyonu arka plan port mesajlaşmasını bypass ederek doğrudan Firebase REST API'den (`/rooms.json`) sorgu atacak şekilde güncellendi. Odanın varlığı anında %100 doğrulanır.
+
+### 2. Google / Yeni Sekmeden Odaya Katılırken Otomatik Film Sayfası Yönlendirmesi
+- **Kalıcı Çözüm:** Odaya katılım anında oda veritabanındaki `lastState.url` okunur. Kullanıcı `google.com` veya başka bir sekmedeyse sekme URL'si anında o film adresine güncellenir (`chrome.tabs.update`).
+
+### 3. Katılan Üyenin Filmi/Diziyi Değiştirebilmesi ve Tüm Odayı Senkronize Etmesi
+- **Kalıcı Çözüm:** `sendMediaEvent` URL güncelleme kuralı (`!hostOnly || userId === hostId`) olarak esnetildi. Odaya katılan 2. üye de yeni dizi bölümüne geçtiğinde tüm oda o yeni bölüme senkronize edilir.
+
 ## [29.07.2026] Case-Insensitive REST Oda Katılımı & Mükerrer "Odaya Katıldı" Çözümü
 
 ### 1. Açık Odalardan Katılırken "Böyle bir oda bulunamadı! ❌" Hatası

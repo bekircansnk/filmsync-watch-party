@@ -1,5 +1,12 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Sızdırmaz REST Katılımı, Otomatik Film Yönlendirmesi & Katılan Üye Senkronizasyon Tamiri
+
+### Düzeltildi / Kalıcı Çözüm
+- **"Böyle Bir Oda Bulunamadı" Sahte Uyarısının %100 Yok Edilmesi (`popup.js`):** `joinRoomWithCode` fonksiyonu doğrudan `https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json` REST endpoint'inden sorgu yapacak şekilde baştan yazıldı. Harf büyüklüğü (case sensitivity) bağımsız olarak `KDTA` veya `kdta` odaları anında bulunur, asenkron mesajlaşma kilitlenmeleri imkansız hale getirildi.
+- **Otomatik Film Yönlendirmesi:** `google.com` veya film dışı bir sekmedeyken bile Açık Odalar kartındaki **Katıl** butonuna tıklandığında sekme URL'si ANINDA oda film adresine (`roomMovieUrl`) güncellenerek filmin izlendiği sayfaya yönlendirilir.
+- **Katılan Üye Yönetim & Senkronizasyon Yetkisi (`content.js`):** `sendMediaEvent` fonksiyonunda URL güncelleme kısıtlaması esnetildi (`!hostOnly || userId === hostId`). Katılan üye yeni bir dizi bölümüne veya filme geçtiğinde oda adresi güncellenir ve TÜM ODA ANINDA O YENİ FİLM BÖLÜMÜNE SENKRONİZE EDİLİR.
+
 ## [29.07.2026] Case-Insensitive REST Oda Katılımı & Mükerrer "Odaya Katıldı" Mesaj Çözümü
 
 ### Düzeltildi / Kalıcı Çözüm

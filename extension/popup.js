@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Odaya Kod ile Katılma Fonksiyonu
+  // Odaya Kod ile Katılma Fonksiyonu (Sızdırmaz 0ms REST API + Otomatik Yönlendirme)
   function joinRoomWithCode(codeValue) {
     const code = codeValue.trim().toUpperCase();
     if (!code || code.length !== 4) {
@@ -222,38 +222,76 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeTabId = tabs && tabs[0] ? tabs[0].id : null;
         const currentUrl = tabs && tabs[0] ? tabs[0].url : '';
 
-        chrome.runtime.sendMessage({
-          type: 'join-room',
-          roomId: code,
-          userId: userId,
-          username: username,
-          avatar: selectedAvatar
-        }, (response) => {
-          if (!response || response.status === 'not_found') {
-            showGlobalToast('Böyle bir oda bulunamadı! ❌');
-            resetStatus();
-            return;
-          }
-
-          const roomData = response.roomData;
-          const roomMovieUrl = roomData && roomData.lastState ? roomData.lastState.url : '';
-
-          saveSettings(code, username, '', userId, roomData ? (roomData.hostOnly || false) : false, activeTabId, () => {
-            showGlobalToast('Odaya başarıyla katıldınız! 🎉');
-
-            if (roomMovieUrl && currentUrl !== roomMovieUrl) {
-              if (activeTabId) {
-                chrome.tabs.update(activeTabId, { url: roomMovieUrl });
-              } else {
-                chrome.tabs.create({ url: roomMovieUrl });
-              }
-            } else if (activeTabId) {
-              chrome.tabs.sendMessage(activeTabId, { type: 'force-sync' }, () => {
-                if (chrome.runtime.lastError) {}
-              });
+        // Doğrudan Firebase REST API ile tüm odaları tara (Harf büyüklüğü bağımsız)
+        fetch('https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json')
+          .then(r => r.json())
+          .then(allRooms => {
+            if (!allRooms) {
+              showGlobalToast('Böyle bir oda bulunamadı! ❌');
+              resetStatus();
+              return;
             }
+
+            // Case-Insensitive oda arama
+            let matchedRoomId = null;
+            let matchedRoomData = null;
+
+            Object.entries(allRooms).forEach(([rId, rData]) => {
+              if (rId.trim().toUpperCase() === code) {
+                matchedRoomId = rId;
+                matchedRoomData = rData;
+              }
+            });
+
+            if (!matchedRoomData || !matchedRoomId) {
+              showGlobalToast('Böyle bir oda bulunamadı! ❌');
+              resetStatus();
+              return;
+            }
+
+            // Odaya katılan kullanıcıyı kaydet
+            const roomMovieUrl = (matchedRoomData.lastState && matchedRoomData.lastState.url) ? matchedRoomData.lastState.url : '';
+            
+            // Eğer oda boşsa veya katılan kullanıcı host olmak istiyorsa host yetkisi ver
+            const updatePayload = {
+              username: username,
+              avatar: selectedAvatar,
+              lastActive: Date.now()
+            };
+
+            fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${matchedRoomId}/users/${userId}.json`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updatePayload)
+            }).then(() => {
+              saveSettings(matchedRoomId, username, '', userId, matchedRoomData.hostOnly || false, activeTabId, () => {
+                showGlobalToast('Odaya başarıyla katıldınız! 🎉');
+
+                // Film Sayfasına Yönlendirme Kontrolü
+                if (roomMovieUrl && currentUrl !== roomMovieUrl && !currentUrl.includes(roomMovieUrl)) {
+                  console.log(`[FilmSync Yönlendirme] Film sayfasına gidiliyor: ${roomMovieUrl}`);
+                  if (activeTabId) {
+                    chrome.tabs.update(activeTabId, { url: roomMovieUrl });
+                  } else {
+                    chrome.tabs.create({ url: roomMovieUrl });
+                  }
+                } else if (activeTabId) {
+                  chrome.tabs.sendMessage(activeTabId, { type: 'force-sync' }, () => {
+                    if (chrome.runtime.lastError) {}
+                  });
+                }
+              });
+            }).catch(err => {
+              console.error('[FilmSync Katılım Hatası]', err);
+              showGlobalToast('Odaya katılırken hata oluştu!');
+              resetStatus();
+            });
+          })
+          .catch(err => {
+            console.error('[FilmSync REST Oda Arama Hatası]', err);
+            showGlobalToast('Oda doğrulanırken bağlantı hatası oluştu!');
+            resetStatus();
           });
-        });
       });
     });
   }

@@ -686,8 +686,8 @@ function sendMediaEvent(isPlaying, currentTime) {
     lastUpdated: firebase.database.ServerValue.TIMESTAMP
   };
 
-  // URL güncelleme yetkisi sadece oda sahibine (host), ana pencereye (window.top) ve embed olmayan adreslere aittir.
-  if (userId === hostId && window === window.top && !isEmbedUrl(window.location.href)) {
+  // URL güncelleme yetkisi (hostOnly kapalıysa odaya katılan herkes yeni bölüm/film açabilir ve odayı senkronize edebilir)
+  if ((!hostOnly || userId === hostId) && window === window.top && !isEmbedUrl(window.location.href)) {
     updatePayload.url = window.location.href;
   }
 
