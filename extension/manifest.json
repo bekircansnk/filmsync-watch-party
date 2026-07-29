@@ -29,10 +29,6 @@
       "js": [
         "libs/firebase-app.js",
         "libs/firebase-database.js",
-        "modules/utils.js",
-        "modules/playerAdapter.js",
-        "modules/chatUI.js",
-        "modules/syncEngine.js",
         "content.js"
       ],
       "run_at": "document_end",
