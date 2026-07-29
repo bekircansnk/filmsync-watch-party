@@ -7,6 +7,7 @@ let selectedAvatar = '🍿';
 let hostId = null;
 let hostOnly = false;
 let db = null;
+let serverTimeOffset = 0;
 
 let videoElement = null;
 let isSyncing = false;
@@ -428,6 +429,10 @@ function setupFirebaseListeners() {
   });
 
   // 1. Medya Durumunu ve Canlı Film/Bölüm Yönlendirmesini Dinle
+  db.ref('.info/serverTimeOffset').on('value', (snap) => {
+    serverTimeOffset = snap.val() || 0;
+  });
+
   db.ref(`rooms/${roomId}/lastState`).on('value', (snapshot) => {
     const state = snapshot.val();
     if (!state) return;
@@ -553,28 +558,42 @@ function applyRemoteState(state) {
 
     isSyncing = true;
     try {
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
+      const currentServerTime = Date.now() + serverTimeOffset;
+      const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
       const targetTime = state.currentTime + timeDiff;
 
-      // Programatik eylem öncesi yerel dinleyicileri kaldır
-      removeVideoListeners();
+      let neededChange = false;
 
       if (state.isPlaying && videoElement.paused) {
         PlayerAdapter.seek(targetTime);
         PlayerAdapter.play();
+        neededChange = true;
       } else if (!state.isPlaying && !videoElement.paused) {
         PlayerAdapter.seek(state.currentTime);
         PlayerAdapter.pause();
+        neededChange = true;
       } else if (Math.abs(videoElement.currentTime - targetTime) > 1.5) {
         PlayerAdapter.seek(targetTime);
+        neededChange = true;
+      }
+      
+      // Eğer müdahale gerekmediyse kilitleri hemen aç, 1000ms boşuna bekleme!
+      if (!neededChange) {
+        isSyncing = false;
+        isFirstSync = false;
+        if (pendingState) {
+          const nextState = pendingState;
+          pendingState = null;
+          applyRemoteState(nextState);
+        }
+        return;
       }
     } catch (e) {
       console.error('[FilmSync] Medya eşileme hatası:', e);
     }
     
-    // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
+    // Gecikmeli olarak kilitleri kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
     setTimeout(() => {
-      setupVideoListeners();
       isSyncing = false;
       isFirstSync = false; // İlk senkronizasyon kilidini kaldır
       
@@ -609,10 +628,10 @@ function forceSync() {
 
       isSyncing = true;
       try {
-        const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
+        const currentServerTime = Date.now() + serverTimeOffset;
+        const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
         const targetTime = state.currentTime + timeDiff;
 
-        removeVideoListeners(); // Dinleyicileri kaldır
         PlayerAdapter.seek(targetTime);
         if (state.isPlaying) {
           PlayerAdapter.play();
@@ -623,7 +642,6 @@ function forceSync() {
         console.error(e);
       }
       setTimeout(() => { 
-        setupVideoListeners(); // Dinleyicileri geri tak
         isSyncing = false; 
         isFirstSync = false; // İlk senkronizasyon kilidini kaldır
         console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
@@ -763,7 +781,8 @@ function startDriftCorrection() {
       // 2. EĞER BEN LİDER DEĞİLSEM (Son Durumu Başkası Göndermişse): Sapma varsa otomatik düzelt
       if (isSyncing) return;
 
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
+      const currentServerTime = Date.now() + serverTimeOffset;
+      const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
       const expectedTime = state.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
@@ -773,7 +792,6 @@ function startDriftCorrection() {
         console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
         isSyncing = true;
         
-        removeVideoListeners(); // Dinleyicileri kaldır
         PlayerAdapter.seek(expectedTime);
         if (state.isPlaying && videoElement.paused) {
           PlayerAdapter.play();
@@ -782,7 +800,6 @@ function startDriftCorrection() {
         }
         
         setTimeout(() => {
-          setupVideoListeners(); // Dinleyicileri geri tak
           isSyncing = false;
         }, 1500);
       }
