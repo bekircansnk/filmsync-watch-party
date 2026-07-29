@@ -308,23 +308,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // "Film Sayfasına Git"
+  // "Film Sayfasına Git 🎬"
   btnGoToMovie.addEventListener('click', () => {
-    if (!db && typeof firebase !== 'undefined' && firebase.apps.length) db = firebase.database();
-    if (!db || !currentRoomId) return;
+    if (!currentRoomId) {
+      showGlobalToast('Oda bulunamadı!');
+      return;
+    }
     
-    db.ref(`rooms/${currentRoomId}/lastState/url`).once('value').then((snapshot) => {
-      const url = snapshot.val();
-      if (url && !isEmbedUrl(url)) {
-        chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-          if (tabs[0] && tabs[0].url !== url) {
-            chrome.tabs.update(tabs[0].id, { url }, () => {
-              window.close();
-            });
-          }
-        });
-      }
-    });
+    fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${currentRoomId}/lastState.json`)
+      .then(res => res.json())
+      .then(lastState => {
+        const url = lastState ? lastState.url : '';
+        if (url) {
+          chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+            if (tabs && tabs[0]) {
+              chrome.tabs.update(tabs[0].id, { url }, () => {
+                showGlobalToast('Film sayfasına gidiliyor... 🍿');
+                setTimeout(() => window.close(), 400);
+              });
+            }
+          });
+        } else {
+          showGlobalToast('Oda film adresi henüz ayarlanmamış!');
+        }
+      })
+      .catch(err => {
+        console.error('[FilmSync REST Url Hatası]', err);
+        showGlobalToast('Film adresi alınamadı!');
+      });
   });
 
   // "Senkronizasyonu Yenile"

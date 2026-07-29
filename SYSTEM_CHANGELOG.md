@@ -1,5 +1,12 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Kapatılabilir Canlı Film/Bölüm Yönlendirme Bildirimi & "Film Sayfasına Git 🎬" Buton Yükseltmesi
+
+### Düzeltildi / Kalıcı Çözüm
+- **"Film Sayfasına Git 🎬" Butonunun Daima Görünür Yapılması (`popup.html` & `popup.js`):** Oda aktif olduğunda Pop-up üzerinde parlak kırmızı gradient stilinde "Film Sayfasına Git 🎬" butonu daima görünür kılındı. REST API ile oda film adresi alınıp sekme tek tıkla o filme yönlendirilir.
+- **Sağ Üst Kapatılabilir Canlı Bildirim Kartı (`showMovieRedirectBanner`):** Oda yeni bir dizi bölümü veya film başlattığında kullanıcı henüz o sayfada değilse sağ üst köşede kapatılabilir (x butonlu) ve şık "Yeni Bölüm / Film Başlatıldı! 🍿" kartı belirir. "İzle 🍿" tıklandığında anında o bölüme yönlendirilir.
+- **Açık Odalar Alanının Ferahlatılması:** `publicRoomList` max-height değeri `135px`'e yükseltildi, kart boşlukları ve kaydırma çubuğu ferahlatıldı.
+
 ## [29.07.2026] Sızdırmaz REST Katılımı, Otomatik Film Yönlendirmesi & Katılan Üye Senkronizasyon Tamiri
 
 ### Düzeltildi / Kalıcı Çözüm

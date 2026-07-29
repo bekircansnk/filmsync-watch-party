@@ -1,5 +1,17 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] Canlı Bildirim Bannerı & "Film Sayfasına Git 🎬" Buton Çözümü
+
+### 1. Odaya Katılınca Film Sayfasına Git Butonunun Görünmemesi
+- **Kök Neden:** `btnGoToMovie` butonu HTML üzerinde `hidden` sınıfı nedeniyle gizli kalıyordu ve Firebase SDK kilitlendiğinde film adresi okunamıyordu.
+- **Kalıcı Çözüm:** `popup.html` içerisindeki `btnGoToMovie` butonunun `hidden` sınıfı kaldırıldı, kırmızı gradient vurgulu stil eklendi. Tıklandığında REST API ile oda film adresi okunur ve sekme 0ms'de yönlendirilir.
+
+### 2. Yeni Bölüm / Film Açıldığında Sağ Üst Kapatılabilir Canlı Bildirim
+- **Kalıcı Çözüm:** `showMovieRedirectBanner(targetUrl)` fonksiyonu yazıldı. Oda yeni bir dizi bölümü veya film başlattığında kullanıcı sekmedeyse sağ üst köşede kapatılabilir (x) şık "Yeni Bölüm / Film Başlatıldı! 🍿" bildirimi çıkar. Tıklandığında o bölüme yönlendirir.
+
+### 3. Açık Odalar Listesi Dikey Sıkışması
+- **Kalıcı Çözüm:** `publicRoomList` dikey `max-height` değeri `135px`'e çıkartılarak odaların ferah ve rahat görünmesi sağlandı.
+
 ## [29.07.2026] Sızdırmaz REST Katılımı & Üye Senkronizasyon Tamiri
 
 ### 1. "Böyle Bir Oda Bulunamadı! ❌" Hatasının Kökten Çözümü

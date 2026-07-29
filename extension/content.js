@@ -430,10 +430,16 @@ function setupFirebaseListeners() {
     hostOnly = snap.val();
   });
 
-  // 1. Medya Durumunu Dinle
+  // 1. Medya Durumunu ve Canlı Film/Bölüm Yönlendirmesini Dinle
   db.ref(`rooms/${roomId}/lastState`).on('value', (snapshot) => {
     const state = snapshot.val();
     if (!state) return;
+
+    // Canlı Film/Bölüm Değişimi Bildirimi (Oda yeni film veya bölüm açtığında sağ üstte kapatılabilir kart göster)
+    if (state.url && state.url !== window.location.href && !isEmbedUrl(state.url)) {
+      showMovieRedirectBanner(state.url);
+    }
+
     if (state.senderId === userId) return;
 
     if (isSyncing) {
@@ -1661,6 +1667,77 @@ function appendMessage({ username: msgUser, message, isSystem, timestamp }) {
     row.appendChild(msgSender);
     row.appendChild(msgBubble);
   }
+
+// Canlı Film / Yeni Bölüm Yönlendirme Bildirimi (Kapatılabilir Sağ Üst Toast)
+let lastNotifiedMovieUrl = null;
+
+function showMovieRedirectBanner(targetUrl) {
+  if (!targetUrl || isEmbedUrl(targetUrl) || targetUrl === window.location.href) return;
+  if (lastNotifiedMovieUrl === targetUrl) return;
+
+  lastNotifiedMovieUrl = targetUrl;
+
+  const existing = document.getElementById('filmsyncRedirectBanner');
+  if (existing) existing.remove();
+
+  const banner = document.createElement('div');
+  banner.id = 'filmsyncRedirectBanner';
+  banner.setAttribute('style', `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2147483647;
+    background: linear-gradient(135deg, #1f1f1f, #141414);
+    border: 1px solid rgba(229, 9, 20, 0.7);
+    border-radius: 12px;
+    padding: 10px 14px;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 13px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(229, 9, 20, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  `);
+
+  banner.innerHTML = `
+    <div style="font-size: 22px;">🎬</div>
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <div style="font-weight: 700; color: #ff3d47; font-size: 12px;">Yeni Bölüm / Film Başlatıldı!</div>
+      <div style="font-size: 11px; color: #aaa;">Oda yeni bir içeriğe geçti. İzlemek için tıklayın.</div>
+    </div>
+    <button id="btnBannerGo" style="
+      background: linear-gradient(135deg, #e50914, #ff3d47);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-weight: 700;
+      font-size: 11px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(229,9,20,0.4);
+    ">İzle 🍿</button>
+    <button id="btnBannerClose" style="
+      background: transparent;
+      color: #888;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 4px;
+    ">×</button>
+  `;
+
+  document.body.appendChild(banner);
+
+  document.getElementById('btnBannerGo').addEventListener('click', () => {
+    window.location.href = targetUrl;
+  });
+
+  document.getElementById('btnBannerClose').addEventListener('click', () => {
+    banner.remove();
+  });
+}
 
   messageList.appendChild(row);
   messageList.scrollTop = messageList.scrollHeight;
