@@ -1,5 +1,11 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] Anında Film URL Kaydı & Akıllı Fallback Film Yönlendirme Çözümü
+
+### 1. "Oda film adresi henüz ayarlanmamış!" Uyarısı Hatası
+- **Kök Neden:** `content.js` içerisinde oda kurulurken `hasVideo` DOM şartı aranıyordu. Eğer video iframe'i henüz DOM'a girmedüyse `initialUrl` boş yazılıyor ve yeni sekmeden film sayfasına yönlendirme yapılamıyordu.
+- **Kalıcı Çözüm:** `hasVideo` kısıtlaması kaldırıldı. `checkIsMoviePage()` doğrulamasıyla film/dizi izleme sayfasında oda kurulduğu an `window.location.href` veritabanına `lastState.url` olarak **ANINDA** yazılır. Ayrıca `popup.js` `btnGoToMovie` handler'ına oda üyeleri üstünden akıllı URL fallback taraması eklendi.
+
 ## [29.07.2026] "Film Sayfasına Git 🎬" Butonunun Daima Görünür Yapılması & Sızdırmaz Yönlendirme
 
 ### 1. "Film Sayfasına Git 🎬" Butonunun Kaybolması Hatası

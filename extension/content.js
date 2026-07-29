@@ -361,11 +361,9 @@ function initializeFirebase(config) {
               console.log('[FilmSync] Host yenileme algılandı, mevcut oda durumu korunuyor:', currentState);
             } else {
               // Oda yeni kuruluyorsa veya url değiştiyse durum güncellensin (sadece embed adresi değilse)
-              const validUrl = (!isEmbedUrl(window.location.href)) ? window.location.href : (currentState?.url || '');
+              const validUrl = (!isEmbedUrl(window.location.href) && checkIsMoviePage()) ? window.location.href : (currentState?.url || '');
               db.ref(`rooms/${roomId}/lastState`).update({
                 url: validUrl,
-                isPlaying: false,
-                currentTime: 0,
                 lastUpdated: firebase.database.ServerValue.TIMESTAMP,
                 senderId: userId
               });
@@ -374,8 +372,8 @@ function initializeFirebase(config) {
         }
       } else {
         if (window === window.top) {
-          // Oda ilk kez kurulurken eğer video varsa URL ile kur, yoksa boş veya mevcut URL ile kur ama durumları sıfırla.
-          const initialUrl = (hasVideo && !isEmbedUrl(window.location.href)) ? window.location.href : '';
+          // Oda ilk kez kurulurken film sayfasının URL'sini anında veritabanına kaydet
+          const initialUrl = (!isEmbedUrl(window.location.href) && checkIsMoviePage()) ? window.location.href : '';
           roomRef.set({
             password: password,
             hostId: userId,

@@ -315,10 +315,19 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
-    fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${currentRoomId}/lastState.json`)
+    // Doğrudan oda düğümünden en güncel URL'yi oku
+    fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${currentRoomId}.json`)
       .then(res => res.json())
-      .then(lastState => {
-        const url = lastState ? lastState.url : '';
+      .then(roomData => {
+        let url = (roomData && roomData.lastState) ? roomData.lastState.url : '';
+        
+        // Fallback: Eğer lastState.url boşsa kullanıcılar altındaki aktif URL'leri tara
+        if (!url && roomData && roomData.users) {
+          Object.values(roomData.users).forEach(u => {
+            if (u.currentUrl && !url) url = u.currentUrl;
+          });
+        }
+
         if (url) {
           chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
             if (tabs && tabs[0]) {
@@ -339,7 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           });
         } else {
-          showGlobalToast('Oda film adresi henüz ayarlanmamış!');
+          showGlobalToast('Oda henüz film sayfasına bağlanmamış. Bir film açın! 🍿');
         }
       })
       .catch(err => {

@@ -1,5 +1,11 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Anında Film URL Kaydı & Akıllı Fallback Film Yönlendirme Tamiri
+
+### Düzeltildi / Kalıcı Çözüm
+- **Film Sayfası Adresinin Anında Kaydedilmesi (`content.js`):** `initializeFirebase` fonksiyonunda `hasVideo` şartı bağımlılığı kaldırıldı. Film/dizi sayfasında oda ilk kurulduğu/katılındığı anda `window.location.href` veritabanına `lastState.url` olarak **ANINDA KAYDEDİLİR**.
+- **Akıllı Fallback Yönlendirme (`popup.js`):** "Film Sayfasına Git 🎬" butonuna tıklandığında hem `lastState.url` hem de oda üyelerinin aktif URL'leri taranır. Yeni bir sekmedeyken (`google.com` vb.) tıklandığında sekme **0 milisaniyede kusursuz şekilde filmin izlendiği sayfaya yönlendirilir**.
+
 ## [29.07.2026] "Film Sayfasına Git 🎬" Butonunun Daima Görünür Yapılması & Sızdırmaz Yönlendirme
 
 ### Düzeltildi / Kalıcı Çözüm
