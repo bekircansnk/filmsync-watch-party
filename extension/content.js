@@ -437,6 +437,16 @@ function setupFirebaseListeners() {
     const state = snapshot.val();
     if (!state) return;
 
+    // YENİ EKLENEN RACE CONDITION KORUMASI:
+    // Eğer yerel olarak son 2 saniye içinde bilinçli bir komut gönderdiysek ve
+    // gelen paketin sunucu saati, bizim gönderdiğimiz zamandan eskiyse (veya çok yakınsa), bunu eski paket say ve yut.
+    if (state.senderId !== userId) {
+      if (Date.now() - lastSentMediaState.timestamp < 2000 && state.lastUpdated < lastSentServerTime + 1000) {
+        console.log('[FilmSync] Race condition engellendi: Gelen eski state yutuldu.');
+        return;
+      }
+    }
+
     // Canlı Film/Bölüm Değişimi Bildirimi (Oda yeni film veya bölüm açtığında sağ üstte kapatılabilir kart göster)
     if (state.url && state.url !== window.location.href && !isEmbedUrl(state.url)) {
       showMovieRedirectBanner(state.url);
@@ -679,8 +689,9 @@ function leaveRoom() {
 
 // Medya Olayını Gönderme (Throttle & Spam Koruma Katmanı)
 let lastSentMediaState = { isPlaying: null, currentTime: -1, timestamp: 0 };
+let lastSentServerTime = 0;
 
-function sendMediaEvent(isPlaying, currentTime) {
+function sendMediaEvent(isPlaying, currentTime, isSeek = false) {
   if (!db || !roomId || isSyncing || isFirstSync) return;
   
   // Herhangi bir yetki kısıtlaması yok: Tüm kullanıcılar tam yetkiye sahiptir.
@@ -699,11 +710,13 @@ function sendMediaEvent(isPlaying, currentTime) {
   const elapsed = now - lastSentMediaState.timestamp;
 
   // Aynı medya durumu 2.5 saniye içinde tekrar geldiyse ve zaman farkı 1.5 sn'den azsa atla
-  if (isSameState && timeDiff < 1.5 && elapsed < 2500) {
+  // Ancak isSeek (sarma) olayı ise mutlaka gönder
+  if (!isSeek && isSameState && timeDiff < 1.5 && elapsed < 2500) {
     return;
   }
 
   lastSentMediaState = { isPlaying, currentTime, timestamp: now };
+  lastSentServerTime = Date.now() + serverTimeOffset;
 
   const updatePayload = {
     isPlaying,
@@ -719,9 +732,15 @@ function sendMediaEvent(isPlaying, currentTime) {
 
   db.ref(`rooms/${roomId}/lastState`).update(updatePayload).then(() => {
     const formattedTime = formatTime(currentTime);
-    const msgText = isPlaying 
-      ? `${username} filmi başlattı. (Kaldığı yer: ${formattedTime})`
-      : `${username} filmi duraklattı.`;
+    let msgText = '';
+    
+    if (isSeek) {
+      msgText = `${username} filmi ${formattedTime} süresine sardı.`;
+    } else {
+      msgText = isPlaying 
+        ? `${username} filmi başlattı. (Kaldığı yer: ${formattedTime})`
+        : `${username} filmi duraklattı.`;
+    }
     
     // Yalnızca anlamlı durum değişikliklerinde sistem mesajı gönder
     sendSystemMessage(msgText);
@@ -768,11 +787,15 @@ function startDriftCorrection() {
       // İlk başta state.senderId boşsa ve host isem ben devralırım.
       if (state.senderId === userId || (!state.senderId && userId === hostId)) {
         if (!videoElement.paused) {
-          db.ref(`rooms/${roomId}/lastState`).update({
-            isPlaying: true,
-            currentTime: videoElement.currentTime,
-            senderId: userId,
-            lastUpdated: firebase.database.ServerValue.TIMESTAMP
+          // RACE CONDITION KORUMASI: Başkasının tam o anda gönderdiği manuel komutu ezmemek için Transaction kullanıyoruz!
+          db.ref(`rooms/${roomId}/lastState`).transaction((currentState) => {
+            if (currentState && (currentState.senderId === userId || (!currentState.senderId && userId === hostId))) {
+              currentState.currentTime = videoElement.currentTime;
+              currentState.isPlaying = true;
+              currentState.lastUpdated = firebase.database.ServerValue.TIMESTAMP;
+              return currentState;
+            }
+            return; // Liderlik benden çıktıysa işlemi iptal et, başkasının komutunu ezme!
           });
         }
         return;
@@ -846,7 +869,7 @@ function handleSeekEvent(e) {
   const isProgrammatic = isSyncing || (e && e.isTrusted === false);
   if (isProgrammatic) return;
 
-  sendMediaEvent(!videoElement.paused, videoElement.currentTime);
+  sendMediaEvent(!videoElement.paused, videoElement.currentTime, true);
 }
 
 function handleWaitingEvent() {
