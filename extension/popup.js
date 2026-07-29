@@ -619,16 +619,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = Date.now();
         const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
         const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+        const STALE_USER_MS = 45 * 1000; // 45 saniye inaktif olan hayalet üyeleri düş
         
-        let validRoomsCount = 0;
+        let processedRooms = [];
 
         Object.entries(rooms).forEach(([roomId, roomData]) => {
           if (!roomData || !roomId || roomId.length !== 4) return;
 
           const lastUpdated = (roomData.lastState && roomData.lastState.lastUpdated) ? roomData.lastState.lastUpdated : 0;
+          const createdAt = roomData.createdAt || lastUpdated || 0;
           const users = roomData.users || {};
           const userEntries = Object.entries(users);
-          const activeUserCount = userEntries.length;
+
+          // 👻 HAYALET ÜYE FİLTRESİ: Son 45 saniyedir canlı sinyal (heartbeat) göndermeyen takılı üyeleri düş
+          const validUserEntries = userEntries.filter(([_, u]) => u.lastActive && (now - u.lastActive < STALE_USER_MS));
+          const activeUserCount = validUserEntries.length;
 
           // Son aktiflik zamanı bul
           let latestUserActivity = lastUpdated;
@@ -639,8 +644,6 @@ document.addEventListener('DOMContentLoaded', () => {
           });
 
           // ZAMAN AŞIMI VE İMHA KURALLARI:
-          // Kural A: 24 saati (1 gün) aştıysa imha et
-          // Kural B: En az 3 saattir HİÇBİR hareket yoksa imha et
           const isExpired24h = (lastUpdated > 0 && (now - lastUpdated > TWENTY_FOUR_HOURS_MS));
           const isInactive3h = (now - latestUserActivity > THREE_HOURS_MS);
 
@@ -649,9 +652,6 @@ document.addEventListener('DOMContentLoaded', () => {
             fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' }).catch(e => {});
             return;
           }
-
-          // Geçerli oda: Listeye ekle
-          validRoomsCount++;
 
           const movieUrl = (roomData.lastState && roomData.lastState.url) ? roomData.lastState.url : '';
           let platformName = '🍿 İzleme Partisi';
@@ -662,9 +662,31 @@ document.addEventListener('DOMContentLoaded', () => {
           else if (movieUrl.includes('disneyplus.com')) platformName = '✨ Disney+';
 
           // Kullanıcı isimleri özeti
-          const userNames = userEntries.map(([_, u]) => u.username || 'Üye').join(', ');
+          const userNames = validUserEntries.map(([_, u]) => u.username || 'Üye').join(', ');
           const displayUsersText = activeUserCount > 0 ? `${activeUserCount} Üye (${userNames})` : 'Boş Oda (Katılabilirsiniz)';
 
+          processedRooms.push({
+            roomId,
+            roomData,
+            createdAt,
+            lastUpdated: latestUserActivity,
+            platformName,
+            displayUsersText,
+            activeUserCount
+          });
+        });
+
+        // 📅 EN YENİ AÇILAN ODA EN ÜSTTE SIRALAMASI (Desc Order by createdAt / lastUpdated)
+        processedRooms.sort((a, b) => b.createdAt - a.createdAt || b.lastUpdated - a.lastUpdated);
+
+        publicRoomCountBadge.textContent = `${processedRooms.length} Aktif Oda`;
+
+        if (processedRooms.length === 0) {
+          publicRoomList.innerHTML = '<div style="font-size: 0.72rem; color: #888; text-align: center; padding: 6px 0;">Şu anda açık oda bulunmuyor. Hemen yukarıdan parti başlatın! 🍿</div>';
+          return;
+        }
+
+        processedRooms.forEach(({ roomId, platformName, displayUsersText, activeUserCount }) => {
           const card = document.createElement('div');
           card.className = 'public-room-card';
           card.innerHTML = `
@@ -685,7 +707,6 @@ document.addEventListener('DOMContentLoaded', () => {
             joinRoomWithCode(roomId);
           });
 
-          // Boş Odaları Manuel İmha Etme Düğmesi (Sadece 0 Üye Olan Odalarda Görünür)
           const deleteBtn = card.querySelector('.btn-delete-public');
           if (deleteBtn) {
             deleteBtn.addEventListener('click', (e) => {

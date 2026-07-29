@@ -1,5 +1,11 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] En Yeni Oda En Üstte Sıralaması & Hayalet Üye (Ghost User) Temizliği Çözümü
+
+### 1. Yeni Açılan Odaların Hangisi Olduğunun Anlaşılamaması & Takılı Üye Sayısı Hatası
+- **Kök Neden:** Odalar tarihe göre sıralanmıyor, gelişigüzel listeleniyordu. Ayrıca sekmesi kapanan kullanıcılar veritabanında inaktif üye olarak takılı kalabiliyordu.
+- **Kalıcı Çözüm:** `loadPublicRooms()` fonksiyonu tüm odaları tarihe göre azalan sırada (En Yeni En Üstte - Descending Order) dizer. `content.js` içerisine 15 saniyelik Heartbeat servisi eklendi; 45 saniyedir aktif sinyal vermeyen hayalet üyeler otomatik olarak sayıdan düşürülür.
+
 ## [29.07.2026] Iframe Dahil %100 Canlı Video Oynat/Duraklat/Sarma Senkronizasyon Çözümü
 
 ### 1. Mesaj Paneline "Oynattı/Duraklattı" Yazdığı Halde Videoların Senkron İlerlememesi Hatası

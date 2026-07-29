@@ -504,11 +504,20 @@ function setupFirebaseListeners() {
   db.ref(`rooms/${roomId}/reactions`).limitToLast(5).on('child_added', (snapshot) => {
     const data = snapshot.val();
     if (!data) return;
-    // Anlık olarak son 5 saniyede atılmış reaksiyonları göster (Gecikmeli tetiklemeleri önlemek için)
     if (Date.now() - data.timestamp < 5000) {
       spawnFlyingEmoji(data.emoji);
     }
   });
+
+  // 5. 15 Saniyelik Canlı Kalma (Heartbeat) Servisi - Hayalet Üye Engelleme
+  if (window.filmsyncHeartbeat) clearInterval(window.filmsyncHeartbeat);
+  window.filmsyncHeartbeat = setInterval(() => {
+    if (db && roomId && userId) {
+      db.ref(`rooms/${roomId}/users/${userId}`).update({
+        lastActive: Date.now()
+      }).catch(e => {});
+    }
+  }, 15000);
 }
 
 // Video elementinin hazır olup olmadığını sorgulayan ve bekleyen mekanizma

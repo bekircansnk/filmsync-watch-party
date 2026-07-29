@@ -1,5 +1,11 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] En Yeni Oda En Üstte Sıralaması & Hayalet Üye (Ghost User) Temizliği
+
+### Düzeltildi / Kalıcı Çözüm
+- **En Yeni Açılan Oda En Üstte (`popup.js`):** Açık Odalar rehberindeki tüm odalar oluşturulma/güncellenme tarihine göre **azalan sırada (Newest First)** dizildi. Yeni bir oda açıldığında en üstte görünür.
+- **15s Heartbeat & Hayalet Üye Filtresi (`content.js` & `popup.js`):** Sayfa açıkken kullanıcılar 15 saniyede bir canlı kalma sinyali (`lastActive`) gönderir. Sekmesi takılan veya ayrılan ve 45 saniyedir sinyal vermeyen üyeler hayalet üye sayılarak listeden ve sayıdan **otomatik düşürülür**.
+
 ## [29.07.2026] Iframe Dahil %100 Canlı Video Oynat/Duraklat/Sarma Senkronizasyon Tamiri
 
 ### Düzeltildi / Kalıcı Çözüm
