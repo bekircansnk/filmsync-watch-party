@@ -1,5 +1,12 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] v1.2.0 Sürüm Yükseltmesi & Arka Plan Canlı Sekme Film Adresi Takipçisi
+
+### Düzeltildi / Kalıcı Çözüm
+- **v1.2.0 Sürüm Rozeti (`popup.html` & `manifest.json`):** Eklenti sürümü `1.2.0`'a yükseltildi. Pop-up logosunun yanına kırmızı neon `v1.2.0` rozeti eklendi.
+- **Service Worker Canlı Sekme Takipçisi (`background.js`):** `chrome.tabs.onUpdated` ve `chrome.tabs.onActivated` dinleyicileri eklendi. Kullanıcı bir film/dizi izleme sekmesine tıkladığında veya sekme yüklendiğinde `background.js` o adresi veritabanına **ANINDA YAZAR**.
+- **Açık Sekmeler Çift Fallback Katmanı (`popup.js`):** "Film Sayfasına Git 🎬" butonuna basıldığında veritabanı haricinde açık tüm film sekmeleri taranır ve `chrome://extensions` veya `google.com` gibi yeni sekmelerden tıklandığında sekme **0 milisaniyede ŞAK diye filmin izlendiği sayfaya yönlendirilir**.
+
 ## [29.07.2026] Anında Film URL Kaydı & Akıllı Fallback Film Yönlendirme Tamiri
 
 ### Düzeltildi / Kalıcı Çözüm

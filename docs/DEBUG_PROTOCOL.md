@@ -1,5 +1,14 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] v1.2.0 Sürüm Yükseltmesi & Arka Plan Canlı Sekme Film Adresi Takipçisi
+
+### 1. `chrome://extensions` veya Yeni Sekmeden Tıklandığında "Oda henüz film sayfasına bağlanmamış" Hatası
+- **Kök Neden:** Kullanıcı sekme değiştirdiğinde veya film sekmesinde gezinirken veritabanına `lastState.url` sadece video event'lerinde veya content script yüklenirken yazılıyordu. Video henüz oynatılmadıysa veritabanı adresi boş kalıyordu.
+- **Kalıcı Çözüm:** `background.js` (Service Worker) içerisine `chrome.tabs.onUpdated` ve `chrome.tabs.onActivated` dinleyicileri bağlandı. Kullanıcı bir film sekmesini açtığı veya sekmede olduğu anda arka plan servisi oda adresini veritabanına anında yazar. Ayrıca `popup.js` tarafına açık tüm sekmeleri tarayan çift fallback katmanı eklendi.
+
+### 2. Güncelleme Etkisini Anlamak İçin Sürüm Rozeti
+- **Kalıcı Çözüm:** `manifest.json` ve `popup.html` Sürüm `1.2.0` olarak yükseltildi. Pop-up başlığında parlak neon **`v1.2.0`** rozeti gösterildi.
+
 ## [29.07.2026] Anında Film URL Kaydı & Akıllı Fallback Film Yönlendirme Çözümü
 
 ### 1. "Oda film adresi henüz ayarlanmamış!" Uyarısı Hatası

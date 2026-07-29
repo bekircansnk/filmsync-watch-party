@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Evo ve Beko Film Partisi",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Evo ve Beko ile Netflix, YouTube ve diğer platformlarda arkadaşlarınızla eşzamanlı film izleyin ve sohbet edin.",
   "permissions": [
     "storage",

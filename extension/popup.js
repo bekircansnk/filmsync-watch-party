@@ -321,34 +321,53 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(roomData => {
         let url = (roomData && roomData.lastState) ? roomData.lastState.url : '';
         
-        // Fallback: Eğer lastState.url boşsa kullanıcılar altındaki aktif URL'leri tara
+        // Fallback A: Eğer lastState.url boşsa kullanıcılar altındaki taze URL'leri tara
         if (!url && roomData && roomData.users) {
           Object.values(roomData.users).forEach(u => {
             if (u.currentUrl && !url) url = u.currentUrl;
           });
         }
 
-        if (url) {
+        // Yönlendirmeyi çalıştır
+        const executeRedirect = (targetUrl) => {
           chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
             if (tabs && tabs[0]) {
               const currentTabUrl = tabs[0].url || '';
-              if (currentTabUrl === url || currentTabUrl.includes(url)) {
-                // Zaten bu film sayfasındayız: Senkronizasyonu tazele ve paneli aç
+              if (currentTabUrl === targetUrl || (currentTabUrl.includes(targetUrl) && targetUrl.length > 10)) {
                 chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, () => {
                   if (chrome.runtime.lastError) {}
                 });
                 showGlobalToast('Zaten bu film sayfasındasınız! 🍿');
               } else {
-                // Farklı sayfadayız: Doğrudan oda film URL'sine yönlendir
-                chrome.tabs.update(tabs[0].id, { url: url }, () => {
+                chrome.tabs.update(tabs[0].id, { url: targetUrl }, () => {
                   showGlobalToast('Film sayfasına gidiliyor... 🍿');
                   setTimeout(() => window.close(), 300);
                 });
               }
             }
           });
+        };
+
+        if (url && url.length > 5) {
+          executeRedirect(url);
         } else {
-          showGlobalToast('Oda henüz film sayfasına bağlanmamış. Bir film açın! 🍿');
+          // Fallback B: Açık sekmeler arasında film izleme sekmesi var mı kontrol et ve yönlendir
+          chrome.tabs.query({}, (allTabs) => {
+            let foundTabUrl = null;
+            if (allTabs) {
+              allTabs.forEach(t => {
+                if (t.url && (t.url.includes('hdfilmcehennemi') || t.url.includes('dizipal') || t.url.includes('netflix.com/watch') || t.url.includes('youtube.com/watch'))) {
+                  if (!foundTabUrl) foundTabUrl = t.url;
+                }
+              });
+            }
+
+            if (foundTabUrl) {
+              executeRedirect(foundTabUrl);
+            } else {
+              showGlobalToast('Oda henüz film sayfasına bağlanmamış. Bir film açın! 🍿');
+            }
+          });
         }
       })
       .catch(err => {

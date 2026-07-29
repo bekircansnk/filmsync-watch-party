@@ -166,3 +166,51 @@ function cleanupExpiredRoomsREST() {
     })
     .catch(err => console.error('[FilmSync REST Cleanup Hatası]', err));
 }
+
+// Film/Dizi Adres Doğrulayıcı
+function isMovieWatchUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  const u = url.toLowerCase();
+  if (u.includes('hdfilmcehennemi')) return true;
+  if (u.includes('dizipal')) return true;
+  if (u.includes('netflix.com')) return true;
+  if (u.includes('youtube.com')) return true;
+  if (u.includes('disneyplus.com')) return true;
+  if (u.includes('primevideo.com') || u.includes('amazon.com')) return true;
+  if (u.includes('blutv.com') || u.includes('exxen.com') || u.includes('gain.tv') || u.includes('todtv.com.tr')) return true;
+  return false;
+}
+
+// Sekme Güncellendiğinde veya Değiştiğinde Arka Planda Film Adresini Anında Firebase'e Yaz
+function syncCurrentTabMovieUrl(tabId, url) {
+  if (!isMovieWatchUrl(url)) return;
+
+  chrome.storage.local.get(['roomId'], (res) => {
+    if (res.roomId) {
+      console.log(`[FilmSync Background] Canlı film adresi Firebase'e yazılıyor: ${url}`);
+      fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/lastState.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: url,
+          lastUpdated: Date.now()
+        })
+      }).catch(err => console.error('[FilmSync URL Sync Hatası]', err));
+    }
+  });
+}
+
+// Tab Olay Dinleyicileri
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (tab && tab.url) {
+    syncCurrentTabMovieUrl(tabId, tab.url);
+  }
+});
+
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  chrome.tabs.get(activeInfo.tabId, (tab) => {
+    if (tab && tab.url) {
+      syncCurrentTabMovieUrl(activeInfo.tabId, tab.url);
+    }
+  });
+});
