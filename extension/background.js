@@ -21,6 +21,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId } = message;
     if (roomId && username) {
+      if (!/^[a-zA-Z0-9_-]+$/.test(roomId)) {
+        console.error('[FilmSync Security] Geçersiz oda kimliği formatı tespit edildi.');
+        sendResponse({ status: 'error', message: 'Invalid room ID' });
+        return true;
+      }
+
       // 1. lastState nesnesini duraklatıldı olarak güncelle
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
         method: 'PATCH',
