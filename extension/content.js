@@ -684,6 +684,18 @@ function leaveRoom() {
     
     db.ref(`rooms/${roomId}/users/${userId}`).remove().catch(err => console.error('[FilmSync] User remove hatası:', err));
     cleanupFirebase();
+    
+    // UI'ı ekrandan tamamen kaldır (Phantom mesaj kutusu sorununu çözer)
+    const root = document.getElementById('filmsync-root');
+    if (root) {
+      root.remove();
+    }
+    
+    // Değişkenleri sıfırla
+    chatPanel = null;
+    chatBtn = null;
+    chatCount = null;
+    roomId = null;
   }
 }
 
