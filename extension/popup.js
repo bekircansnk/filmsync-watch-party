@@ -289,10 +289,20 @@ document.addEventListener('DOMContentLoaded', () => {
           
           chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
             const activeTabId = tabs && tabs[0] ? tabs[0].id : null;
+            const currentUrl = tabs && tabs[0] ? tabs[0].url : '';
+            const roomMovieUrl = roomData.lastState ? roomData.lastState.url : '';
+
             saveSettings(code, username, '', userId, roomData.hostOnly || false, activeTabId, () => {
               showGlobalToast('Odaya başarıyla katıldınız! 🎉');
               
-              if (activeTabId) {
+              // Odanın film URL'si mevcutsa ve aktif sekme o adreste değilse doğrudan film sayfasına yönlendir
+              if (roomMovieUrl && currentUrl !== roomMovieUrl) {
+                if (activeTabId) {
+                  chrome.tabs.update(activeTabId, { url: roomMovieUrl });
+                } else {
+                  chrome.tabs.create({ url: roomMovieUrl });
+                }
+              } else if (activeTabId) {
                 chrome.tabs.sendMessage(activeTabId, { type: 'force-sync' }, () => {
                   if (chrome.runtime.lastError) {}
                 });

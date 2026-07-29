@@ -129,13 +129,20 @@ function init() {
 
     chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
       if (result.roomId) {
-        // Aktif Sekme İzolasyonu: Sadece popup üzerinden oda kurulan/katılınan aktif sekmede çalıştır!
-        // result.activeTabId tanımlıysa ve benim sekmemle eşleşmiyorsa diğer sekmelerdeki işlemleri bloke et.
+        // Aktif Sekme İzolasyonu & Otomatik Kurtarma:
+        // Eğer kullanıcı bir film izleme sayfasındaysa ve roomId mevcutsa, sekme değişmiş veya tarayıcı yeniden başlatılmış olsa bile aktif sekme olarak güncellensin.
+        const isMoviePage = !!(document.querySelector('video') || PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube());
+
         if (!result.activeTabId || (myTabId !== null && myTabId !== result.activeTabId)) {
-          console.log(`[FilmSync İzolasyon] Eklenti bu sekmede pasif. Aktif Sekme ID: ${result.activeTabId}, Bu Sekme ID: ${myTabId}`);
-          removeChatUI();
-          cleanupFirebase();
-          return;
+          if (isMoviePage && myTabId !== null) {
+            console.log(`[FilmSync Sekme Kurtarma] Sekme ID (${myTabId}) aktif sekme olarak güncelleniyor ve odaya bağlanılıyor.`);
+            chrome.storage.local.set({ activeTabId: myTabId });
+          } else {
+            console.log(`[FilmSync İzolasyon] Eklenti bu sekmede pasif. Aktif Sekme ID: ${result.activeTabId}, Bu Sekme ID: ${myTabId}`);
+            removeChatUI();
+            cleanupFirebase();
+            return;
+          }
         }
 
         roomId = result.roomId;
@@ -214,10 +221,17 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         const myTabId = tabResponse ? tabResponse.tabId : null;
 
         chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
+          const isMoviePage = !!(document.querySelector('video') || PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube());
+
           if (!result.activeTabId || (myTabId !== null && myTabId !== result.activeTabId)) {
-            console.log(`[FilmSync İzolasyon Storage] Eklenti bu sekmede pasif hale getiriliyor.`);
-            removeChatUI();
-            return;
+            if (isMoviePage && myTabId !== null && result.roomId) {
+              console.log(`[FilmSync Storage Sekme Kurtarma] Sekme ID (${myTabId}) aktif yapılıyor.`);
+              chrome.storage.local.set({ activeTabId: myTabId });
+            } else {
+              console.log(`[FilmSync İzolasyon Storage] Eklenti bu sekmede pasif hale getiriliyor.`);
+              removeChatUI();
+              return;
+            }
           }
 
           roomId = result.roomId;
@@ -850,7 +864,7 @@ function createChatUI() {
       color: #fff;
       padding: 5px 10px;
       border-radius: 6px;
-      font-size: 0.75rem;
+      font-size: 12px !important;
       white-space: nowrap;
       pointer-events: none;
       opacity: 0;
@@ -861,7 +875,11 @@ function createChatUI() {
       transform: translateY(-50%) scale(1);
     }
 
-    /* Dikey Sohbet Paneli (Sidebar) */
+    /* Dikey Sohbet Paneli (Sidebar) & Font İzolasyonu */
+    #filmsync-chat-panel * {
+      box-sizing: border-box !important;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    }
     #filmsync-chat-panel {
       position: fixed !important;
       top: 0 !important;
@@ -881,6 +899,7 @@ function createChatUI() {
       z-index: 2147483646 !important;
       box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6);
       pointer-events: auto !important;
+      font-size: 14px !important;
     }
     #filmsync-chat-panel.active {
       transform: translateX(0) !important;
@@ -903,7 +922,7 @@ function createChatUI() {
       align-items: center;
     }
     .filmsync-header-title {
-      font-size: 1.05rem;
+      font-size: 16px !important;
       font-weight: 800;
       color: #fff;
       display: flex;
@@ -916,7 +935,7 @@ function createChatUI() {
       -webkit-text-fill-color: transparent;
     }
     .filmsync-premium-badge {
-      font-size: 0.65rem;
+      font-size: 10px !important;
       font-weight: 700;
       background: #e1b12c;
       color: #000;
@@ -934,7 +953,7 @@ function createChatUI() {
       border: none;
       color: #aaa;
       cursor: pointer;
-      font-size: 1.4rem;
+      font-size: 22px !important;
       line-height: 1;
       transition: color 0.2s;
     }
@@ -942,7 +961,7 @@ function createChatUI() {
       color: #fff;
     }
     .filmsync-users {
-      font-size: 0.78rem;
+      font-size: 12px !important;
       font-weight: 500;
       color: #aaa;
       display: flex;
@@ -986,7 +1005,7 @@ function createChatUI() {
     .filmsync-msg-row.system { align-self: center; max-width: 90%; }
 
     .filmsync-msg-sender {
-      font-size: 1.05rem !important;
+      font-size: 12px !important;
       color: #888 !important;
       margin-bottom: 4px !important;
       margin-left: 6px !important;
@@ -998,9 +1017,9 @@ function createChatUI() {
     }
 
     .filmsync-msg-bubble {
-      padding: 12px 18px !important;
-      border-radius: 18px !important;
-      font-size: 1.35rem !important;
+      padding: 10px 14px !important;
+      border-radius: 14px !important;
+      font-size: 14px !important;
       line-height: 1.45 !important;
       word-break: break-word !important;
       color: #fff !important;
@@ -1019,7 +1038,7 @@ function createChatUI() {
       background: transparent !important;
       border: none !important;
       color: #e1b12c !important;
-      font-size: 1.05rem !important;
+      font-size: 12px !important;
       text-align: center !important;
       font-style: italic !important;
       box-shadow: none !important;
@@ -1028,7 +1047,7 @@ function createChatUI() {
 
     /* Buffering Göstergesi */
     .filmsync-buffering-indicator {
-      font-size: 0.75rem;
+      font-size: 12px !important;
       color: #aaa;
       padding: 4px 15px;
       background: rgba(229, 9, 20, 0.15);
@@ -1060,7 +1079,7 @@ function createChatUI() {
       border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
     .filmsync-react-btn {
-      font-size: 1.25rem;
+      font-size: 18px !important;
       background: transparent;
       border: none;
       cursor: pointer;
@@ -1088,7 +1107,7 @@ function createChatUI() {
       border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 20px;
       color: #fff;
-      font-size: 0.85rem;
+      font-size: 13px !important;
       outline: none;
       transition: all 0.2s ease;
     }
@@ -1108,7 +1127,7 @@ function createChatUI() {
       justify-content: center;
       cursor: pointer;
       color: #fff;
-      font-size: 1rem;
+      font-size: 14px !important;
       transition: all 0.2s;
     }
     .filmsync-send-btn:hover {
@@ -1136,7 +1155,7 @@ function createChatUI() {
     .flying-emoji {
       position: absolute;
       bottom: -50px;
-      font-size: 2.2rem;
+      font-size: 32px !important;
       animation: flyUp 3.5s cubic-bezier(0.075, 0.82, 0.165, 1) forwards;
       opacity: 0.9;
     }
@@ -1164,14 +1183,14 @@ function createChatUI() {
     }
     .filmsync-toast.active { transform: translateX(0) !important; }
     .filmsync-toast-header {
-      font-size: 0.72rem;
+      font-size: 11px !important;
       font-weight: 700;
       color: #e50914;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .filmsync-toast-body {
-      font-size: 0.85rem;
+      font-size: 13px !important;
       color: #fff;
     }
 
@@ -1188,7 +1207,8 @@ function createChatUI() {
     body.filmsync-sidebar-open disney-web-player,
     body.filmsync-sidebar-open .btm-media-player,
     body.filmsync-sidebar-open .media-client-container {
-      width: calc(100% - 270px) !important;
+      width: 100% !important;
+      max-width: 100% !important;
       left: 0 !important;
     }
 

@@ -1,5 +1,14 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Netflix Arayüzü & Kalıcı Oda Kodu Katılım Tamiri (360-hata-uzmani)
+
+### Düzeltildi / Geliştirildi
+- **Netflix Yazı Boyutları (rem -> px):** Netflix `html`/`body` kök ölçeklendirmesinden dolayı mikro seviyede küçülen sohbet paneli fontları `px` birimlerine dönüştürüldü ve font izolasyonu sağlandı.
+- **Netflix Çifte Ekran / Boşluk Düzeltmesi:** Sohbet paneli açıldığında Netflix videolarında oluşan 270px genişliğindeki bomboş siyah alan (çifte daraltma) giderildi, oynatıcı sohbet paneline tam oturtuldu.
+- **Oda Kodu Katılım ve Yönlendirme:** Popup üzerinden 4 haneli oda kodu girildiğinde kullanıcı otomatik olarak odadaki aktif film URL'sine (`lastState.url`) yönlendirilecek şekilde geliştirildi.
+- **Oda ve Sekme Kurtarma (Tab Recovery):** Tarayıcı kapatılıp açıldığında Chrome sekme ID'lerinin sıfırlanması nedeniyle eklentinin pasife geçmesi engellendi; film sayfasında sekme otomatik aktifleşip odaya yeniden bağlanır hale getirildi.
+- **Kalıcı Odalar (Persistent Rooms):** Odadan çıkılsa dahi oda kodları ve Firebase durumları korunarak, istenildiği zaman 4 haneli kodla aynı odaya tekrar girilebilmesi sağlandı.
+
 ## [12.07.2026] Oda URL Senkronizasyonu ve Anlık Film Katılım Bildirimleri
 
 ### Eklendi / Güncellendi
