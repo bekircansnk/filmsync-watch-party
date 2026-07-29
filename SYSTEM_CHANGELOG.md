@@ -1,5 +1,12 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Oda Koduyla Manuel Katılma (joinCodeSection) & Kompakt UX Tamiri
+
+### Eklendi / Düzeltildi
+- **Oda Koduyla Katılma Alanının Geri Kazandırılması:** Popup arayüzüne 4 haneli oda kodu giriş kutusu (`#joinRoomCodeInput`) ve **"Katıl"** butonu dikey yer kaplamayan şık ve kompakt bir satır olarak geri eklendi.
+- **Kompakt Çoklu İşlev Katmanı:** Film/Dizi sayfasındayken (Netflix, HDFilmCehennemi, Dizipal vb.) artık hem **Partiyi Başlat 🚀**, hem **4 Haneli Oda Koduyla Katıl**, hem de **Açık Odalar** canlı listesi aynı anda erişilebilir ve mükemmel şekilde görünür.
+- **Tüm Domain Uzantıları Uyumu:** `hdfilmcehennemi` (.nl, .com vb. tüm TLD uzantıları) ile tam uyumluluk garanti edildi.
+
 ## [29.07.2026] Kompakt Apple-Style UI & 50+ Zengin Dinamik Emoji Avatar Sistemi
 
 ### Eklendi / Geliştirildi

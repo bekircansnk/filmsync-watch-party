@@ -1,5 +1,14 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] Oda Koduyla Katılma (joinCodeSection) & UX Tamiri
+
+### 1. Manuel 4 Haneli Oda Kodu Giriş Alanı
+- **Kök Neden:** Arayüz sadeleştirilirken 4 haneli oda kodu girme input'u kaldırılmıştı, bu durum arkadaşından kod alan kişilerin manuel odaya katılmasına engel oluyordu.
+- **Çözüm:** `popup.html` içerisine kompakt dikey yer kaplamayan `#joinRoomCodeInput` ve `btnJoinWithCode` ("Katıl") alanı yerleştirildi. Hem film sayfalarından hem servis seçiciden 4 haneli kod ile katılma sağlandı.
+
+### 2. Film Sayfalarında Çoklu İşlev Katmanı
+- **Çözüm:** Film sayfalarında (HDFilmCehennemi, Netflix, Dizipal) artık "Partiyi Başlat 🚀" butonu, "Oda Koduyla Katıl" alanı ve "Açık Odalar" listesinin 3'ü birden aynı anda görünür hale getirildi.
+
 ## [29.07.2026] Kompakt Apple-Style UI & 50+ Zengin Dinamik Emoji Avatar Sistemi
 
 ### 1. Gereksiz Metin Temizliği ve Zero-Scroll Layout Optimization

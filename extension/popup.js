@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const partyCreatorContainer = document.getElementById('partyCreatorContainer');
   const platformSelectorContainer = document.getElementById('platformSelectorContainer');
   const commonUserConfig = document.getElementById('commonUserConfig');
+  const joinCodeSection = document.getElementById('joinCodeSection');
   
   const usernameInput = document.getElementById('usernameInput');
   const userAvatarDisplay = document.getElementById('userAvatarDisplay');
@@ -81,6 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCopyInvite = document.getElementById('btnCopyInvite');
   const btnRetrySync = document.getElementById('btnRetrySync');
   const btnGoToMovie = document.getElementById('btnGoToMovie');
+  
+  const joinRoomCodeInput = document.getElementById('joinRoomCodeInput');
+  const btnJoinWithCode = document.getElementById('btnJoinWithCode');
   
   const userCountTitle = document.getElementById('userCountTitle');
   const activeUsersList = document.getElementById('activeUsersList');
@@ -341,23 +345,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Odaya Katıl Düğmeleri Tetikleyicileri
-  btnJoinWithCode.addEventListener('click', () => {
-    joinRoomWithCode(joinRoomCodeInput.value);
-  });
-  joinRoomCodeInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
+  if (btnJoinWithCode && joinRoomCodeInput) {
+    btnJoinWithCode.addEventListener('click', () => {
       joinRoomWithCode(joinRoomCodeInput.value);
-    }
-  });
-
-  btnJoinWithCodeSelector.addEventListener('click', () => {
-    joinRoomWithCode(joinRoomCodeInputSelector.value);
-  });
-  joinRoomCodeInputSelector.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      joinRoomWithCode(joinRoomCodeInputSelector.value);
-    }
-  });
+    });
+    joinRoomCodeInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        joinRoomWithCode(joinRoomCodeInput.value);
+      }
+    });
+  }
 
   // "Film Sayfasına Git"
   btnGoToMovie.addEventListener('click', () => {
@@ -444,6 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Arayüz ve Canlı Firebase Dinleyicileri
   function updateUI() {
     const publicRoomsSection = document.getElementById('publicRoomsSection');
+    const joinCodeSection = document.getElementById('joinCodeSection');
 
     chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
       const currentTabUrl = (tabs && tabs[0] && tabs[0].url) ? tabs[0].url : '';
@@ -464,6 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
           platformSelectorContainer.classList.add('hidden');
           if (commonUserConfig) commonUserConfig.classList.add('hidden');
           if (publicRoomsSection) publicRoomsSection.classList.add('hidden');
+          if (joinCodeSection) joinCodeSection.classList.add('hidden');
           roomIdDisplay.textContent = result.roomId;
           
           currentRoomId = result.roomId;
@@ -475,6 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
           platformSelectorContainer.classList.add('hidden');
           if (commonUserConfig) commonUserConfig.classList.remove('hidden');
           if (publicRoomsSection) publicRoomsSection.classList.remove('hidden');
+          if (joinCodeSection) joinCodeSection.classList.remove('hidden');
           resetStatus();
           cleanupFirebaseListeners();
           loadPublicRooms();
@@ -485,6 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
           platformSelectorContainer.classList.remove('hidden');
           if (commonUserConfig) commonUserConfig.classList.remove('hidden');
           if (publicRoomsSection) publicRoomsSection.classList.remove('hidden');
+          if (joinCodeSection) joinCodeSection.classList.remove('hidden');
           resetStatus();
           cleanupFirebaseListeners();
           loadPublicRooms();
