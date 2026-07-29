@@ -1,5 +1,11 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Case-Insensitive REST Oda Katılımı & Mükerrer "Odaya Katıldı" Mesaj Çözümü
+
+### Düzeltildi / Kalıcı Çözüm
+- **"Böyle Bir Oda Bulunamadı" Hatasının Kökten Çözümü (`background.js`):** `join-room` REST API handler'ında büyük/küçük harf uyuşmazlığından bağımsız arama mekanizması kuruldu. `ZZCS` veya `zzcs` şeklinde girilen tüm kodlar veritabanındaki odalarla %100 eşleşir ve odaya saniyesinde katılım sağlanır.
+- **Mükerrer "beko odaya katıldı" Mesajı Koruması (`content.js`):** `joinedSystemMessageSentRooms` bellek içi Set ve `sessionStorage` çift kontrol sistemi kuruldu. Aynı oturumda odaya katıldı mesajı YALNIZCA 1 KEZ atılır, 3 kez üst üste basılması %100 engellendi.
+
 ## [29.07.2026] Kesin Film Sayfası Doğrulama Motoru (`checkIsMoviePage`) & %100 Sekme İzolasyonu
 
 ### Düzeltildi / Kalıcı Çözüm

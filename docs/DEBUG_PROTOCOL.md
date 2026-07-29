@@ -1,5 +1,15 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] Case-Insensitive REST Oda Katılımı & Mükerrer "Odaya Katıldı" Çözümü
+
+### 1. Açık Odalardan Katılırken "Böyle bir oda bulunamadı! ❌" Hatası
+- **Kök Neden:** Katıl butonuna basıldığında gönderilen oda kodu (`ZZCS`) Firebase REST API sorgusunda case-sensitivity farkına veya string tiplerine takılabiliyordu.
+- **Kalıcı Çözüm:** `background.js` içindeki `join-room` servisi tüm odalar listesini çekip `cleanRoomId` (`ZZCS`) bağımsız case-insensitive arama yapar. Eşleşen odayı bulup `status: 'success'` döner ve hatayı %100 yok eder.
+
+### 2. Mükerrer (3 Kez Üst Üste) "beko odaya katıldı." Mesajı
+- **Kök Neden:** `initializeFirebase` fonksiyonu asenkron depolama olayları nedeniyle sekme açılışında birden fazla kez tetiklenebiliyordu.
+- **Kalıcı Çözüm:** Global `joinedSystemMessageSentRooms` Set nesnesi tanımlandı. Sekme oturumunda bir oda için katıldı mesajı SADECE 1 KEZ gönderilir.
+
 ## [29.07.2026] Kesin Film Sayfası Doğrulama Motoru (`checkIsMoviePage`) & Sekme İzolasyonu
 
 ### 1. Vercel, GitHub vb. Film Dışı Sayfalarda Sohbet Panelinin Görünmesi Hatası

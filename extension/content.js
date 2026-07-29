@@ -17,6 +17,7 @@ let userListDisplay = null;
 
 let isFirebaseInitialized = false;
 let renderedMessageKeys = new Set();
+let joinedSystemMessageSentRooms = new Set();
 let pendingState = null;
 let isFirstSync = true;
 let messagesQueue = [];
@@ -393,11 +394,12 @@ function initializeFirebase(config) {
       userRef.set({ username, lastActive: firebase.database.ServerValue.TIMESTAMP, isBuffering: false, avatar: selectedAvatar });
       userRef.onDisconnect().remove();
       
-      // Sürekli "odaya katıldı" yazmasını önlemek için sessionStorage kontrolü
+      // Sürekli "odaya katıldı" yazmasını önlemek için bellek içi Set ve sessionStorage çift kontrolü
       const sessionKey = `joined_${roomId}`;
-      if (window === window.top && !sessionStorage.getItem(sessionKey)) {
-        sendSystemMessage(`${username} odaya katıldı.`);
+      if (window === window.top && !joinedSystemMessageSentRooms.has(roomId) && !sessionStorage.getItem(sessionKey)) {
+        joinedSystemMessageSentRooms.add(roomId);
         sessionStorage.setItem(sessionKey, 'true');
+        sendSystemMessage(`${username} odaya katıldı.`);
       }
       
       setupFirebaseListeners();

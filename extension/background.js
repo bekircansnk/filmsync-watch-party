@@ -51,6 +51,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   } else if (message.type === 'create-room') {
     const { roomId, hostId, username, avatar, hostOnly, url } = message;
+    const cleanRoomId = (roomId || '').trim().toUpperCase();
+
     const roomData = {
       password: '',
       hostId: hostId,
@@ -70,7 +72,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     };
 
-    fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, {
+    fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${cleanRoomId}.json`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(roomData)
@@ -82,15 +84,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   } else if (message.type === 'join-room') {
     const { roomId, userId, username, avatar } = message;
-    
-    fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`)
+    const cleanRoomId = (roomId || '').trim().toUpperCase();
+
+    // Önce tüm odaları çekip büyük/küçük harf bağımsız sorgula
+    fetch('https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json')
       .then(res => res.json())
-      .then(roomData => {
-        if (!roomData) {
+      .then(allRooms => {
+        if (!allRooms) {
           sendResponse({ status: 'not_found' });
           return;
         }
-        fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/users/${userId}.json`, {
+
+        // Büyük/küçük harf duyarsız oda arama
+        let matchedRoomId = null;
+        let matchedRoomData = null;
+
+        Object.entries(allRooms).forEach(([rId, rData]) => {
+          if (rId.trim().toUpperCase() === cleanRoomId) {
+            matchedRoomId = rId;
+            matchedRoomData = rData;
+          }
+        });
+
+        if (!matchedRoomData || !matchedRoomId) {
+          sendResponse({ status: 'not_found' });
+          return;
+        }
+
+        // Kullanıcıyı odaya ekle
+        fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${matchedRoomId}/users/${userId}.json`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -99,7 +121,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             lastActive: Date.now()
           })
         })
-          .then(() => sendResponse({ status: 'success', roomData }))
+          .then(() => sendResponse({ status: 'success', roomData: matchedRoomData, roomId: matchedRoomId }))
           .catch(err => sendResponse({ status: 'error', error: err.toString() }));
       })
       .catch(err => sendResponse({ status: 'error', error: err.toString() }));
