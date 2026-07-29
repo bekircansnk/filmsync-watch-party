@@ -319,27 +319,20 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${currentRoomId}.json`)
       .then(res => res.json())
       .then(roomData => {
-        let url = (roomData && roomData.lastState) ? roomData.lastState.url : '';
+        let targetUrl = (roomData && roomData.lastState) ? roomData.lastState.url : '';
         
-        // Fallback A: Eğer lastState.url boşsa kullanıcılar altındaki taze URL'leri tara
-        if (!url && roomData && roomData.users) {
-          Object.values(roomData.users).forEach(u => {
-            if (u.currentUrl && !url) url = u.currentUrl;
-          });
-        }
-
-        // Yönlendirmeyi çalıştır
-        const executeRedirect = (targetUrl) => {
+        // Yönlendirme yardımcısı
+        const redirectTab = (urlStr) => {
           chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
             if (tabs && tabs[0]) {
               const currentTabUrl = tabs[0].url || '';
-              if (currentTabUrl === targetUrl || (currentTabUrl.includes(targetUrl) && targetUrl.length > 10)) {
+              if (currentTabUrl === urlStr || (currentTabUrl.includes(urlStr) && urlStr.length > 15)) {
                 chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, () => {
                   if (chrome.runtime.lastError) {}
                 });
                 showGlobalToast('Zaten bu film sayfasındasınız! 🍿');
               } else {
-                chrome.tabs.update(tabs[0].id, { url: targetUrl }, () => {
+                chrome.tabs.update(tabs[0].id, { url: urlStr }, () => {
                   showGlobalToast('Film sayfasına gidiliyor... 🍿');
                   setTimeout(() => window.close(), 300);
                 });
@@ -348,22 +341,26 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         };
 
-        if (url && url.length > 5) {
-          executeRedirect(url);
+        if (targetUrl && targetUrl.length > 8 && !targetUrl.includes('chrome://')) {
+          redirectTab(targetUrl);
         } else {
-          // Fallback B: Açık sekmeler arasında film izleme sekmesi var mı kontrol et ve yönlendir
+          // Fallback: Veritabanında url henüz yoksa açık sekmeler arasında film sekmesini bulup odaklan ve yönlendir!
           chrome.tabs.query({}, (allTabs) => {
-            let foundTabUrl = null;
+            let foundTab = null;
             if (allTabs) {
               allTabs.forEach(t => {
                 if (t.url && (t.url.includes('hdfilmcehennemi') || t.url.includes('dizipal') || t.url.includes('netflix.com/watch') || t.url.includes('youtube.com/watch'))) {
-                  if (!foundTabUrl) foundTabUrl = t.url;
+                  if (!foundTab) foundTab = t;
                 }
               });
             }
 
-            if (foundTabUrl) {
-              executeRedirect(foundTabUrl);
+            if (foundTab) {
+              chrome.tabs.update(foundTab.id, { active: true }, () => {
+                chrome.windows.update(foundTab.windowId, { focused: true });
+                showGlobalToast('Film sekmesine geçildi! 🍿');
+                setTimeout(() => window.close(), 300);
+              });
             } else {
               showGlobalToast('Oda henüz film sayfasına bağlanmamış. Bir film açın! 🍿');
             }

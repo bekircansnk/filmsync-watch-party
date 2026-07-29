@@ -1,5 +1,11 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] Akıllı Açık Film Sekmesi Odaklanması & Kesintisiz Film Yönlendirme
+
+### 1. `google.com` Üzerindeyken "Film Sayfasına Git 🎬" Butonuna Basıldığında Yönlendirememe Hatası
+- **Kök Neden:** Oda veritabanında `lastState.url` henüz video başlamadığı için boş kaldığında `popup.js` pes edip sahte uyarı fırlatıyordu.
+- **Kalıcı Çözüm:** `popup.js` içerisindeki `btnGoToMovie` handler'ına Akıllı Sekme Tarayıcısı & Odaklayıcısı eklendi. Veritabanındaki adres boş olsa dahi Chrome'da açık olan film izleme sekmesi (HDFilmCehennemi, Dizipal, Netflix vb.) taranır, sekme öne getirilir (`chrome.tabs.update(id, { active: true })`) ve Chrome penceresine odaklanılır (`chrome.windows.update(windowId, { focused: true })`).
+
 ## [29.07.2026] v1.2.0 Sürüm Yükseltmesi & Arka Plan Canlı Sekme Film Adresi Takipçisi
 
 ### 1. `chrome://extensions` veya Yeni Sekmeden Tıklandığında "Oda henüz film sayfasına bağlanmamış" Hatası

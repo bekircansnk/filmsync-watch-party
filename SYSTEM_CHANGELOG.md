@@ -1,5 +1,12 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Akıllı Açık Film Sekmesi Odaklanması & Kesintisiz Film Yönlendirme
+
+### Düzeltildi / Kalıcı Çözüm
+- **Akıllı Sekme Odaklanması ve Yönlendirme (`popup.js`):** "Film Sayfasına Git 🎬" butonuna basıldığında veritabanı adresi boş görünse dahi, Chrome'da açık olan HDFilmCehennemi, Dizipal veya Netflix film sekmesi anında bulunur. Sekme öne getirilir ve pencereye odaklanılır (`chrome.windows.update(windowId, { focused: true })`).
+- **Anında Film Adres Kaydı:** Film sayfasında oda kurulduğu an `checkIsMoviePage()` şartıyla sayfa adresi veritabanına `lastState.url` olarak **ANINDA KAYDEDİLİR**.
+- **Canlı Bildirim Kartı (`content.js`):** Oda yeni bir dizi bölümüne geçtiğinde sağ üst köşede kapatılabilir "Yeni Bölüm / Film Başlatıldı! 🍿" bildirimi görünür ve tek tıkla yeni bölüme taşır.
+
 ## [29.07.2026] v1.2.0 Sürüm Yükseltmesi & Arka Plan Canlı Sekme Film Adresi Takipçisi
 
 ### Düzeltildi / Kalıcı Çözüm
