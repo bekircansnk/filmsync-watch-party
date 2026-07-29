@@ -437,6 +437,63 @@
       background: rgba(229, 9, 20, 0.25);
     }
 
+    /* Açık Odalar Kart Stilleri */
+    .public-room-card {
+      background: #2a2a2a;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+    .public-room-card:hover {
+      background: #333333;
+      border-color: rgba(229, 9, 20, 0.4);
+    }
+    .public-room-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .public-room-code-badge {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #ff3d47;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .public-room-platform {
+      font-size: 0.7rem;
+      color: #aaa;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .public-room-users {
+      font-size: 0.68rem;
+      color: #2ed573;
+      font-weight: 600;
+    }
+    .btn-join-public {
+      background: var(--primary-gradient);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-join-public:hover {
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(229, 9, 20, 0.4);
+    }
+
     .toast-popup {
       position: fixed;
       bottom: 20px;
@@ -490,6 +547,18 @@
           <button class="avatar-btn" data-avatar="🍩">🍩</button>
           <button class="avatar-btn" data-avatar="🔥">🔥</button>
         </div>
+      </div>
+    </div>
+
+    <!-- AÇIK ODALAR REHBERİ (Canlı Public Oda Listesi) -->
+    <div id="publicRoomsSection" class="form-section" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <span class="section-title" style="font-size: 0.85rem; margin-bottom: 0;">Açık Odalar</span>
+        <span id="publicRoomCountBadge" style="font-size: 0.65rem; font-weight: 700; background: rgba(46, 213, 115, 0.15); color: #2ed573; padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(46, 213, 115, 0.3);">0 Aktif Oda</span>
+      </div>
+      
+      <div id="publicRoomList" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px;">
+        <div style="font-size: 0.75rem; color: #888; text-align: center; padding: 10px 0;">Odalar taranıyor... 🍿</div>
       </div>
     </div>
 

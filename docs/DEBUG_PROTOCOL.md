@@ -1,5 +1,15 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] Aktif Odalar Rehberi ve Otomatik Oda İmha Sistemi
+
+### 1. Açık Odalar Canlı Rehberi (Public Rooms Listing)
+- **Tasarım & Mantık:** Eklenti açıldığında oda kodu kopyalayıp paylaşma zorunluluğunu ortadan kaldırmak için `popup.html` ve `popup.js` üzerine canlı `publicRoomsSection` bileşeni eklendi.
+- **Detaylar:** Firebase `rooms` düğümü canlı olarak dinlenerek o andaki açık oda sayısı, oda kodları, izlenen platform (Netflix, YouTube, Disney+ vb.) ve odadaki kişilerin isimleri liste olarak kartlar halinde gösterilmektedir. Tek tıkla "Odaya Katıl" butonu ile doğrudan film sayfasına aktarım sağlanmaktadır.
+
+### 2. Otomatik Oda İmha / Zaman Aşımı (Room Auto-Cleanup Rules)
+- **3 Saat İnaktiflik:** Odada hiç aktif üye olmadığında veya son hareket üzerinden 3 saat geçtiğinde oda Firebase Realtime Database üzerinden otomatik silinir (`db.ref('rooms/' + roomId).remove()`).
+- **24 Saat Max TTL:** Bir oda ne durumda olursa olsun ilk oluşturulduğu andan itibaren 24 saat (86.400.000 ms) geçtiğinde sistem tarafından otomatik imha edilmektedir.
+
 ## [29.07.2026] Netflix Arayüzü & Oda Kodu Katılım Sorunları
 
 ### 1. Netflix Sohbet Yazı Boyutu (Font Scaling Issue)

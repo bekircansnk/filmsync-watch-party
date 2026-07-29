@@ -43,8 +43,48 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           timestamp: Date.now()
         })
       }).catch(err => console.error('[FilmSync Unload Msg Hatası]', err));
+
+      // 3. Otomatik zaman aşımı olan inaktif odaları temizle
+      cleanupExpiredRoomsREST();
     }
     sendResponse({ status: 'success' });
     return true;
   }
 });
+
+// Arka planda 3 saattir inaktif veya 24 saatliği geçmiş odaları temizleyen REST fonksiyonu
+function cleanupExpiredRoomsREST() {
+  fetch('https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json')
+    .then(res => res.json())
+    .then(rooms => {
+      if (!rooms) return;
+      const now = Date.now();
+      const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+      const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
+      Object.entries(rooms).forEach(([rId, rData]) => {
+        if (!rData || !rId || rId.length !== 4) return;
+        const lastUpdated = (rData.lastState && rData.lastState.lastUpdated) ? rData.lastState.lastUpdated : 0;
+        const users = rData.users || {};
+        const activeUserCount = Object.keys(users).length;
+
+        let latestUserActivity = lastUpdated;
+        Object.values(users).forEach(u => {
+          if (u.lastActive && u.lastActive > latestUserActivity) {
+            latestUserActivity = u.lastActive;
+          }
+        });
+
+        const isExpired24h = (lastUpdated > 0 && (now - lastUpdated > TWENTY_FOUR_HOURS_MS));
+        const isInactive3h = (now - latestUserActivity > THREE_HOURS_MS);
+
+        if (isExpired24h || (activeUserCount === 0 && isInactive3h)) {
+          console.log(`[FilmSync Background İmha] Oda ${rId} siliniyor.`);
+          fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${rId}.json`, {
+            method: 'DELETE'
+          }).catch(err => console.error(`[FilmSync Delete Hatası ${rId}]`, err));
+        }
+      });
+    })
+    .catch(err => console.error('[FilmSync REST Cleanup Hatası]', err));
+}

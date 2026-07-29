@@ -428,6 +428,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Arayüz ve Canlı Firebase Dinleyicileri
   function updateUI() {
+    const publicRoomsSection = document.getElementById('publicRoomsSection');
+
     chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
       const currentTabUrl = (tabs && tabs[0] && tabs[0].url) ? tabs[0].url : '';
       const isVideoPage = currentTabUrl && (
@@ -452,6 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
           partyCreatorContainer.classList.add('hidden');
           platformSelectorContainer.classList.add('hidden');
           if (commonUserConfig) commonUserConfig.classList.add('hidden');
+          if (publicRoomsSection) publicRoomsSection.classList.add('hidden');
           roomIdDisplay.textContent = result.roomId;
           
           currentRoomId = result.roomId;
@@ -462,16 +465,20 @@ document.addEventListener('DOMContentLoaded', () => {
           partyCreatorContainer.classList.remove('hidden');
           platformSelectorContainer.classList.add('hidden');
           if (commonUserConfig) commonUserConfig.classList.remove('hidden');
+          if (publicRoomsSection) publicRoomsSection.classList.remove('hidden');
           resetStatus();
           cleanupFirebaseListeners();
+          loadPublicRooms();
         } else {
           // Durum 3: Desteklenmeyen bir sayfada
           activeRoomContainer.classList.add('hidden');
           partyCreatorContainer.classList.add('hidden');
           platformSelectorContainer.classList.remove('hidden');
           if (commonUserConfig) commonUserConfig.classList.remove('hidden');
+          if (publicRoomsSection) publicRoomsSection.classList.remove('hidden');
           resetStatus();
           cleanupFirebaseListeners();
+          loadPublicRooms();
         }
       });
     });
@@ -591,5 +598,116 @@ document.addEventListener('DOMContentLoaded', () => {
       lower.includes('video.php') ||
       lower.includes('stream.php')
     );
+  }
+
+  // 🍿 CANLI AÇIK ODALARI LİSTELEME VE ZAMAN AŞIMI TEMİZLİK (3 Saat İnaktif / 24 Saat Max TTL)
+  function loadPublicRooms() {
+    const publicRoomList = document.getElementById('publicRoomList');
+    const publicRoomCountBadge = document.getElementById('publicRoomCountBadge');
+    if (!publicRoomList || !publicRoomCountBadge) return;
+
+    try {
+      if (typeof firebase === 'undefined') return;
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      const tempDb = firebase.database();
+
+      tempDb.ref('rooms').on('value', (snapshot) => {
+        const rooms = snapshot.val();
+        publicRoomList.innerHTML = '';
+
+        if (!rooms) {
+          publicRoomCountBadge.textContent = '0 Aktif Oda';
+          publicRoomList.innerHTML = '<div style="font-size: 0.75rem; color: #888; text-align: center; padding: 10px 0;">Şu anda açık oda bulunmuyor. Hemen yukarıdan parti başlatın! 🍿</div>';
+          return;
+        }
+
+        const now = Date.now();
+        const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+        const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+        
+        let validRoomsCount = 0;
+
+        Object.entries(rooms).forEach(([roomId, roomData]) => {
+          if (!roomData || !roomId || roomId.length !== 4) return;
+
+          const lastUpdated = (roomData.lastState && roomData.lastState.lastUpdated) ? roomData.lastState.lastUpdated : 0;
+          const users = roomData.users || {};
+          const userEntries = Object.entries(users);
+          const activeUserCount = userEntries.length;
+
+          // Son aktiflik zamanı bul
+          let latestUserActivity = lastUpdated;
+          userEntries.forEach(([_, u]) => {
+            if (u.lastActive && u.lastActive > latestUserActivity) {
+              latestUserActivity = u.lastActive;
+            }
+          });
+
+          // 🚨 ZAMAN AŞIMI VE İMHA KURALLARI:
+          // Kural A: 24 saati (1 gün) aştıysa otomatik imha et
+          // Kural B: Üye sayısı 0 ise veya 3 saattir inaktifse otomatik imha et
+          const isExpired24h = (lastUpdated > 0 && (now - lastUpdated > TWENTY_FOUR_HOURS_MS));
+          const isInactive3h = (now - latestUserActivity > THREE_HOURS_MS);
+
+          if (isExpired24h || (activeUserCount === 0 && isInactive3h)) {
+            console.log(`[FilmSync İmha Motoru] Oda ${roomId} süresi dolduğu/inaktif kaldığı için siliniyor.`);
+            tempDb.ref(`rooms/${roomId}`).remove();
+            return; // Bu odayı listede gösterme
+          }
+
+          // Geçerli oda: Listeye ekle
+          validRoomsCount++;
+
+          // Platform / Film Başlığı Tespiti
+          const movieUrl = (roomData.lastState && roomData.lastState.url) ? roomData.lastState.url : '';
+          let platformName = '🍿 İzleme Partisi';
+          if (movieUrl.includes('netflix.com')) platformName = '🍿 Netflix';
+          else if (movieUrl.includes('youtube.com')) platformName = '📺 YouTube';
+          else if (movieUrl.includes('disneyplus.com')) platformName = '✨ Disney+';
+          else if (movieUrl.includes('primevideo.com') || movieUrl.includes('amazon.com')) platformName = '📦 Prime Video';
+          else if (movieUrl.includes('max.com')) platformName = '🎬 HBO Max';
+
+          // Kullanıcı İsimleri Özeti
+          let userNames = 'Katılımcı Yok';
+          if (activeUserCount > 0) {
+            userNames = userEntries.map(([_, u]) => u.username || 'Anonim').join(', ');
+          }
+
+          const card = document.createElement('div');
+          card.className = 'public-room-card';
+
+          card.innerHTML = `
+            <div class="public-room-info">
+              <div class="public-room-code-badge">
+                ${roomId}
+                <span style="font-size: 0.65rem; color: #888; font-weight: normal;">${platformName}</span>
+              </div>
+              <div class="public-room-users">👥 ${activeUserCount} Kişi: ${userNames}</div>
+            </div>
+            <button class="btn-join-public" data-room="${roomId}">Katıl</button>
+          `;
+
+          // Katıl Butonu Olayı
+          const joinBtn = card.querySelector('.btn-join-public');
+          joinBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            joinRoomWithCode(roomId);
+          });
+
+          publicRoomList.appendChild(card);
+        });
+
+        publicRoomCountBadge.textContent = `${validRoomsCount} Aktif Oda`;
+
+        if (validRoomsCount === 0) {
+          publicRoomList.innerHTML = '<div style="font-size: 0.75rem; color: #888; text-align: center; padding: 10px 0;">Şu anda açık oda bulunmuyor. Hemen yukarıdan parti başlatın! 🍿</div>';
+        }
+      });
+
+    } catch (e) {
+      console.error("[FilmSync] Açık odalar yükleme hatası:", e);
+    }
   }
 });

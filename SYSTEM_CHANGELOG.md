@@ -1,5 +1,14 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Aktif Odalar Rehberi (Public Rooms) & Otomatik Oda İmha Sistemi
+
+### Eklendi / Geliştirildi
+- **Aktif Odalar Rehberi (Public Rooms List):** Eklenti açıldığında oda kodu paylaşma ihtiyacını ortadan kaldıran canlı "AÇIK ODALAR (X)" kart listesi ve aktif oda sayacı eklendi.
+- **Tek Tıkla Katılma:** Odalar; oda kodu, platform (Netflix, YouTube, Disney+ vb.) ve içerideki kişilerin isimleriyle listelenerek "Odaya Katıl" butonu ile şifresiz/kod yazmadan filmin izlendiği sayfaya aktarılacak şekilde entegre edildi.
+- **Otomatik Oda İmha (Auto-Cleanup):**
+  - **3 Saat İnaktiflik:** Odada hiç üye kalmadığında veya 3 saat boyunca hiçbir hareket olmadığında oda otomatik imha edilerek Firebase'den siliniyor.
+  - **24 Saat Zaman Aşımı (Max TTL):** Bir oda oluşturulduktan itibaren 24 saat geçtiğinde otomatik olarak temizleniyor.
+
 ## [29.07.2026] Netflix Arayüzü & Kalıcı Oda Kodu Katılım Tamiri (360-hata-uzmani)
 
 ### Düzeltildi / Geliştirildi
