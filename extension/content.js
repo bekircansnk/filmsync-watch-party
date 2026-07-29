@@ -437,16 +437,6 @@ function setupFirebaseListeners() {
     const state = snapshot.val();
     if (!state) return;
 
-    // YENİ EKLENEN RACE CONDITION KORUMASI:
-    // Eğer yerel olarak son 2 saniye içinde bilinçli bir komut gönderdiysek ve
-    // gelen paketin sunucu saati, bizim gönderdiğimiz zamandan eskiyse (veya çok yakınsa), bunu eski paket say ve yut.
-    if (state.senderId !== userId) {
-      if (Date.now() - lastSentMediaState.timestamp < 2000 && state.lastUpdated < lastSentServerTime + 1000) {
-        console.log('[FilmSync] Race condition engellendi: Gelen eski state yutuldu.');
-        return;
-      }
-    }
-
     // Canlı Film/Bölüm Değişimi Bildirimi (Oda yeni film veya bölüm açtığında sağ üstte kapatılabilir kart göster)
     if (state.url && state.url !== window.location.href && !isEmbedUrl(state.url)) {
       showMovieRedirectBanner(state.url);
@@ -868,26 +858,17 @@ function removeVideoListeners() {
 }
 
 function handlePlayEvent(e) {
-  // Eğer bu olay programatik bir senkronizasyon ise veya event isTrusted değilse yut
-  const isProgrammatic = isSyncing || (e && e.isTrusted === false);
-  if (isProgrammatic) return;
-
+  if (isSyncing || isFirstSync) return;
   sendMediaEvent(true, videoElement.currentTime);
 }
 
 function handlePauseEvent(e) {
-  // Eğer bu olay programatik bir senkronizasyon ise veya event isTrusted değilse yut
-  const isProgrammatic = isSyncing || (e && e.isTrusted === false);
-  if (isProgrammatic) return;
-
+  if (isSyncing || isFirstSync) return;
   sendMediaEvent(false, videoElement.currentTime);
 }
 
 function handleSeekEvent(e) {
-  // Eğer bu olay programatik bir senkronizasyon ise veya event isTrusted değilse yut
-  const isProgrammatic = isSyncing || (e && e.isTrusted === false);
-  if (isProgrammatic) return;
-
+  if (isSyncing || isFirstSync) return;
   sendMediaEvent(!videoElement.paused, videoElement.currentTime, true);
 }
 
