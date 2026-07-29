@@ -81,6 +81,45 @@ const PlayerAdapter = {
 init();
 
 function init() {
+  // 🎥 DİZİPAL OTOMATİK GÜNCEL ADRES BULUCU & YÖNLENDİRİCİ MOTORU
+  if (window === window.top && window.location.hostname.includes('google.com') && window.location.search.toLowerCase().includes('dizipal')) {
+    console.log('[FilmSync Dizipal Motoru] Google aramasında Dizipal güncel adresi taranıyor...');
+    
+    const findAndRedirectDizipal = () => {
+      const links = Array.from(document.querySelectorAll('#search a[href*="dizipal"], #rso a[href*="dizipal"], a[href*="dizipal"]'));
+      const validLink = links.find(a => {
+        const href = a.href || '';
+        return href.includes('dizipal') && !href.includes('google.com') && !href.includes('google.com.tr') && !href.includes('webcache');
+      });
+
+      if (validLink && validLink.href) {
+        console.log(`[FilmSync Dizipal Motoru] Güncel Dizipal adresi bulundu: ${validLink.href}`);
+        
+        // Ekranda Şık Yönlendirme Overlay Göster
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(20,20,20,0.92);backdrop-filter:blur(10px);z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,0.8);';
+        overlay.innerHTML = `
+          <div style="font-size:3rem;margin-bottom:15px;">🎥</div>
+          <div style="font-size:1.4rem;font-weight:800;color:#ff3d47;margin-bottom:8px;">Dizipal Güncel Adresi Bulundu!</div>
+          <div style="font-size:0.95rem;color:#ccc;margin-bottom:15px;">Otomatik olarak yönlendiriliyorsunuz...</div>
+          <div style="font-size:0.8rem;background:#2a2a2a;padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);color:#2ed573;font-weight:bold;">${validLink.href}</div>
+        `;
+        document.body.appendChild(overlay);
+
+        setTimeout(() => {
+          window.location.href = validLink.href;
+        }, 600);
+      }
+    };
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      setTimeout(findAndRedirectDizipal, 200);
+    } else {
+      window.addEventListener('DOMContentLoaded', findAndRedirectDizipal);
+    }
+    return;
+  }
+
   // GİTHUB DAVET LİNKİ KONTROLÜ (İsim Giriş Modal Destekli)
   if (window === window.top && window.location.href.includes('github.com/bekircansnk/filmsync-watch-party')) {
     const urlParams = new URLSearchParams(window.location.search);

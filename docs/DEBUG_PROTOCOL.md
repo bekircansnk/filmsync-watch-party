@@ -1,5 +1,14 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] Dizipal Otomatik Güncel Adres Yönlendirici
+
+### 1. Dinamik URL Değişimi ve Otomatik Adres Tespiti
+- **Kök Neden:** Dizipal gibi sitelerin alan adları sürekli değiştiği için kullanıcılar `t.ly/dizipalgiris` adresine girdiğinde Google arama sonuçlarına düşmektedir.
+- **Çözüm:** `extension/content.js` içerisine Google Arama Yönlendirici motoru entegre edildi. `google.com/search?q=dizipal...` açıldığında DOM üzerindeki en üstteki organik geçerli Dizipal bağlantısı tespit edilir, saniyeler içinde ekran üstü yönlendirme bildirimiyle güncel adrese aktarım tamamlanır.
+
+### 2. Servis Kartları Filtreleme
+- **Çözüm:** `popup.html` ve `popup.js` üzerindeki servis kartları sadeleştirilerek sadece **Netflix**, **HDFilmCehennemi** ve **Dizipal** kartları bırakıldı.
+
 ## [29.07.2026] Aktif Odalar Rehberi ve Otomatik Oda İmha Sistemi
 
 ### 1. Açık Odalar Canlı Rehberi (Public Rooms Listing)

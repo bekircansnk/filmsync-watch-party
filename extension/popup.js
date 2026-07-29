@@ -434,16 +434,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const currentTabUrl = (tabs && tabs[0] && tabs[0].url) ? tabs[0].url : '';
       const isVideoPage = currentTabUrl && (
         currentTabUrl.includes('netflix.com/watch/') || 
-        currentTabUrl.includes('youtube.com/watch') || 
-        currentTabUrl.includes('youtube.com/shorts/') ||
-        currentTabUrl.includes('disneyplus.com/video/') ||
-        currentTabUrl.includes('disneyplus.com/play/') ||
-        currentTabUrl.includes('amazon.com/gp/video/') ||
-        currentTabUrl.includes('primevideo.com/detail/') ||
-        currentTabUrl.includes('max.com/watch/') ||
-        currentTabUrl.includes('hulu.com/watch') ||
         currentTabUrl.includes('hdfilmcehennemi') ||
-        // Genel test desteği (içinde video olan herhangi bir http/https sitesi)
+        currentTabUrl.includes('dizipal') ||
+        currentTabUrl.includes('youtube.com/watch') || 
+        currentTabUrl.includes('disneyplus.com') ||
         (currentTabUrl.startsWith('http') && !currentTabUrl.startsWith('https://www.google.com'))
       );
 
@@ -664,10 +658,10 @@ document.addEventListener('DOMContentLoaded', () => {
           const movieUrl = (roomData.lastState && roomData.lastState.url) ? roomData.lastState.url : '';
           let platformName = '🍿 İzleme Partisi';
           if (movieUrl.includes('netflix.com')) platformName = '🍿 Netflix';
+          else if (movieUrl.includes('hdfilmcehennemi')) platformName = '🎬 HDFilmCehennemi';
+          else if (movieUrl.includes('dizipal')) platformName = '🎥 Dizipal';
           else if (movieUrl.includes('youtube.com')) platformName = '📺 YouTube';
           else if (movieUrl.includes('disneyplus.com')) platformName = '✨ Disney+';
-          else if (movieUrl.includes('primevideo.com') || movieUrl.includes('amazon.com')) platformName = '📦 Prime Video';
-          else if (movieUrl.includes('max.com')) platformName = '🎬 HBO Max';
 
           // Kullanıcı İsimleri Özeti
           let userNames = 'Katılımcı Yok';

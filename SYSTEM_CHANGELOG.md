@@ -1,5 +1,11 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Dizipal Otomatik Güncel Adres Yönlendirici & Ücretsiz Servisler Sadeleştirmesi
+
+### Eklendi / Geliştirildi
+- **Ücretsiz Servis Kartları Sadeleştirmesi:** Servis kartları sadeleştirilerek sadece **Netflix**, **HDFilmCehennemi** ve **Dizipal** kartları kalacak şekilde yeniden tasarlandı.
+- **Dizipal Otomatik Güncel Adres Bulucu:** Dizipal kartına tıklandığında açılan `t.ly/dizipalgiris` Google aramasına yönlendiğinde, `content.js` arama sonuçlarında en tepede yer alan güncel Dizipal adresini (`dizipal1567.com` vb.) otomatik tespit eder ve kullanıcıyı 600ms içinde ekran içi yönlendirme bildirimiyle o adrese aktarır.
+
 ## [29.07.2026] Aktif Odalar Rehberi (Public Rooms) & Otomatik Oda İmha Sistemi
 
 ### Eklendi / Geliştirildi
