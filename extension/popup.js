@@ -655,12 +655,32 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="public-room-platform">${platformName}</div>
               <div class="public-room-users">${displayUsersText}</div>
             </div>
-            <button class="btn-join-public" data-code="${roomId}">Katıl</button>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
+              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+            </div>
           `;
 
           card.querySelector('.btn-join-public').addEventListener('click', () => {
             joinRoomWithCode(roomId);
           });
+
+          // Boş Odaları Manuel İmha Etme Düğmesi (Sadece 0 Üye Olan Odalarda Görünür)
+          const deleteBtn = card.querySelector('.btn-delete-public');
+          if (deleteBtn) {
+            deleteBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' })
+                .then(() => {
+                  showGlobalToast(`Oda ${roomId} başarıyla imha edildi! 🗑️`);
+                  loadPublicRooms();
+                })
+                .catch(err => {
+                  console.error('[FilmSync Oda Silme Hatası]', err);
+                  showGlobalToast('Oda silinirken hata oluştu!');
+                });
+            });
+          }
 
           publicRoomList.appendChild(card);
         });

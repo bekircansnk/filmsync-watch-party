@@ -1,5 +1,11 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] 0-Üyeli Boş Odaları Manuel İmha Etme (Silme) Özelliği
+
+### 1. Boş Odaları Kapatabilme / İmha Edebilme Talebi
+- **Kök Neden:** Otomatik 3 saatlik/24 saatlik silme kurallarına ek olarak, kullanıcının atıl/boş kalan 0-üyeli odaları anında temizlemek istemesi.
+- **Kalıcı Çözüm:** `loadPublicRooms()` kartlarında `activeUserCount === 0` şartı kontrol edilir. Yalnızca 0 üyesi olan boş odaların yanında `🗑️` imha butonu belirir. Tıklandığında REST API `DELETE` isteği ile oda silinir. Aktif üyeli odalarda buton gizlenir.
+
 ## [29.07.2026] Canlı Bildirim Bannerı & "Film Sayfasına Git 🎬" Buton Çözümü
 
 ### 1. Odaya Katılınca Film Sayfasına Git Butonunun Görünmemesi

@@ -1,5 +1,11 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] 0-Üyeli Boş Odaları Manuel İmha Etme (Silme) Özelliği
+
+### Düzeltildi / Kalıcı Çözüm
+- **Boş Odalar İçin Manuel Silme Düğmesi (`btn-delete-public`):** Açık Odalar rehberinde yalnızca üye sayısı 0 olan (hiç kimse bulunmayan) odaların sağ tarafına `🗑️` imha butonu eklendi. Tek tıkla veritabanından ve listeden anında silinir.
+- **Canlı ve Aktif Odaların Korunması:** Odada 1 veya daha fazla aktif üye varsa imha butonu KESİNLİKLE OLUŞTURULMAZ ve gizlenir. Hiç kimse aktif odaları silemez.
+
 ## [29.07.2026] Kapatılabilir Canlı Film/Bölüm Yönlendirme Bildirimi & "Film Sayfasına Git 🎬" Buton Yükseltmesi
 
 ### Düzeltildi / Kalıcı Çözüm
