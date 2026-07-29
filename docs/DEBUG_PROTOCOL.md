@@ -1,5 +1,11 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] Kesin Film Sayfası Doğrulama Motoru (`checkIsMoviePage`) & Sekme İzolasyonu
+
+### 1. Vercel, GitHub vb. Film Dışı Sayfalarda Sohbet Panelinin Görünmesi Hatası
+- **Kök Neden:** `isMoviePage` tanımı esnetilirken `(protocol === 'http' && !google.com)` kuralı yazılmıştı, bu durum Vercel (`vercel.com`), GitHub veya diğer tüm geliştirme sayfalarını da "film sayfası" sanıp sohbet panelini çizmesine yol açıyordu.
+- **Kalıcı Çözüm:** `checkIsMoviePage()` fonksiyonu yazıldı. Sohbet paneli YALNIZCA sayfada aktif `<video>` varsa VEYA URL `netflix.com/watch/`, `hdfilmcehennemi`, `dizipal`, `youtube.com/watch`, `disneyplus.com`, `primevideo`, `blutv` vb. tanınmış film izleme platformlarına aitse açılır. Film dışı sitelerde (`vercel.com` vb.) sohbet paneli %100 engellenir ve kaldırılır (`removeChatUI()`).
+
 ## [29.07.2026] Medya Event Spam Koruması & Açık Odalar Kalıcı Saklama Çözümü
 
 ### 1. Mükerrer "filmi duraklattı" / "filmi başlattı" Event Spam'i

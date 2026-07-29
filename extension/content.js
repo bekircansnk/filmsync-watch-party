@@ -162,33 +162,45 @@ function init() {
     }
   }
 
+// Kesin Film/Dizi Sayfası Doğrulama Motoru (Vercel, GitHub vb. film dışı sitelerde paneli kilitler)
+function checkIsMoviePage() {
+  const url = window.location.href.toLowerCase();
+  
+  // 1. Sayfada aktif bir HTML5 video elementi var mı?
+  if (document.querySelector('video')) return true;
+
+  // 2. Özel film/dizi izleme platformu URL kontrolü
+  if (url.includes('netflix.com/watch/')) return true;
+  if (url.includes('hdfilmcehennemi')) return true;
+  if (url.includes('dizipal')) return true;
+  if (url.includes('youtube.com/watch')) return true;
+  if (url.includes('disneyplus.com')) return true;
+  if (url.includes('primevideo.com') || url.includes('amazon.com/gp/video')) return true;
+  if (url.includes('blutv.com') || url.includes('exxen.com') || url.includes('gain.tv') || url.includes('todtv.com.tr')) return true;
+
+  // Vercel, GitHub, Google vb. film dışı çalışma sayfalarında KESİNLİKLE FALSE
+  return false;
+}
+
   // Normal Başlatma
   chrome.runtime.sendMessage({ type: 'get-tab-id' }, (tabResponse) => {
     const myTabId = tabResponse ? tabResponse.tabId : null;
 
     chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
       if (result.roomId) {
-        // Sekme İzolasyonu & Otomatik Kurtarma:
-        // Kullanıcı bir web/film sayfasındaysa ve roomId mevcutsa aktif sekme olarak self-heal yapıp odaya bağlansın.
-        const isMoviePage = !!(
-          document.querySelector('video') || 
-          PlayerAdapter.isNetflix() || 
-          PlayerAdapter.isDisney() || 
-          PlayerAdapter.isYouTube() ||
-          window.location.href.includes('hdfilmcehennemi') ||
-          window.location.href.includes('dizipal') ||
-          (window.location.protocol.startsWith('http') && !window.location.href.includes('google.com'))
-        );
+        // Film dışı sayfalarda (Vercel, GitHub vb.) sohbet panelini KESİNLİKLE ÇİZME!
+        const isMoviePage = checkIsMoviePage();
+        if (!isMoviePage) {
+          console.log(`[FilmSync İzolasyon] Film dışı sayfa (${window.location.hostname}) tespit edildi. Panel engelleniyor.`);
+          removeChatUI();
+          cleanupFirebase();
+          return;
+        }
 
         if (!result.activeTabId || (myTabId !== null && myTabId !== result.activeTabId)) {
-          if (isMoviePage && myTabId !== null) {
+          if (myTabId !== null) {
             console.log(`[FilmSync Sekme Kurtarma] Sekme ID (${myTabId}) aktif sekme olarak güncelleniyor ve odaya bağlanılıyor.`);
             chrome.storage.local.set({ activeTabId: myTabId });
-          } else {
-            console.log(`[FilmSync İzolasyon] Eklenti bu sekmede pasif. Aktif Sekme ID: ${result.activeTabId}, Bu Sekme ID: ${myTabId}`);
-            removeChatUI();
-            cleanupFirebase();
-            return;
           }
         }
 
@@ -271,24 +283,18 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         const myTabId = tabResponse ? tabResponse.tabId : null;
 
         chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
-          const isMoviePage = !!(
-            document.querySelector('video') || 
-            PlayerAdapter.isNetflix() || 
-            PlayerAdapter.isDisney() || 
-            PlayerAdapter.isYouTube() ||
-            window.location.href.includes('hdfilmcehennemi') ||
-            window.location.href.includes('dizipal') ||
-            (window.location.protocol.startsWith('http') && !window.location.href.includes('google.com'))
-          );
+          const isMoviePage = checkIsMoviePage();
+          if (!isMoviePage) {
+            console.log(`[FilmSync İzolasyon Storage] Film dışı sayfa (${window.location.hostname}) tespit edildi. Panel kaldırılıyor.`);
+            removeChatUI();
+            cleanupFirebase();
+            return;
+          }
 
           if (!result.activeTabId || (myTabId !== null && myTabId !== result.activeTabId)) {
-            if (isMoviePage && myTabId !== null && result.roomId) {
+            if (myTabId !== null && result.roomId) {
               console.log(`[FilmSync Storage Sekme Kurtarma] Sekme ID (${myTabId}) aktif yapılıyor.`);
               chrome.storage.local.set({ activeTabId: myTabId });
-            } else {
-              console.log(`[FilmSync İzolasyon Storage] Eklenti bu sekmede pasif.`);
-              removeChatUI();
-              return;
             }
           }
 

@@ -1,5 +1,12 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Kesin Film Sayfası Doğrulama Motoru (`checkIsMoviePage`) & %100 Sekme İzolasyonu
+
+### Düzeltildi / Kalıcı Çözüm
+- **Film Dışı Sayfalarda Panel Engeli (`checkIsMoviePage`):** Sohbet Paneli (`createChatUI()`) YALNIZCA ve YALNIZCA gerçek film/dizi izleme sayfalarında (`hdfilmcehennemi`, `dizipal`, `netflix`, `youtube`, `<video>` elementi olan sayfalar) açılacak şekilde kilitlendi.
+- **Vercel, GitHub, Google İzolasyonu:** Vercel (`vercel.com`), GitHub, Google veya film izlenmeyen herhangi bir geliştirme/yönetim panelinde sohbet paneli KESİNLİKLE ÇİZİLMEZ (`removeChatUI()`) ve pasif kalır.
+- **Tekrarlanmayan İzolasyon Garantisi:** Kullanıcı Vercel veya başka sekmedeyken sohbet paneli temizlenir, tekrar HDFilmCehennemi/Netflix sekmesine geçtiğinde Sohbet Paneli sadece film sekmesinde yeniden belirir.
+
 ## [29.07.2026] Medya Event Spam Koruması & Açık Odalar Kalıcı Oda Saklama Tamiri
 
 ### Düzeltildi / Kalıcı Çözüm
