@@ -1,0 +1,4 @@
+## 2024-05-18 - Fix Path Traversal in Database REST API
+ **Vulnerability:** The `roomId` parameter derived from untrusted Chrome messages was directly concatenated into the Firebase Realtime Database REST API URL. This could allow an attacker to send a malicious `roomId` (e.g., `../something_else`) and write to arbitrary database paths.
+ **Learning:** When making REST API calls from a background service worker using dynamic data originating from content scripts or other potentially untrusted sources, all path parameters must be strictly validated.
+ **Prevention:** Added a strict regex validation mask (`/^[a-zA-Z0-9_-]+$/`) to the `roomId` before using it in the URL to prevent path traversal and arbitrary database write vulnerabilities.
