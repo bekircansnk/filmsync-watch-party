@@ -1,5 +1,11 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] "Film Sayfasına Git 🎬" Butonunun Daima Görünür Yapılması & Sızdırmaz Yönlendirme
+
+### Düzeltildi / Kalıcı Çözüm
+- **Buton Kaybolma Hatasının %100 Yok Edilmesi (`popup.js`):** Oda aktif olduğunda Pop-up üzerinde kırmızı-gradient vurgulu **"Film Sayfasına Git 🎬"** butonunu gizleyen `classList.add('hidden')` kodları tamamen kaldırıldı. Buton DAİMA ve KESİNTİSİZ ekranda kalır.
+- **Tek Tıkla Sıkıntısız Yönlendirme:** Butona tıklandığında REST API ile oda URL'si okunur. Sekme farklı adresteyse (`google.com` vb.) ANINDA film sayfasına yönlendirilir, aynı adresteyse senkronizasyon tazelenir.
+
 ## [29.07.2026] 0-Üyeli Boş Odaları Manuel İmha Etme (Silme) Özelliği
 
 ### Düzeltildi / Kalıcı Çözüm

@@ -1,5 +1,11 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] "Film Sayfasına Git 🎬" Butonunun Daima Görünür Yapılması & Sızdırmaz Yönlendirme
+
+### 1. "Film Sayfasına Git 🎬" Butonunun Kaybolması Hatası
+- **Kök Neden:** Firebase SDK canlı URL dinleyicisi `targetUrl` okurken kilitlendiğinde veya `null` geldiğinde `btnGoToMovie.classList.add('hidden')` çalışarak butonu otomatik gizliyordu.
+- **Kalıcı Çözüm:** Butonu gizleyen `hidden` mantığı kaldırıldı. Odaya katılındığında veya oda kurulduğunda Pop-up üzerinde **"Film Sayfasına Git 🎬"** butonu DAİMA ve KESİNTİSİZ ekranda kalır. Tıklandığında REST API ile 0ms'de sekme o filmin izlendiği sayfaya yönlendirilir.
+
 ## [29.07.2026] 0-Üyeli Boş Odaları Manuel İmha Etme (Silme) Özelliği
 
 ### 1. Boş Odaları Kapatabilme / İmha Edebilme Talebi

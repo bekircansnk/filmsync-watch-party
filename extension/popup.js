@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // "Film Sayfasına Git 🎬"
   btnGoToMovie.addEventListener('click', () => {
     if (!currentRoomId) {
-      showGlobalToast('Oda bulunamadı!');
+      showGlobalToast('Aktif oda bulunamadı!');
       return;
     }
     
@@ -322,10 +322,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (url) {
           chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
             if (tabs && tabs[0]) {
-              chrome.tabs.update(tabs[0].id, { url }, () => {
-                showGlobalToast('Film sayfasına gidiliyor... 🍿');
-                setTimeout(() => window.close(), 400);
-              });
+              const currentTabUrl = tabs[0].url || '';
+              if (currentTabUrl === url || currentTabUrl.includes(url)) {
+                // Zaten bu film sayfasındayız: Senkronizasyonu tazele ve paneli aç
+                chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, () => {
+                  if (chrome.runtime.lastError) {}
+                });
+                showGlobalToast('Zaten bu film sayfasındasınız! 🍿');
+              } else {
+                // Farklı sayfadayız: Doğrudan oda film URL'sine yönlendir
+                chrome.tabs.update(tabs[0].id, { url: url }, () => {
+                  showGlobalToast('Film sayfasına gidiliyor... 🍿');
+                  setTimeout(() => window.close(), 300);
+                });
+              }
             }
           });
         } else {
@@ -510,25 +520,10 @@ document.addEventListener('DOMContentLoaded', () => {
         userCountTitle.textContent = `Aktif Üyeler (${count})`;
       });
 
-      // 2. Canlı URL Eşleşmesini Dinle
-      db.ref(`rooms/${roomId}/lastState/url`).on('value', (snapshot) => {
-        const targetUrl = snapshot.val();
-        if (!targetUrl) {
-          btnGoToMovie.classList.add('hidden');
-          return;
-        }
-
-        chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-          if (tabs[0]) {
-            const currentUrl = tabs[0].url;
-            if (currentUrl !== targetUrl) {
-              btnGoToMovie.classList.remove('hidden');
-            } else {
-              btnGoToMovie.classList.add('hidden');
-            }
-          }
-        });
-      });
+      // 2. "Film Sayfasına Git 🎬" Butonunu Daima Görünür Tut
+      if (btnGoToMovie) {
+        btnGoToMovie.classList.remove('hidden');
+      }
 
     } catch (e) {
       console.error(e);
