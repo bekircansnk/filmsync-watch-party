@@ -1,0 +1,3 @@
+## 2024-11-20 - Converted Generic UI Elements to Accessible Labels
+**Learning:** Found several generic HTML elements (`div`, `span`) acting as input labels in the extension popup UI without native click-to-focus behavior. A custom group of buttons acting as a radio selector (avatars) lacked screen reader grouping contexts.
+**Action:** Always wrap input descriptors in semantic `<label for="...">` tags and apply `cursor: pointer` via class (e.g. `.clickable-label`) to expand the interactive focus area. For custom interactive groups like avatar selectors, use `role="group"` with an `aria-labelledby` attribute pointing to a visible `<label>` to ensure proper accessibility structure.
