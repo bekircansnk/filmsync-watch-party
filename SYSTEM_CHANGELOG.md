@@ -1,5 +1,13 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Kompakt Apple-Style UI & 50+ Zengin Dinamik Emoji Avatar Sistemi
+
+### Eklendi / Geliştirildi
+- **Gereksiz Metinlerin Temizliği:** *"Eklentiyi kullanmak için lütfen aşağıdaki servislerden birini seçin:"* ve diğer kalabalık açıklama metinleri kaldırıldı.
+- **Kompakt Zero-Scroll Düzen:** Popup yüksekliği ve bileşen alanları sabitlenerek aşağı yukarı sayfa kayma problemi tamamen giderildi (`320px` x `520px` modüler layout).
+- **Logo ve Header Yenilemesi:** Logo `52px` boyutuna büyütüldü, parlak kırmızı-mor halo gölge ile öne çıkarıldı. Metinsel *"Bağlantı Yok"* / *"Bağlandı"* yazıları kaldırılıp minimal yeşil/kırmızı neon durum noktası (status dot) entegre edildi.
+- **50+ Zengin Dinamik Emoji Avatar:** Sabit 6 emoji seçici buton kaldırıldı. Kullanıcı adı yazıldığında veya profil simgesine tıklandığında 50+ sinema, animasyon ve karakter emojisi içerisinden o kullanıcıya özel eğlenceli dinamik avatar atanması sağlandı.
+
 ## [29.07.2026] Dizipal Otomatik Güncel Adres Yönlendirici & Ücretsiz Servisler Sadeleştirmesi
 
 ### Eklendi / Geliştirildi

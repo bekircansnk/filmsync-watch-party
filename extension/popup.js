@@ -14,6 +14,26 @@ let db = null;
 let currentRoomId = null;
 let selectedAvatar = '🍿'; // Varsayılan avatar
 
+// 50+ Zengin Sinema, Animasyon ve Karakter Emojisi Havuzu
+const MOVIE_AVATARS = [
+  '🍿', '🎬', '🚀', '🎭', '🦁', '🦊', '🤖', '👑', '⚡', '🐲', 
+  '🐺', '🦄', '🐼', '🐯', '🦅', '🛸', '👾', '🎮', '🍕', '🍔', 
+  '🍩', '🔥', '🔮', '🎯', '🎸', '🍿', '🎩', '🦸', '🥷', '🕵️', 
+  '🧜', '🧚', '🧞', '🧟', '🧛', '🎃', '🎉', '🌟', '💎', '🚀'
+];
+
+function getRandomMovieAvatar(nameStr) {
+  if (!nameStr) {
+    return MOVIE_AVATARS[Math.floor(Math.random() * MOVIE_AVATARS.length)];
+  }
+  let hash = 0;
+  for (let i = 0; i < nameStr.length; i++) {
+    hash = nameStr.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % MOVIE_AVATARS.length;
+  return MOVIE_AVATARS[index];
+}
+
 // 4 Harfli Büyük Harflerden Oluşan Oda Kodu Üretici
 function generate4LetterCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -50,8 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const commonUserConfig = document.getElementById('commonUserConfig');
   
   const usernameInput = document.getElementById('usernameInput');
+  const userAvatarDisplay = document.getElementById('userAvatarDisplay');
   const hostOnlySwitch = document.getElementById('hostOnlySwitch');
-  const avatarButtons = document.querySelectorAll('.avatar-btn');
   const platformCards = document.querySelectorAll('.platform-card');
   
   const roomIdDisplay = document.getElementById('roomIdDisplay');
@@ -61,12 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCopyInvite = document.getElementById('btnCopyInvite');
   const btnRetrySync = document.getElementById('btnRetrySync');
   const btnGoToMovie = document.getElementById('btnGoToMovie');
-  
-  // Katılma Buton ve Inputları
-  const joinRoomCodeInput = document.getElementById('joinRoomCodeInput');
-  const btnJoinWithCode = document.getElementById('btnJoinWithCode');
-  const joinRoomCodeInputSelector = document.getElementById('joinRoomCodeInputSelector');
-  const btnJoinWithCodeSelector = document.getElementById('btnJoinWithCodeSelector');
   
   const userCountTitle = document.getElementById('userCountTitle');
   const activeUsersList = document.getElementById('activeUsersList');
@@ -78,21 +92,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Local storage'dan önceki durumları yükle
   chrome.storage.local.get(['selectedAvatar', 'username', 'roomId', 'password', 'hostOnly'], (result) => {
-    if (result.selectedAvatar) {
-      selectedAvatar = result.selectedAvatar;
-      avatarButtons.forEach(btn => {
-        if (btn.getAttribute('data-avatar') === selectedAvatar) {
-          btn.classList.add('selected');
-        } else {
-          btn.classList.remove('selected');
-        }
-      });
-    }
     if (result.username) {
       usernameInput.value = result.username;
+      selectedAvatar = result.selectedAvatar || getRandomMovieAvatar(result.username);
     } else {
-      usernameInput.value = ''; // Standart olarak boş kalsın, kullanıcı yazsın
+      usernameInput.value = '';
+      selectedAvatar = getRandomMovieAvatar('');
     }
+    
+    if (userAvatarDisplay) userAvatarDisplay.textContent = selectedAvatar;
+
     if (result.hostOnly !== undefined) {
       hostOnlySwitch.checked = result.hostOnly;
     }
@@ -100,22 +109,29 @@ document.addEventListener('DOMContentLoaded', () => {
     updateUI();
   });
 
-  // Avatar Seçim Olayı
-  avatarButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      avatarButtons.forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      selectedAvatar = btn.getAttribute('data-avatar');
+  // Kullanıcı adı değiştiğinde veya tıklanıldığında dinamik avatar ata
+  if (userAvatarDisplay) {
+    userAvatarDisplay.addEventListener('click', () => {
+      selectedAvatar = MOVIE_AVATARS[Math.floor(Math.random() * MOVIE_AVATARS.length)];
+      userAvatarDisplay.textContent = selectedAvatar;
       chrome.storage.local.set({ selectedAvatar });
       
-      // Eğer bir odaya bağlıysa Firebase profilini de anlık güncelle
       chrome.storage.local.get(['roomId', 'userId'], (res) => {
         if (res.roomId && res.userId && db) {
           db.ref(`rooms/${res.roomId}/users/${res.userId}/avatar`).set(selectedAvatar);
         }
       });
     });
-  });
+  }
+
+  if (usernameInput) {
+    usernameInput.addEventListener('input', () => {
+      const val = usernameInput.value.trim();
+      selectedAvatar = getRandomMovieAvatar(val);
+      if (userAvatarDisplay) userAvatarDisplay.textContent = selectedAvatar;
+      chrome.storage.local.set({ username: val, selectedAvatar });
+    });
+  }
 
   // Platform Butonları Yönlendirme Olayı
   platformCards.forEach(card => {
@@ -414,8 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function resetStatus() {
-    globalStatusDot.classList.remove('active');
-    globalStatusText.textContent = 'Bağlantı Yok';
+    if (globalStatusDot) globalStatusDot.classList.remove('active');
   }
 
   function saveSettings(roomId, username, password, userId, hostOnly, activeTabId, callback) {
@@ -488,9 +503,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       db = firebase.database();
       
-      // Durumu 'Bağlandı & Senkronize' yap
-      globalStatusDot.classList.add('active');
-      globalStatusText.textContent = 'Bağlandı & Senkronize';
+      // Durumu aktif yap (Yeşil Neon Dot)
+      if (globalStatusDot) globalStatusDot.classList.add('active');
 
       // Eski dinleyicileri temizle
       db.ref(`rooms/${roomId}/users`).off();

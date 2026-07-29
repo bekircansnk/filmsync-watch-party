@@ -5,8 +5,8 @@
   <title>Evo ve Beko Film Partisi</title>
   <style>
     :root {
-      --bg-color: #141414;
-      --panel-bg: #181818;
+      --bg-color: #121212;
+      --panel-bg: #1a1a1a;
       --primary: #e50914;
       --primary-hover: #ff2d38;
       --primary-gradient: linear-gradient(135deg, #e50914, #ff3d47);
@@ -28,45 +28,56 @@
       font-family: var(--font);
       background: var(--bg-color);
       color: var(--text);
-      padding: 15px;
-      overflow-x: hidden;
+      padding: 10px;
+      overflow: hidden;
+      user-select: none;
     }
 
     .container {
       background: var(--panel-bg);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 20px;
+      padding: 14px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
+    /* Büyük Şık Header & Logo */
     .logo-container {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
+      padding-bottom: 10px;
       border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
     }
 
     .logo-brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     .logo-img {
-      width: 48px;
-      height: 48px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(229, 9, 20, 0.45);
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(229, 9, 20, 0.5);
+      object-fit: cover;
+    }
+
+    .logo-title-group {
+      display: flex;
+      flex-direction: column;
     }
 
     h1 {
-      font-size: 1.05rem;
-      font-weight: 800;
+      font-size: 1.15rem;
+      font-weight: 900;
       color: var(--text-bright);
       letter-spacing: -0.5px;
+      line-height: 1.1;
     }
 
     h1 span {
@@ -75,178 +86,224 @@
       -webkit-text-fill-color: transparent;
     }
 
-    .status-badge {
+    .logo-subtitle {
       font-size: 0.65rem;
-      font-weight: 700;
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text-bright);
-      padding: 3px 8px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
+      color: #888;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    /* Neon Durum Noktası (Metinsiz, Sadece Parlak Dot) */
+    .status-badge {
+      padding: 4px;
       display: flex;
       align-items: center;
-      gap: 5px;
+      justify-content: center;
     }
 
     .status-dot {
-      width: 6px;
-      height: 6px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
       background-color: #e50914;
+      box-shadow: 0 0 8px #e50914;
+      transition: all 0.3s ease;
     }
 
     .status-dot.active {
       background-color: #2ed573;
-      box-shadow: 0 0 6px #2ed573;
+      box-shadow: 0 0 10px #2ed573;
     }
 
-    /* Durum A: Aktif Oynatıcı Olan Sayfa - Parti Başlatma Arayüzü */
-    .party-creator-panel {
+    /* Entegre Kullanıcı Girişi & Rastgele Emoji Rozeti */
+    .user-input-wrapper {
       display: flex;
-      flex-direction: column;
-    }
-
-    .section-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text-bright);
-      margin-bottom: 14px;
-    }
-
-    .form-group {
-      margin-bottom: 14px;
-    }
-
-    label {
-      display: block;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 5px;
-      color: var(--secondary);
-      font-weight: 700;
-    }
-
-    input {
-      width: 100%;
-      padding: 9px 12px;
-      background: #2f2f2f !important;
+      align-items: center;
+      gap: 8px;
+      background: #242424;
       border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-bright);
-      font-size: 0.85rem;
-      transition: all 0.2s ease;
+      border-radius: 12px;
+      padding: 4px 10px;
+      transition: border-color 0.2s;
     }
 
-    input:focus {
-      outline: none;
+    .user-input-wrapper:focus-within {
       border-color: var(--primary);
-      background: #3a3a3a !important;
       box-shadow: 0 0 10px rgba(229, 9, 20, 0.2);
     }
 
-    .avatar-list {
-      display: flex;
-      justify-content: space-between;
-      gap: 6px;
-      margin-bottom: 14px;
-    }
-
-    .avatar-btn {
-      width: 36px;
-      height: 36px;
+    .user-avatar-badge {
       font-size: 1.3rem;
-      border-radius: 50%;
-      border: 2px solid transparent;
-      background: rgba(255, 255, 255, 0.03);
-      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s ease;
+      cursor: pointer;
+      transition: transform 0.2s ease;
     }
 
-    .avatar-btn:hover {
-      background: rgba(255, 255, 255, 0.08);
-      transform: scale(1.1);
+    .user-avatar-badge:hover {
+      transform: scale(1.2) rotate(10deg);
     }
 
-    .avatar-btn.selected {
-      border-color: var(--primary);
-      background: rgba(229, 9, 20, 0.15);
-      box-shadow: 0 0 10px rgba(229, 9, 20, 0.3);
+    .username-input {
+      flex: 1;
+      background: transparent !important;
+      border: none !important;
+      color: var(--text-bright);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 6px 0;
+      outline: none !important;
+      box-shadow: none !important;
     }
 
-    .switch-group {
+    /* Başlık Sınıfları */
+    .section-title-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
-      padding-top: 10px;
-      border-top: 1px solid var(--border);
+      margin-bottom: 6px;
     }
 
-    .switch-text {
-      font-size: 0.8rem;
-      color: var(--text);
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .badge-count {
+      font-size: 0.65rem;
+      font-weight: 700;
+      background: rgba(46, 213, 115, 0.15);
+      color: #2ed573;
+      padding: 2px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(46, 213, 115, 0.3);
+    }
+
+    /* Açık Odalar Konteyneri */
+    #publicRoomList {
+      max-height: 120px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 2px;
+    }
+
+    #publicRoomList::-webkit-scrollbar {
+      width: 4px;
+    }
+    #publicRoomList::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 2px;
+    }
+
+    .public-room-card {
+      background: #242424;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .public-room-card:hover {
+      background: #2c2c2c;
+      border-color: rgba(229, 9, 20, 0.4);
+    }
+
+    .public-room-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .public-room-code-badge {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #ff3d47;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .public-room-users {
+      font-size: 0.68rem;
+      color: #2ed573;
       font-weight: 600;
     }
 
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 38px;
-      height: 20px;
-    }
-
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #2f2f2f;
-      transition: .3s;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-    }
-
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 12px;
-      width: 12px;
-      left: 3px;
-      bottom: 3px;
-      background-color: #888;
-      transition: .3s;
-      border-radius: 50%;
-    }
-
-    input:checked + .slider {
-      background-color: var(--primary);
-    }
-
-    input:checked + .slider:before {
-      transform: translateX(18px);
-      background-color: white;
-    }
-
-    .btn-start-party {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
+    .btn-join-public {
       background: var(--primary-gradient);
       color: #fff;
-      font-size: 0.95rem;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-join-public:hover {
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(229, 9, 20, 0.4);
+    }
+
+    /* Servis Kartları Grid */
+    .platform-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .platform-card {
+      background: #242424;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .platform-card:hover {
+      background: #2e2e2e;
+      border-color: rgba(229, 9, 20, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .platform-icon {
+      font-size: 1.4rem;
+      margin-bottom: 2px;
+    }
+
+    .platform-name {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: var(--text-bright);
+      text-align: center;
+    }
+
+    /* Parti Başlatma Buton ve Kartlar */
+    .btn-start-party {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      background: var(--primary-gradient);
+      color: #fff;
+      font-size: 0.85rem;
       font-weight: 800;
       cursor: pointer;
       box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
@@ -261,67 +318,7 @@
       box-shadow: 0 6px 20px rgba(229, 9, 20, 0.6);
     }
 
-    /* Durum B: Desteklenmeyen Sayfa - Platform Yönlendirme Listesi */
-    .platform-selector-panel {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .platform-info-text {
-      font-size: 0.8rem;
-      color: #888;
-      line-height: 1.4;
-      margin-bottom: 16px;
-    }
-
-    .platform-section-header {
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: var(--secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-
-    .platform-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .platform-card {
-      background: #2f2f2f;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 4px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .platform-card:hover {
-      background: #3d3d3d;
-      border-color: rgba(255, 255, 255, 0.15);
-      transform: translateY(-1px);
-    }
-
-    .platform-icon {
-      font-size: 1.5rem;
-      margin-bottom: 4px;
-    }
-
-    .platform-name {
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--text-bright);
-      text-align: center;
-    }
-
-    /* Aktif Oda Kartı (Katılınca Görünen) */
+    /* Aktif Oda Ekranı */
     .active-room-card {
       display: flex;
       flex-direction: column;
@@ -330,69 +327,36 @@
     }
 
     .room-id-display {
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       font-weight: 800;
       color: #ff3d47;
-      margin: 10px 0;
-      letter-spacing: 4px;
+      margin: 6px 0;
+      letter-spacing: 3px;
       cursor: pointer;
-      background: #2f2f2f;
+      background: #242424;
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 8px 20px;
+      padding: 6px 16px;
       display: inline-block;
-      transition: all 0.2s ease;
-    }
-
-    .room-id-display:hover {
-      background: #3a3a3a;
-    }
-
-    .copied-toast {
-      font-size: 0.7rem;
-      color: #2ed573;
-      margin-top: 2px;
-      display: none;
-      font-weight: 600;
     }
 
     .user-list-container {
       width: 100%;
-      margin-top: 12px;
-      padding-top: 12px;
+      margin-top: 8px;
+      padding-top: 8px;
       border-top: 1px solid var(--border);
       text-align: left;
-    }
-
-    .user-list-title {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--secondary);
-      margin-bottom: 6px;
-      font-weight: 700;
-    }
-
-    .user-list-items {
-      font-size: 0.8rem;
-      color: var(--text);
-      max-height: 80px;
-      overflow-y: auto;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      padding-left: 2px;
     }
 
     .user-badge {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 2px 8px;
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
     }
 
     .user-badge-online-dot {
@@ -404,12 +368,13 @@
     }
 
     .btn-secondary {
-      background: #2f2f2f;
+      background: #242424;
       color: var(--text-bright);
       border: 1px solid var(--border);
-      margin-top: 10px;
+      margin-top: 6px;
       width: 100%;
-      padding: 10px;
+      padding: 8px;
+      font-size: 0.78rem;
       font-weight: 700;
       border-radius: 8px;
       cursor: pointer;
@@ -417,16 +382,17 @@
     }
 
     .btn-secondary:hover {
-      background: #3d3d3d;
+      background: #2e2e2e;
     }
 
     .btn-danger {
       background: rgba(229, 9, 20, 0.15);
       color: #e50914;
       border: 1px solid rgba(229, 9, 20, 0.3);
-      margin-top: 8px;
+      margin-top: 6px;
       width: 100%;
-      padding: 10px;
+      padding: 8px;
+      font-size: 0.78rem;
       font-weight: 700;
       border-radius: 8px;
       cursor: pointer;
@@ -437,73 +403,16 @@
       background: rgba(229, 9, 20, 0.25);
     }
 
-    /* Açık Odalar Kart Stilleri */
-    .public-room-card {
-      background: #2a2a2a;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: all 0.2s ease;
-    }
-    .public-room-card:hover {
-      background: #333333;
-      border-color: rgba(229, 9, 20, 0.4);
-    }
-    .public-room-info {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-    .public-room-code-badge {
-      font-size: 0.95rem;
-      font-weight: 800;
-      color: #ff3d47;
-      letter-spacing: 1px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .public-room-platform {
-      font-size: 0.7rem;
-      color: #aaa;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .public-room-users {
-      font-size: 0.68rem;
-      color: #2ed573;
-      font-weight: 600;
-    }
-    .btn-join-public {
-      background: var(--primary-gradient);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 6px 12px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .btn-join-public:hover {
-      transform: scale(1.05);
-      box-shadow: 0 2px 8px rgba(229, 9, 20, 0.4);
-    }
-
     .toast-popup {
       position: fixed;
-      bottom: 20px;
+      bottom: 12px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(20,20,20,0.95);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 8px 16px;
-      font-size: 0.75rem;
+      padding: 6px 14px;
+      font-size: 0.72rem;
       color: var(--text-bright);
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
       display: none;
@@ -513,79 +422,97 @@
     .hidden {
       display: none !important;
     }
+
+    .switch-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .switch-text {
+      font-size: 0.75rem;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 34px;
+      height: 18px;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #2e2e2e; transition: .3s; border-radius: 20px; border: 1px solid var(--border);
+    }
+
+    .slider:before {
+      position: absolute; content: ""; height: 10px; width: 10px; left: 3px; bottom: 3px;
+      background-color: #888; transition: .3s; border-radius: 50%;
+    }
+
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(14px); background-color: white; }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Eklenti Header -->
+    <!-- Büyük Şık Header & Logo -->
     <div class="logo-container">
       <div class="logo-brand">
-        <img src="icon128.png" class="logo-img" alt="Evo ve Beko Logo">
-        <h1>Evo & Beko<span>.</span>🍿</h1>
+        <img src="icon128.png" class="logo-img" alt="Evo & Beko Logo">
+        <div class="logo-title-group">
+          <h1>Evo & Beko<span>.</span>🍿</h1>
+          <div class="logo-subtitle">WATCH PARTY</div>
+        </div>
       </div>
-      <div class="status-badge">
+      <div class="status-badge" title="Bağlantı Durumu">
         <span class="status-dot" id="globalStatusDot"></span>
-        <span id="globalStatusText">Bağlantı Yok</span>
+        <span id="globalStatusText" style="display:none;"></span>
       </div>
     </div>
 
-    <!-- ORTAK KULLANICI ADI VE AVATAR ALANI (Aktif bir oda yokken her zaman görünür) -->
-    <div id="commonUserConfig" class="form-section">
-      <div class="form-group" style="margin-bottom: 10px;">
-        <label>Kullanıcı Adınız</label>
-        <input type="text" id="usernameInput" placeholder="Kullanıcı adınızı girin">
-      </div>
-
-      <!-- Profil Simgesi Seçici -->
-      <div class="form-group" style="margin-bottom: 0;">
-        <label>Profil Simgesi</label>
-        <div class="avatar-list" id="avatarList">
-          <button class="avatar-btn selected" data-avatar="🍿">🍿</button>
-          <button class="avatar-btn" data-avatar="🍕">🍕</button>
-          <button class="avatar-btn" data-avatar="🍔">🍔</button>
-          <button class="avatar-btn" data-avatar="🍪">🍪</button>
-          <button class="avatar-btn" data-avatar="🍩">🍩</button>
-          <button class="avatar-btn" data-avatar="🔥">🔥</button>
-        </div>
-      </div>
+    <!-- Entegre Kullanıcı Girişi & Otomatik Emoji Rozeti -->
+    <div id="commonUserConfig" class="user-input-wrapper">
+      <span id="userAvatarDisplay" class="user-avatar-badge" title="Profil Simgesini Değiştir">🍿</span>
+      <input type="text" id="usernameInput" class="username-input" placeholder="Kullanıcı Adınız...">
     </div>
 
     <!-- AÇIK ODALAR REHBERİ (Canlı Public Oda Listesi) -->
-    <div id="publicRoomsSection" class="form-section" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <span class="section-title" style="font-size: 0.85rem; margin-bottom: 0;">Açık Odalar</span>
-        <span id="publicRoomCountBadge" style="font-size: 0.65rem; font-weight: 700; background: rgba(46, 213, 115, 0.15); color: #2ed573; padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(46, 213, 115, 0.3);">0 Aktif Oda</span>
+    <div id="publicRoomsSection">
+      <div class="section-title-row">
+        <span class="section-title">Açık Odalar</span>
+        <span id="publicRoomCountBadge" class="badge-count">0 Aktif</span>
       </div>
-      
-      <div id="publicRoomList" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px;">
-        <div style="font-size: 0.75rem; color: #888; text-align: center; padding: 10px 0;">Odalar taranıyor... 🍿</div>
+      <div id="publicRoomList">
+        <div style="font-size: 0.72rem; color: #888; text-align: center; padding: 6px 0;">Odalar taranıyor... 🍿</div>
       </div>
     </div>
 
     <!-- 1. AKTİF SOHBET PARTİ KARTI (Oda Kurulunca/Katılınca Görünür) -->
     <div id="activeRoomContainer" class="active-room-card hidden">
-      <div style="font-size: 0.8rem; color: #888; font-weight: bold; margin-bottom: 5px;">Bağlantı Aktif! Davet Linki Kopyalandı.</div>
-      <div id="roomIdDisplay" class="room-id-display" title="Oda Kodunu Kopyala" role="button" tabindex="0" aria-label="Oda Kodunu Kopyala">----</div>
-      <div class="copied-toast" id="copiedToast">Oda kodu kopyalandı!</div>
+      <div style="font-size: 0.72rem; color: #888; font-weight: bold;">Bağlantı Aktif</div>
+      <div id="roomIdDisplay" class="room-id-display" title="Oda Kodunu Kopyala" role="button" tabindex="0">----</div>
+      <div class="copied-toast" id="copiedToast" style="display:none; font-size:0.68rem; color:#2ed573;">Kopyalandı!</div>
       
-      <button id="btnGoToMovie" class="btn-secondary hidden" style="background: #2ed573; border-color: #2ed573; color: white; margin-bottom: 8px;">Film Sayfasına Git 🎬</button>
+      <button id="btnGoToMovie" class="btn-secondary hidden" style="background: #2ed573; border-color: #2ed573; color: white;">Film Sayfasına Git 🎬</button>
 
-      <!-- Aktif Kullanıcı Listesi -->
       <div class="user-list-container">
-        <div class="user-list-title" id="userCountTitle">Aktif Üyeler (0)</div>
-        <div class="user-list-items" id="activeUsersList"></div>
+        <div class="section-title" id="userCountTitle" style="margin-bottom:4px;">Aktif Üyeler (0)</div>
+        <div class="user-list-items" id="activeUsersList" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
       </div>
 
-      <button id="btnRetrySync" class="btn-secondary" style="margin-top: 12px;">Senkronizasyonu Yenile</button>
+      <button id="btnRetrySync" class="btn-secondary">Senkronizasyonu Yenile</button>
       <button id="btnCopyInvite" class="btn-secondary">Davet Linkini Kopyala</button>
       <button id="btnLeaveRoom" class="btn-danger">Odadan Ayrıl</button>
     </div>
 
     <!-- 2. PARTİ KURUCU EKRANI (Desteklenen bir film sayfasındayken) -->
-    <div id="partyCreatorContainer" class="party-creator-panel hidden" style="border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px;">
-      <div class="section-title">Evo & Beko Film Partisi Başlat</div>
-      
-      <!-- Sadece Host Kontrolü Switch -->
+    <div id="partyCreatorContainer" class="party-creator-panel hidden">
       <div class="switch-group">
         <span class="switch-text">Sadece Bende Kontrol Olsun</span>
         <label class="switch">
@@ -593,27 +520,15 @@
           <span class="slider"></span>
         </label>
       </div>
-
-      <button id="btnStartParty" class="btn-start-party" style="margin-bottom: 15px;">Partiyi Başlat</button>
-
-      <!-- Oda Koduyla Katılma Bölümü (Film Sayfasındayken) -->
-      <div style="padding-top: 15px; border-top: 1px solid var(--border);">
-        <div class="section-title" style="font-size: 0.85rem; margin-bottom: 10px;">Bir Odaya Katıl</div>
-        <div class="form-group" style="margin-bottom: 8px;">
-          <input type="text" id="joinRoomCodeInput" placeholder="4 Haneli Oda Kodu (Örn: ABCD)" maxlength="4" style="text-transform: uppercase; text-align: center; font-weight: bold; letter-spacing: 2px;">
-        </div>
-        <button id="btnJoinWithCode" class="btn-secondary" style="margin-top: 0; padding: 8px;">Katıl</button>
-      </div>
+      <button id="btnStartParty" class="btn-start-party">Partiyi Başlat 🚀</button>
     </div>
 
-    <!-- 3. DESTEKLENMEYEN SAYFA - SERVİS SEÇİCİ EKRAN (Normal sayfalarda ise) -->
+    <!-- 3. DESTEKLENMEYEN SAYFA - SERVİS SEÇİCİ EKRAN -->
     <div id="platformSelectorContainer" class="platform-selector-panel hidden">
-      <div class="platform-info-text">
-        Eklentiyi kullanmak için lütfen aşağıdaki servislerden birini seçin:
+      <div class="section-title-row" style="margin-bottom: 6px;">
+        <span class="section-title">Servisler</span>
       </div>
-
-      <div class="platform-section-header">Ücretsiz Servisler</div>
-      <div class="platform-grid" style="margin-bottom: 14px; grid-template-columns: repeat(3, 1fr);">
+      <div class="platform-grid">
         <div class="platform-card" data-url="https://www.netflix.com">
           <span class="platform-icon">🍿</span>
           <span class="platform-name">Netflix</span>
@@ -627,20 +542,10 @@
           <span class="platform-name">Dizipal</span>
         </div>
       </div>
-
-
-      <!-- Oda Koduyla Katılma Bölümü (Desteklenmeyen Sayfadayken) -->
-      <div style="padding-top: 15px; border-top: 1px solid var(--border);">
-        <div class="section-title" style="font-size: 0.85rem; margin-bottom: 10px;">Bir Odaya Katıl</div>
-        <div class="form-group" style="margin-bottom: 8px;">
-          <input type="text" id="joinRoomCodeInputSelector" placeholder="4 Haneli Oda Kodu (Örn: ABCD)" maxlength="4" style="text-transform: uppercase; text-align: center; font-weight: bold; letter-spacing: 2px;">
-        </div>
-        <button id="btnJoinWithCodeSelector" class="btn-secondary" style="margin-top: 0; padding: 8px;">Katıl</button>
-      </div>
     </div>
   </div>
 
-  <div class="toast-popup" id="globalToast">Davet linki kopyalandı!</div>
+  <div class="toast-popup" id="globalToast">İşlem başarılı!</div>
 
   <!-- Firebase SDK Kütüphaneleri -->
   <script src="libs/firebase-app.js"></script>
