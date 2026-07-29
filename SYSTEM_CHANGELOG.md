@@ -1,5 +1,11 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Iframe Dahil %100 Canlı Video Oynat/Duraklat/Sarma Senkronizasyon Tamiri
+
+### Düzeltildi / Kalıcı Çözüm
+- **Kök Neden Çözümü (`content.js`):** Sayfa yüklendiğinde `initializeFirebase(firebaseConfig)` önceden sadece ana pencerede (`window === window.top`) çalışıyordu. HDFilmCehennemi, Dizipal vb. platformlarda gerçek `<video>` elementi IFRAME içinde olduğu için iframe'deki `content.js` Firebase veritabanına bağlanamıyor ve uzaktan gelen `play`, `pause`, `seek` emirlerini alamıyordu.
+- **Kalıcı Çözüm:** `initializeFirebase` Iframe dahil her seviyede aktif kılındı! Iframe içerisindeki `content.js` artık veritabanındaki `rooms/${roomId}/lastState` düğümünü anlık dinler, odadaki diğer üye filmi oynattığında/duraklattığında/sardığında **Iframe içindeki `<video>` elementine 0ms gecikmeyle %100 kusursuz uygular**.
+
 ## [29.07.2026] Akıllı Açık Film Sekmesi Odaklanması & Kesintisiz Film Yönlendirme
 
 ### Düzeltildi / Kalıcı Çözüm

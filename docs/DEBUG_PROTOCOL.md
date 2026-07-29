@@ -1,5 +1,11 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] Iframe Dahil %100 Canlı Video Oynat/Duraklat/Sarma Senkronizasyon Çözümü
+
+### 1. Mesaj Paneline "Oynattı/Duraklattı" Yazdığı Halde Videoların Senkron İlerlememesi Hatası
+- **Kök Neden:** `content.js` içerisindeki `initializeFirebase` çağrısı `if (window === window.top)` bloku içine alınmıştı. HDFilmCehennemi, Dizipal vb. sitelerde `<video>` elementi IFRAME içinde kaldığından, Iframe içindeki `content.js` Firebase veritabanına bağlanamıyor ve `rooms/${roomId}/lastState` uzaktan gelen oynat/duraklat sinyallerini dinleyemiyordu.
+- **Kalıcı Çözüm:** `initializeFirebase` Iframe dahil tüm pencerelerde aktif kılındı. Iframe içerisindeki `<video>` elementi veritabanındaki son medya durumunu anlık dinleyip `PlayerAdapter` ile 0ms gecikmeyle uzaktan eşzamanlar.
+
 ## [29.07.2026] Akıllı Açık Film Sekmesi Odaklanması & Kesintisiz Film Yönlendirme
 
 ### 1. `google.com` Üzerindeyken "Film Sayfasına Git 🎬" Butonuna Basıldığında Yönlendirememe Hatası

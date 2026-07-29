@@ -219,9 +219,8 @@ function checkIsMoviePage() {
         
         console.log(`[FilmSync] Canlı odaya bağlanılıyor: ${roomId}, Kullanıcı: ${username}`);
         
-        // Iframe spam'ini önle: Başlangıçta sadece Top Window bağlansın.
+        initializeFirebase(firebaseConfig);
         if (window === window.top) {
-          initializeFirebase(firebaseConfig);
           createChatUI();
           startUIKeeper();
         }
@@ -308,8 +307,8 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 
           if (roomId) {
             console.log(`[FilmSync Storage] Yeni oda bağlantısı tetikleniyor: ${roomId}`);
+            initializeFirebase(firebaseConfig);
             if (window === window.top) {
-              initializeFirebase(firebaseConfig);
               if (!document.getElementById('filmsync-root')) {
                 createChatUI();
                 startUIKeeper();
@@ -517,13 +516,13 @@ function ensureVideoReady(callback, retriesLeft = 10) {
   const activeVideo = document.querySelector('video');
   if (activeVideo) videoElement = activeVideo;
 
-  if (videoElement && videoElement.readyState >= 1) {
+  if (videoElement) {
     callback(true);
   } else if (retriesLeft > 0) {
     console.log(`[FilmSync] Video elementinin hazır olması bekleniyor... Kalan deneme: ${retriesLeft}`);
     setTimeout(() => {
       ensureVideoReady(callback, retriesLeft - 1);
-    }, 500);
+    }, 300);
   } else {
     console.log('[FilmSync] Video elementi zaman aşımına uğradı veya bulunamadı.');
     callback(false);
