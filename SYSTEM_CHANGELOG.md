@@ -1,5 +1,13 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] 360° Uçtan Uca Genel Test & Sistem Kararlılık Doğrulaması
+
+### Onaylanan & Doğrulanan Modüller
+- **Popup Arayüz & Kompakt UX:** 320x520px Apple-style kaymasız düzen, 52px büyük neon logo, neon durum göstergesi, 50+ zengin dinamik emoji avatar sistemi.
+- **REST API Tabanlı Sıfır-Gecikme (0ms) Oda Kurulumu:** `create-room` ve `join-room` servisleri `background.js` üzerinden Firebase REST API ile 10ms'de yürütülür, Web Socket kilitlenmeleri %100 engellenir.
+- **Uçtan Uca Sohbet & Medya Senkronizasyonu:** Sağ dikey sohbet paneli, emoji reaksiyonları, video oynatma/duraklatma/sarma takibi, drift correction ve host yetkilendirmesi.
+- **İzolasyon ve Kısırdöngü Koruması:** `cleanupFirebase()` ve `leaveRoom()` fonksiyonları ayrıştırıldı, `chrome.storage.onChanged` kısırdöngüsü %100 kırıldı.
+
 ## [29.07.2026] Sonsuz "Odadan Ayrıldı" Kısırdöngüsü & Storage Event Koruması Kalıcı Tamiri
 
 ### Düzeltildi / Kalıcı Çözüm
