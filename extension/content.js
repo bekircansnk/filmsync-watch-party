@@ -11,6 +11,27 @@ let serverTimeOffset = 0;
 
 let videoElement = null;
 let isSyncing = false;
+let isFirstSync = true;
+let syncLockTimeout = null;
+
+function setSyncLock(ms = 800) {
+  isSyncing = true;
+  if (syncLockTimeout) clearTimeout(syncLockTimeout);
+  syncLockTimeout = setTimeout(() => {
+    isSyncing = false;
+    isFirstSync = false;
+  }, ms);
+}
+
+function releaseSyncLock() {
+  isSyncing = false;
+  isFirstSync = false;
+  if (syncLockTimeout) {
+    clearTimeout(syncLockTimeout);
+    syncLockTimeout = null;
+  }
+}
+
 let chatPanel = null;
 let messageInput = null;
 let messageList = null;
@@ -55,27 +76,34 @@ const PlayerAdapter = {
   isDisney: () => window.location.host.includes('disneyplus.com'),
 
   play: () => {
-    if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-    } else if (videoElement) {
-      videoElement.play();
-    }
+    try {
+      if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
+        window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
+      } else if (videoElement) {
+        const p = videoElement.play();
+        if (p && p.catch) p.catch(() => {});
+      }
+    } catch (e) {}
   },
 
   pause: () => {
-    if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-    } else if (videoElement) {
-      videoElement.pause();
-    }
+    try {
+      if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
+        window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
+      } else if (videoElement) {
+        videoElement.pause();
+      }
+    } catch (e) {}
   },
 
   seek: (seconds) => {
-    if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-    } else if (videoElement) {
-      videoElement.currentTime = seconds;
-    }
+    try {
+      if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
+        window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
+      } else if (videoElement && !isNaN(seconds) && isFinite(seconds) && seconds >= 0) {
+        videoElement.currentTime = seconds;
+      }
+    } catch (e) {}
   }
 };
 
@@ -555,9 +583,12 @@ function applyRemoteState(state) {
   }
 
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+    if (!isReady || !videoElement) {
+      releaseSyncLock();
+      return;
+    }
 
-    isSyncing = true;
+    setSyncLock(1000);
     try {
       const currentServerTime = Date.now() + serverTimeOffset;
       const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
@@ -580,8 +611,7 @@ function applyRemoteState(state) {
       
       // Eğer müdahale gerekmediyse kilitleri hemen aç, 1000ms boşuna bekleme!
       if (!neededChange) {
-        isSyncing = false;
-        isFirstSync = false;
+        releaseSyncLock();
         if (pendingState) {
           const nextState = pendingState;
           pendingState = null;
@@ -591,20 +621,8 @@ function applyRemoteState(state) {
       }
     } catch (e) {
       console.error('[FilmSync] Medya eşileme hatası:', e);
+      releaseSyncLock();
     }
-    
-    // Gecikmeli olarak kilitleri kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
-    setTimeout(() => {
-      isSyncing = false;
-      isFirstSync = false; // İlk senkronizasyon kilidini kaldır
-      
-      // Kilit açıldığında sıradaki bekleyen durum varsa onu uygula
-      if (pendingState) {
-        const nextState = pendingState;
-        pendingState = null;
-        applyRemoteState(nextState);
-      }
-    }, 1000);
   });
 }
 
@@ -686,7 +704,8 @@ let lastSentMediaState = { isPlaying: null, currentTime: -1, timestamp: 0 };
 let lastSentServerTime = 0;
 
 function sendMediaEvent(isPlaying, currentTime, isSeek = false) {
-  if (!db || !roomId || isSyncing || isFirstSync) return;
+  if (!db || !roomId || isSyncing) return;
+  isFirstSync = false;
   
   // Herhangi bir yetki kısıtlaması yok: Tüm kullanıcılar tam yetkiye sahiptir.
 
@@ -852,17 +871,20 @@ function removeVideoListeners() {
 }
 
 function handlePlayEvent(e) {
-  if (isSyncing || isFirstSync) return;
+  if (isSyncing) return;
+  isFirstSync = false;
   sendMediaEvent(true, videoElement.currentTime);
 }
 
 function handlePauseEvent(e) {
-  if (isSyncing || isFirstSync) return;
+  if (isSyncing) return;
+  isFirstSync = false;
   sendMediaEvent(false, videoElement.currentTime);
 }
 
 function handleSeekEvent(e) {
-  if (isSyncing || isFirstSync) return;
+  if (isSyncing) return;
+  isFirstSync = false;
   sendMediaEvent(!videoElement.paused, videoElement.currentTime, true);
 }
 
