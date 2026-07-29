@@ -1,4 +1,5 @@
-// Evo ve Beko Film Partisi (Teleparty Clone) 🍿
+// FilmSync Watch Party Content Script (Ana Giriş Noktası)
+
 let roomId = null;
 let username = 'Anonim';
 let password = '';
@@ -7,12 +8,13 @@ let selectedAvatar = '🍿';
 let hostId = null;
 let hostOnly = false;
 let db = null;
-let serverTimeOffset = 0;
 
 let videoElement = null;
 let isSyncing = false;
 let isFirstSync = true;
 let syncLockTimeout = null;
+
+let pendingState = null;
 
 function setSyncLock(ms = 800) {
   isSyncing = true;
@@ -32,124 +34,32 @@ function releaseSyncLock() {
   }
 }
 
-let chatPanel = null;
-let messageInput = null;
-let messageList = null;
-let userListDisplay = null;
-
-let isFirebaseInitialized = false;
-let renderedMessageKeys = new Set();
-let joinedSystemMessageSentRooms = new Set();
-let pendingState = null;
-let isFirstSync = true;
-let messagesQueue = [];
-let isInputFocused = false;
-
-// Firebase Canlı Yapılandırması
-const firebaseConfig = {
-  apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
-  authDomain: "movieparty-af87f.firebaseapp.com",
-  databaseURL: "https://movieparty-af87f-default-rtdb.firebaseio.com",
-  projectId: "movieparty-af87f",
-  storageBucket: "movieparty-af87f.firebasestorage.app",
-  messagingSenderId: "563223702114",
-  appId: "1:563223702114:web:00815dcbe7645d83b83f3b",
-  measurementId: "G-4KR5X5Y4ZS"
-};
-
-// Netflix, Disney+ ve YouTube için inject.js scriptini enjekte et (Sayfa bağlamına erişim için)
-const shouldInject = window.location.host.includes('netflix.com') || 
-                     window.location.host.includes('disneyplus.com') || 
-                     window.location.host.includes('youtube.com');
-
-if (shouldInject && window === window.top) {
-  const script = document.createElement('script');
-  script.src = chrome.runtime.getURL('inject.js');
-  (document.head || document.documentElement).appendChild(script);
-  console.log('[FilmSync] Player entegrasyon scripti enjekte edildi.');
-}
-
-// Oynatıcı Adaptörü (Farklı siteleri tek arayüzden kontrol etmek için)
-const PlayerAdapter = {
-  isNetflix: () => window.location.host.includes('netflix.com'),
-  isYouTube: () => window.location.host.includes('youtube.com'),
-  isDisney: () => window.location.host.includes('disneyplus.com'),
-
-  play: () => {
-    try {
-      if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
-        window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      } else if (videoElement) {
-        const p = videoElement.play();
-        if (p && p.catch) p.catch(() => {});
-      }
-    } catch (e) {}
-  },
-
-  pause: () => {
-    try {
-      if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
-        window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-      } else if (videoElement) {
-        videoElement.pause();
-      }
-    } catch (e) {}
-  },
-
-  seek: (seconds) => {
-    try {
-      if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
-        window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-      } else if (videoElement && !isNaN(seconds) && isFinite(seconds) && seconds >= 0) {
-        videoElement.currentTime = seconds;
-      }
-    } catch (e) {}
+// Oynatıcının Hazır Olmasını Bekleyen Yardımcı Fonksiyon
+function ensureVideoReady(callback, retries = 5) {
+  if (videoElement && videoElement.readyState >= 1) {
+    callback(true);
+    return;
   }
-};
-
-// Sayfa yüklendiğinde başlat
-init();
-
-function init() {
-  // 🎥 DİZİPAL OTOMATİK GÜNCEL ADRES BULUCU & YÖNLENDİRİCİ MOTORU
-  if (window === window.top && window.location.hostname.includes('google.com') && window.location.search.toLowerCase().includes('dizipal')) {
-    console.log('[FilmSync Dizipal Motoru] Google aramasında Dizipal güncel adresi taranıyor...');
-    
-    const findAndRedirectDizipal = () => {
-      const links = Array.from(document.querySelectorAll('#search a[href*="dizipal"], #rso a[href*="dizipal"], a[href*="dizipal"]'));
-      const validLink = links.find(a => {
-        const href = a.href || '';
-        return href.includes('dizipal') && !href.includes('google.com') && !href.includes('google.com.tr') && !href.includes('webcache');
-      });
-
-      if (validLink && validLink.href) {
-        console.log(`[FilmSync Dizipal Motoru] Güncel Dizipal adresi bulundu: ${validLink.href}`);
-        
-        // Ekranda Şık Yönlendirme Overlay Göster
-        const overlay = document.createElement('div');
-        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(20,20,20,0.92);backdrop-filter:blur(10px);z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,0.8);';
-        overlay.innerHTML = `
-          <div style="font-size:3rem;margin-bottom:15px;">🎥</div>
-          <div style="font-size:1.4rem;font-weight:800;color:#ff3d47;margin-bottom:8px;">Dizipal Güncel Adresi Bulundu!</div>
-          <div style="font-size:0.95rem;color:#ccc;margin-bottom:15px;">Otomatik olarak yönlendiriliyorsunuz...</div>
-          <div style="font-size:0.8rem;background:#2a2a2a;padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);color:#2ed573;font-weight:bold;">${validLink.href}</div>
-        `;
-        document.body.appendChild(overlay);
-
-        setTimeout(() => {
-          window.location.href = validLink.href;
-        }, 600);
-      }
-    };
-
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      setTimeout(findAndRedirectDizipal, 200);
-    } else {
-      window.addEventListener('DOMContentLoaded', findAndRedirectDizipal);
-    }
+  
+  const foundVideo = document.querySelector('video');
+  if (foundVideo && foundVideo.readyState >= 1) {
+    videoElement = foundVideo;
+    setupVideoListeners();
+    callback(true);
     return;
   }
 
+  if (retries > 0) {
+    setTimeout(() => ensureVideoReady(callback, retries - 1), 300);
+  } else {
+    callback(false);
+  }
+}
+
+// Eklenti Giriş Noktası
+init();
+
+function init() {
   // GİTHUB DAVET LİNKİ KONTROLÜ (İsim Giriş Modal Destekli)
   if (window === window.top && window.location.href.includes('github.com/bekircansnk/filmsync-watch-party')) {
     const urlParams = new URLSearchParams(window.location.search);
@@ -157,73 +67,72 @@ function init() {
     const joinPass = urlParams.get('pass') || '';
 
     if (joinRoom) {
-      showNamePromptModal(joinRoom, (enteredName) => {
-        showAutoJoinOverlay(joinRoom);
-        
-        // Kendi sekme ID'mizi alıp activeTabId olarak kaydet
-        chrome.runtime.sendMessage({ type: 'get-tab-id' }, (tabResponse) => {
-          const myTabId = tabResponse ? tabResponse.tabId : null;
-          const newUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+      if (document.getElementById('filmsync-autojoin-overlay')) return;
+
+      const overlay = document.createElement('div');
+      overlay.id = 'filmsync-autojoin-overlay';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,14,0.94);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
+      overlay.innerHTML = `
+        <div style="background:#181820;border:1px solid rgba(255,255,255,0.12);padding:30px;border-radius:20px;width:340px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,0.8);">
+          <div style="font-size:42px;margin-bottom:12px;">🍿</div>
+          <div style="font-size:20px;font-weight:800;color:#ff3d47;margin-bottom:6px;">FilmSync Watch Party</div>
+          <div style="font-size:13px;color:#aaa;margin-bottom:20px;">Odaya Katılmak İçin Takma Adınızı Girin</div>
+          <div style="margin-bottom:15px;text-align:left;">
+            <label style="font-size:11px;color:#888;font-weight:700;display:block;margin-bottom:5px;">TAKMA ADINIZ</label>
+            <input type="text" id="fs-join-username" placeholder="Örn: Ahmet" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);padding:10px 14px;border-radius:10px;color:#fff;font-size:14px;outline:none;" />
+          </div>
+          <button id="fs-btn-autojoin" style="width:100%;background:linear-gradient(135deg,#ff3d47,#e50914);color:#fff;border:none;padding:12px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 8px 20px rgba(255,61,71,0.4);transition:all 0.2s;">Partiye Katıl 🚀</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      const userInput = document.getElementById('fs-join-username');
+      const joinBtn = document.getElementById('fs-btn-autojoin');
+      userInput.focus();
+
+      chrome.storage.local.get(['username'], (res) => {
+        if (res.username) userInput.value = res.username;
+      });
+
+      const executeJoin = () => {
+        const nameVal = userInput.value.trim() || 'Misafir';
+        const myUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+        joinBtn.textContent = 'Odaya Bağlanılıyor...';
+        joinBtn.style.opacity = '0.7';
+
+        const tempDb = firebase.initializeApp(firebaseConfig, 'tempJoinApp_' + Date.now()).database();
+        tempDb.ref(`rooms/${joinRoom}/lastState`).once('value').then((snapshot) => {
+          const state = snapshot.val();
+          let targetUrl = (state && state.url) ? state.url : '';
           
-          chrome.storage.local.set({ 
-            roomId: joinRoom, 
-            username: enteredName, 
-            password: joinPass, 
-            userId: newUserId,
-            activeTabId: myTabId
+          if (!targetUrl || isEmbedUrl(targetUrl)) {
+            targetUrl = 'https://www.hdfilmcehennemi.nl/';
+          }
+
+          chrome.storage.local.set({
+            roomId: joinRoom,
+            username: nameVal,
+            password: joinPass,
+            userId: myUserId
           }, () => {
-            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            const tempDb = firebase.database();
-            tempDb.ref(`rooms/${joinRoom}/lastState`).once('value').then((snapshot) => {
-              const state = snapshot.val();
-              if (state && state.url) {
-                setTimeout(() => {
-                  chrome.runtime.sendMessage({ type: 'redirect-tab', url: state.url });
-                }, 1000);
-              } else {
-                alert('Bu odada aktif bir film izlenmiyor veya oda bulunamadı.');
-                document.getElementById('filmsync-autojoin-overlay')?.remove();
-              }
-            });
+            if (targetUrl) {
+              window.location.href = targetUrl;
+            }
           });
         });
+      };
+
+      joinBtn.addEventListener('click', executeJoin);
+      userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') executeJoin();
       });
       return;
     }
   }
 
-// Kesin Film/Dizi Sayfası Doğrulama Motoru (Vercel, GitHub vb. film dışı sitelerde paneli kilitler)
-function checkIsMoviePage() {
-  const url = window.location.href.toLowerCase();
-  
-  // 1. Sayfada aktif bir HTML5 video elementi var mı?
-  if (document.querySelector('video')) return true;
-
-  // 2. Özel film/dizi izleme platformu URL kontrolü
-  if (url.includes('netflix.com/watch/')) return true;
-  if (url.includes('hdfilmcehennemi')) return true;
-  if (url.includes('dizipal')) return true;
-  if (url.includes('youtube.com/watch')) return true;
-  if (url.includes('disneyplus.com')) return true;
-  if (url.includes('primevideo.com') || url.includes('amazon.com/gp/video')) return true;
-  if (url.includes('blutv.com') || url.includes('exxen.com') || url.includes('gain.tv') || url.includes('todtv.com.tr')) return true;
-
-  // Vercel, GitHub, Google vb. film dışı çalışma sayfalarında KESİNLİKLE FALSE
-  return false;
-}
-
-  // Normal Başlatma
-  chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
+  // Normal Başlatma (Herhangi bir IPC engeline takılmaksızın doğrudan storage okunur)
+  chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar'], (result) => {
     if (result.roomId) {
-      // Film dışı sayfalarda (Vercel, GitHub vb.) sohbet panelini KESİNLİKLE ÇİZME!
-      const isMoviePage = checkIsMoviePage();
-      if (!isMoviePage) {
-        console.log(`[FilmSync İzolasyon] Film dışı sayfa (${window.location.hostname}) tespit edildi. Panel engelleniyor.`);
-        removeChatUI();
-        cleanupFirebase();
-        return;
-      }
-
       roomId = result.roomId;
       username = result.username || 'Anonim';
       password = result.password || '';
@@ -253,17 +162,14 @@ function checkIsMoviePage() {
       removeChatUI();
     }
     
-    // Netflix detay sayfaları için buton enjeksiyonunu başlat
     startButtonObserver();
   });
 }
 
-// Sayfa yenilenirken veya kapanırken durum güncellemesi tetikle (REST API üzerinden Service Worker ile çalışır)
+// Sayfa Yenilenirken Veya Kapanırken Bildir
 window.addEventListener('beforeunload', () => {
   if (roomId && isFirebaseInitialized && window === window.top) {
-    // Sayfa kapanırken oynatıcı eventlerinin tetiklenmesini önlemek için dinleyicileri derhal kaldır
     removeVideoListeners();
-
     chrome.runtime.sendMessage({
       type: 'page-unload',
       roomId: roomId,
@@ -273,39 +179,28 @@ window.addEventListener('beforeunload', () => {
   }
 });
 
-// Storage ve Popup Mesaj Dinleyicileri
+// Popup Mesaj Dinleyicisi
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'settings-updated' || message.type === 'force-sync') {
-    console.log('[FilmSync] Popup mesajı alındı, bağlantı ve Chat UI yenileniyor.');
+    console.log('[FilmSync] Popup mesajı alındı, bağlantı yenileniyor.');
     init();
     sendResponse({ status: 'success' });
   } else if (message.type === 'leave-room') {
-    console.log('[FilmSync] Odadan ayrıl mesajı alındı, leaveRoom tetikleniyor.');
+    console.log('[FilmSync] Odadan ayrıl mesajı alındı.');
     leaveRoom();
-    removeChatUI();
     sendResponse({ status: 'success' });
   }
 });
 
-// Canlı Depolama Değişikliği Dinleyicisi (Iframe'ler ve Üst Sayfa Eşleşmesi İçin)
+// Canlı Depolama Değişikliği Dinleyicisi
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'local') {
-    // Yalnızca roomId, username veya password değiştiğinde sıfırla, activeTabId değişikliklerinde kısırdöngüye girme
     if (changes.roomId || changes.username || changes.password) {
-      console.log('[FilmSync Storage] Oda ayarları değişti, bağlantı tazeleniyor.');
-      
+      console.log('[FilmSync Storage] Depolama değişti, arayüz güncelleniyor.');
       cleanupFirebase();
       isFirebaseInitialized = false;
       
-      chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
-        const isMoviePage = checkIsMoviePage();
-        if (!isMoviePage) {
-          console.log(`[FilmSync İzolasyon Storage] Film dışı sayfa (${window.location.hostname}) tespit edildi. Panel kaldırılıyor.`);
-          removeChatUI();
-          cleanupFirebase();
-          return;
-        }
-
+      chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar'], (result) => {
         roomId = result.roomId;
         username = result.username || 'Anonim';
         password = result.password || '';
@@ -314,7 +209,6 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         if (result.userId) userId = result.userId;
 
         if (roomId) {
-          console.log(`[FilmSync Storage] Yeni oda bağlantısı tetikleniyor: ${roomId}`);
           initializeFirebase(firebaseConfig);
           if (window === window.top) {
             if (!document.getElementById('filmsync-root')) {
@@ -331,2014 +225,80 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   }
 });
 
-// Firebase SDK Başlatma
-function initializeFirebase(config) {
-  if (isFirebaseInitialized) return;
-  isFirebaseInitialized = true;
-
-  try {
-    if (!firebase.apps.length) {
-      firebase.initializeApp(config);
-    }
-    db = firebase.database();
-    
-    const roomRef = db.ref(`rooms/${roomId}`);
-    
-    roomRef.once('value').then((snapshot) => {
-      const roomData = snapshot.val();
-      const hasVideo = !!document.querySelector('video');
-      
-      if (roomData) {
-        if (roomData.password && roomData.password !== password) {
-          alert('[FilmSync Hata] Hatalı oda şifresi!');
-          removeChatUI();
-          cleanupFirebase();
-          return;
-        }
-        
-        // Eğer odaya giren kişi oda sahibi (host) ise ve geçerli bir video sayfasındaysa oda durumunu güncellesin.
-        // F5 ile yenilemelerde veya tekrar girişlerde mevcuttaki lastState durumunu sıfırlamak yerine koruyacağız!
-        // Sadece Firebase'de henüz lastState yoksa (veya url tanımsızsa) durum başlatılmalıdır.
-        if (roomData.hostId === userId && window === window.top && hasVideo) {
-          db.ref(`rooms/${roomId}/lastState`).once('value').then((stateSnap) => {
-            const currentState = stateSnap.val();
-            // Eğer Firebase'de zaten geçerli bir lastState varsa ve url bizim şu anki url ile aynıysa, sıfırlama yapma!
-            if (currentState && currentState.url === window.location.href && currentState.currentTime > 0) {
-              console.log('[FilmSync] Host yenileme algılandı, mevcut oda durumu korunuyor:', currentState);
-            } else {
-              // Oda yeni kuruluyorsa veya url değiştiyse durum güncellensin (sadece embed adresi değilse)
-              const validUrl = (!isEmbedUrl(window.location.href) && checkIsMoviePage()) ? window.location.href : (currentState?.url || '');
-              db.ref(`rooms/${roomId}/lastState`).update({
-                url: validUrl,
-                lastUpdated: firebase.database.ServerValue.TIMESTAMP,
-                senderId: userId
-              });
-            }
-          });
-        }
-      } else {
-        if (window === window.top) {
-          // Oda ilk kez kurulurken film sayfasının URL'sini anında veritabanına kaydet
-          const initialUrl = (!isEmbedUrl(window.location.href) && checkIsMoviePage()) ? window.location.href : '';
-          roomRef.set({
-            password: password,
-            hostId: userId,
-            hostOnly: false,
-            lastState: {
-              isPlaying: false,
-              currentTime: 0,
-              url: initialUrl,
-              senderId: userId,
-              lastUpdated: firebase.database.ServerValue.TIMESTAMP
-            }
-          });
-        }
-      }
-      
-      const userRef = db.ref(`rooms/${roomId}/users/${userId}`);
-      userRef.set({ username, lastActive: firebase.database.ServerValue.TIMESTAMP, isBuffering: false, avatar: selectedAvatar });
-      userRef.onDisconnect().remove();
-      
-      // Sürekli "odaya katıldı" yazmasını önlemek için bellek içi Set ve sessionStorage çift kontrolü
-      const sessionKey = `joined_${roomId}`;
-      if (window === window.top && !joinedSystemMessageSentRooms.has(roomId) && !sessionStorage.getItem(sessionKey)) {
-        joinedSystemMessageSentRooms.add(roomId);
-        sessionStorage.setItem(sessionKey, 'true');
-        sendSystemMessage(`${username} odaya katıldı.`);
-      }
-      
-      setupFirebaseListeners();
-      forceSync();
-      setTimeout(() => {
-        isFirstSync = false;
-        console.log('[FilmSync] İlk senkronizasyon kilidi zaman aşımıyla kaldırıldı.');
-      }, 1500);
-    }).catch(err => {
-      console.error('[FilmSync] Firebase bağlantı hatası:', err);
-    });
-
-  } catch (err) {
-    console.error('[FilmSync] Firebase başlatılamadı:', err);
-  }
-}
-
-
-// Firebase Olay Dinleyicileri
-function setupFirebaseListeners() {
-  if (!db) return;
-
-  // Host Bilgilerini Dinle
-  db.ref(`rooms/${roomId}/hostId`).on('value', (snap) => {
-    hostId = snap.val();
-  });
-  db.ref(`rooms/${roomId}/hostOnly`).on('value', (snap) => {
-    hostOnly = snap.val();
-  });
-
-  // 1. Medya Durumunu ve Canlı Film/Bölüm Yönlendirmesini Dinle
-  db.ref('.info/serverTimeOffset').on('value', (snap) => {
-    serverTimeOffset = snap.val() || 0;
-  });
-
-  db.ref(`rooms/${roomId}/lastState`).on('value', (snapshot) => {
-    const state = snapshot.val();
-    if (!state) return;
-
-    // Canlı Film/Bölüm Değişimi Bildirimi (Oda yeni film veya bölüm açtığında sağ üstte kapatılabilir kart göster)
-    if (state.url && state.url !== window.location.href && !isEmbedUrl(state.url)) {
-      showMovieRedirectBanner(state.url);
-    }
-
-    if (state.senderId === userId) return;
-
-    if (isSyncing) {
-      // Kilit aktifken gelen son durumu sıraya al (yutulmasını önle)
-      pendingState = state;
-      return;
-    }
-
-    applyRemoteState(state);
-  });
-
-  // 2. Sohbet Mesajlarını Dinle
-  db.ref(`rooms/${roomId}/messages`).limitToLast(50).off();
-  db.ref(`rooms/${roomId}/messages`).limitToLast(50).on('child_added', (snapshot) => {
-    const msg = snapshot.val();
-    const key = snapshot.key;
-    if (!msg || renderedMessageKeys.has(key)) return;
-    renderedMessageKeys.add(key);
-
-    appendMessage({ ...msg, timestamp: msg.timestamp || Date.now() });
-
-    // Bildirim Toast'u (Panel kapalıyken veya idle nedeniyle gizlenmişken tetiklenir)
-    const msgAge = Date.now() - (msg.timestamp || 0);
-    if (msgAge < 10000 && !msg.isSystem && msg.username !== username) {
-      const isPanelActive = chatPanel && chatPanel.classList.contains('active');
-      const isPanelHidden = chatPanel && chatPanel.style.opacity === '0';
-      if (!isPanelActive || isPanelHidden) {
-        showNotificationToast(msg.username, msg.message);
-      }
-    }
-  });
-
-  // 3. Aktif Kullanıcıları ve Buffering Durumlarını Dinle
-  if (window === window.top) {
-    db.ref(`rooms/${roomId}/users`).on('value', (snapshot) => {
-      const usersData = snapshot.val();
-      const usersList = [];
-      const bufferingUsers = [];
-
-      if (usersData) {
-        Object.values(usersData).forEach(u => {
-          if (u.username) {
-            usersList.push(u);
-            if (u.isBuffering) bufferingUsers.push(u.username);
-          }
-        });
-      }
-      updateUsersDisplay(usersList);
-
-      // Buffering Paneli Yönetimi
-      const bufferIndicator = document.getElementById('filmsyncBufferingIndicator');
-      const bufferText = document.getElementById('filmsyncBufferingText');
-      if (bufferIndicator && bufferText) {
-        if (bufferingUsers.length > 0) {
-          bufferIndicator.classList.add('active');
-          bufferText.textContent = `${bufferingUsers.join(', ')} yükleniyor (buffering)...`;
-        } else {
-          bufferIndicator.classList.remove('active');
-        }
-      }
-    });
-  }
-
-  // 4. Reaksiyon Emojilerini Dinle
-  db.ref(`rooms/${roomId}/reactions`).limitToLast(5).on('child_added', (snapshot) => {
-    const data = snapshot.val();
-    if (!data) return;
-    if (Date.now() - data.timestamp < 5000) {
-      spawnFlyingEmoji(data.emoji);
-    }
-  });
-
-  // 5. 15 Saniyelik Canlı Kalma (Heartbeat) Servisi - Hayalet Üye Engelleme
-  if (window.filmsyncHeartbeat) clearInterval(window.filmsyncHeartbeat);
-  window.filmsyncHeartbeat = setInterval(() => {
-    if (db && roomId && userId) {
-      db.ref(`rooms/${roomId}/users/${userId}`).update({
-        lastActive: Date.now()
-      }).catch(e => {});
-    }
-  }, 15000);
-}
-
-// Video elementinin hazır olup olmadığını sorgulayan ve bekleyen mekanizma
-function ensureVideoReady(callback, retriesLeft = 10) {
-  const activeVideo = document.querySelector('video');
-  if (activeVideo) videoElement = activeVideo;
-
-  if (videoElement) {
-    callback(true);
-  } else if (retriesLeft > 0) {
-    console.log(`[FilmSync] Video elementinin hazır olması bekleniyor... Kalan deneme: ${retriesLeft}`);
-    setTimeout(() => {
-      ensureVideoReady(callback, retriesLeft - 1);
-    }, 300);
-  } else {
-    console.log('[FilmSync] Video elementi zaman aşımına uğradı veya bulunamadı.');
-    callback(false);
-  }
-}
-
-// Uzak Durumu Videoya Uygula
-function applyRemoteState(state) {
-  if (!state) return;
-  
-  // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
-  if (state.url && state.url !== window.location.href && window === window.top) {
-    showMovieRedirectNotification(state.url);
-    return;
-  }
-
-  ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) {
-      releaseSyncLock();
-      return;
-    }
-
-    setSyncLock(1000);
-    try {
-      const currentServerTime = Date.now() + serverTimeOffset;
-      const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
-      const targetTime = state.currentTime + timeDiff;
-
-      let neededChange = false;
-
-      if (state.isPlaying && videoElement.paused) {
-        PlayerAdapter.seek(targetTime);
-        PlayerAdapter.play();
-        neededChange = true;
-      } else if (!state.isPlaying && !videoElement.paused) {
-        PlayerAdapter.seek(state.currentTime);
-        PlayerAdapter.pause();
-        neededChange = true;
-      } else if (Math.abs(videoElement.currentTime - targetTime) > 1.5) {
-        PlayerAdapter.seek(targetTime);
-        neededChange = true;
-      }
-      
-      // Eğer müdahale gerekmediyse kilitleri hemen aç, 1000ms boşuna bekleme!
-      if (!neededChange) {
-        releaseSyncLock();
-        if (pendingState) {
-          const nextState = pendingState;
-          pendingState = null;
-          applyRemoteState(nextState);
-        }
-        return;
-      }
-    } catch (e) {
-      console.error('[FilmSync] Medya eşileme hatası:', e);
-      releaseSyncLock();
-    }
-  });
-}
-
-// Zorla Senkronize Et
-function forceSync() {
-  if (!db || !roomId) return;
-  db.ref(`rooms/${roomId}/lastState`).once('value').then((snapshot) => {
-    const state = snapshot.val();
-    if (!state) return;
-
-    // Yönlendirme bildirimi (Eğer veritabanındaki URL ile mevcut URL farklıysa ve üst penceredeysek, yönlendirme bildirimini göster)
-    if (state.url && state.url !== window.location.href && window === window.top) {
-      showMovieRedirectNotification(state.url);
-      return;
-    }
-
-    ensureVideoReady((isReady) => {
-      if (!isReady || !videoElement) {
-        isFirstSync = false;
-        return;
-      }
-
-      isSyncing = true;
-      try {
-        const currentServerTime = Date.now() + serverTimeOffset;
-        const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
-        const targetTime = state.currentTime + timeDiff;
-
-        PlayerAdapter.seek(targetTime);
-        if (state.isPlaying) {
-          PlayerAdapter.play();
-        } else {
-          PlayerAdapter.pause();
-        }
-      } catch (e) {
-        console.error(e);
-      }
-      setTimeout(() => { 
-        isSyncing = false; 
-        isFirstSync = false; // İlk senkronizasyon kilidini kaldır
-        console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
-      }, 2000);
-    });
-  });
-}
-
-// Dahili Firebase Dinleyici Temizleme (Sadece listener kapatır, odadan ayrıldı mesajı atmaz)
-function cleanupFirebase() {
-  if (db && roomId) {
-    try {
-      db.ref(`rooms/${roomId}/lastState`).off();
-      db.ref(`rooms/${roomId}/messages`).off();
-      db.ref(`rooms/${roomId}/users`).off();
-      db.ref(`rooms/${roomId}/reactions`).off();
-    } catch (e) {
-      console.error('[FilmSync] Firebase dinleyici temizleme hatası:', e);
-    }
-    renderedMessageKeys.clear();
-  }
-}
-
-// Kullanıcının Gerçekten Odadan Ayrılması (Oda silinmez, açık odalar listesinde 24 saat kalır)
-function leaveRoom() {
-  if (db && roomId && userId) {
-    if (window === window.top) {
-      sendSystemMessage(`${username} odadan ayrıldı.`);
-    }
-    
-    db.ref(`rooms/${roomId}/users/${userId}`).remove().catch(err => console.error('[FilmSync] User remove hatası:', err));
-    cleanupFirebase();
-    
-    // UI'ı ekrandan tamamen kaldır (Phantom mesaj kutusu sorununu çözer)
-    removeChatUI();
-  }
-}
-
-// Medya Olayını Gönderme (Throttle & Spam Koruma Katmanı)
-let lastSentMediaState = { isPlaying: null, currentTime: -1, timestamp: 0 };
-let lastSentServerTime = 0;
-
-function sendMediaEvent(isPlaying, currentTime, isSeek = false) {
-  if (!db || !roomId || isSyncing) return;
-  isFirstSync = false;
-  
-  // Herhangi bir yetki kısıtlaması yok: Tüm kullanıcılar tam yetkiye sahiptir.
-
-  // Video sayfası olmayan sayfalardan veritabanına play/pause/seek yazılmasını engelle
-  const activeVideo = document.querySelector('video');
-  if (!activeVideo) return;
-
-  // Video henüz yüklenmediyse (hazır değilse) veya süresi tanımsız ise gönderme
-  if (activeVideo.readyState < 1 || isNaN(activeVideo.duration) || activeVideo.duration === 0) return;
-
-  // MÜKERRER MESAJ VE EVENT SPAM KORUMASI:
-  const now = Date.now();
-  const isSameState = (lastSentMediaState.isPlaying === isPlaying);
-  const timeDiff = Math.abs(lastSentMediaState.currentTime - currentTime);
-  const elapsed = now - lastSentMediaState.timestamp;
-
-  // Aynı medya durumu 2.5 saniye içinde tekrar geldiyse ve zaman farkı 1.5 sn'den azsa atla
-  // Ancak isSeek (sarma) olayı ise mutlaka gönder
-  if (!isSeek && isSameState && timeDiff < 1.5 && elapsed < 2500) {
-    return;
-  }
-
-  lastSentMediaState = { isPlaying, currentTime, timestamp: now };
-  lastSentServerTime = Date.now() + serverTimeOffset;
-
-  const updatePayload = {
-    isPlaying,
-    currentTime,
-    senderId: userId,
-    lastUpdated: firebase.database.ServerValue.TIMESTAMP
-  };
-
-  // URL güncelleme yetkisi: Tüm kullanıcılar yeni film/bölüm açabilir ve odayı senkronize edebilir
-  if (window === window.top && !isEmbedUrl(window.location.href)) {
-    updatePayload.url = window.location.href;
-  }
-
-  db.ref(`rooms/${roomId}/lastState`).update(updatePayload).then(() => {
-    const formattedTime = formatTime(currentTime);
-    let msgText = '';
-    
-    if (isSeek) {
-      msgText = `${username} filmi ${formattedTime} süresine sardı.`;
-    } else {
-      msgText = isPlaying 
-        ? `${username} filmi başlattı. (Kaldığı yer: ${formattedTime})`
-        : `${username} filmi duraklattı.`;
-    }
-    
-    // Yalnızca anlamlı durum değişikliklerinde sistem mesajı gönder
-    sendSystemMessage(msgText);
-  }).catch(err => console.error('[FilmSync] Medya durum yazma hatası:', err));
-}
-
-// Videolu Sayfalarda UI Motoru
-function startVideoTracking() {
-  if (window.filmsyncVideoTrackingInterval) clearInterval(window.filmsyncVideoTrackingInterval);
-  window.filmsyncVideoTrackingInterval = setInterval(() => {
-    const activeVideo = document.querySelector('video');
-    if (activeVideo && activeVideo !== videoElement) {
-      removeVideoListeners();
-      videoElement = activeVideo;
-      setupVideoListeners();
-      
-      console.log('[FilmSync] Video tespit edildi. Eşitleme yapılıyor.');
-      forceSync();
-
-      // Arayüz oluştur (Sadece top window UI enjekte etsin, iframe'ler UI oluşturmasın!)
-      if (!document.getElementById('filmsync-root') && window === window.top) {
-        createChatUI();
-        startUIKeeper();
-      }
-      
-      // Iframe de olsa Firebase'i başlatsın
-      if (window !== window.top) {
-        initializeFirebase(firebaseConfig);
-      }
-    }
-  }, 1000);
-}
-
-// Akıllı Eşitleme ve Sağlık Denetleyicisi (Heartbeat & Auto-Sync)
-function startDriftCorrection() {
-  if (window.filmsyncDriftInterval) clearInterval(window.filmsyncDriftInterval);
-  window.filmsyncDriftInterval = setInterval(() => {
-    if (!db || !roomId || !videoElement || isSyncing) return;
-    if (videoElement.readyState < 3) return; // Oynatıcı hazır değilse bekle
-
-    db.ref(`rooms/${roomId}/lastState`).once('value').then((snapshot) => {
-      const state = snapshot.val();
-      if (!state) return;
-
-      // 1. EĞER SON DURUMU BEN GÖNDERMİŞSEM (Lider Benim): Firebase'deki durumu periyodik güncelle (Heartbeat)
-      // İlk başta state.senderId boşsa ve host isem ben devralırım.
-      if (state.senderId === userId || (!state.senderId && userId === hostId)) {
-        if (!videoElement.paused) {
-          // RACE CONDITION KORUMASI: Başkasının tam o anda gönderdiği manuel komutu ezmemek için Transaction kullanıyoruz!
-          db.ref(`rooms/${roomId}/lastState`).transaction((currentState) => {
-            if (currentState && (currentState.senderId === userId || (!currentState.senderId && userId === hostId))) {
-              currentState.currentTime = videoElement.currentTime;
-              currentState.isPlaying = true;
-              currentState.lastUpdated = firebase.database.ServerValue.TIMESTAMP;
-              return currentState;
-            }
-            return; // Liderlik benden çıktıysa işlemi iptal et, başkasının komutunu ezme!
-          });
-        }
-        return;
-      }
-
-      // 2. EĞER BEN LİDER DEĞİLSEM (Son Durumu Başkası Göndermişse): Sapma varsa otomatik düzelt
-      if (isSyncing) return;
-
-      // EĞER ben daha yeni (son 3 saniye içinde) bilinçli bir eylem gönderdiysem, otomatik düzeltmeyi YUT!
-      // (Çünkü Firebase sunucusundan gelen yanıt veya .once cache'i henüz güncellenmemiş olabilir)
-      if (Date.now() - lastSentMediaState.timestamp < 3000) {
-        console.log('[FilmSync Auto-Sync] Yerel bir eylem yapıldığı için otomatik düzeltme ertelendi.');
-        return;
-      }
-
-      const currentServerTime = Date.now() + serverTimeOffset;
-      const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
-      const expectedTime = state.currentTime + timeDiff;
-      const drift = Math.abs(videoElement.currentTime - expectedTime);
-
-      const playStateMismatch = state.isPlaying !== !videoElement.paused;
-
-      if (playStateMismatch || drift > 2.5) {
-        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
-        isSyncing = true;
-        
-        PlayerAdapter.seek(expectedTime);
-        if (state.isPlaying && videoElement.paused) {
-          PlayerAdapter.play();
-        } else if (!state.isPlaying && !videoElement.paused) {
-          PlayerAdapter.pause();
-        }
-        
-        setTimeout(() => {
-          isSyncing = false;
-        }, 1500);
-      }
-    });
-  }, 4000);
-}
-
-function setupVideoListeners() {
-  if (!videoElement) return;
-  videoElement.addEventListener('play', handlePlayEvent);
-  videoElement.addEventListener('pause', handlePauseEvent);
-  videoElement.addEventListener('seeked', handleSeekEvent);
-  videoElement.addEventListener('waiting', handleWaitingEvent);
-  videoElement.addEventListener('playing', handlePlayingEvent);
-}
-
-function removeVideoListeners() {
-  if (!videoElement) return;
-  videoElement.removeEventListener('play', handlePlayEvent);
-  videoElement.removeEventListener('pause', handlePauseEvent);
-  videoElement.removeEventListener('seeked', handleSeekEvent);
-  videoElement.removeEventListener('waiting', handleWaitingEvent);
-  videoElement.removeEventListener('playing', handlePlayingEvent);
-}
-
-function handlePlayEvent(e) {
-  if (isSyncing) return;
-  isFirstSync = false;
-  sendMediaEvent(true, videoElement.currentTime);
-}
-
-function handlePauseEvent(e) {
-  if (isSyncing) return;
-  isFirstSync = false;
-  sendMediaEvent(false, videoElement.currentTime);
-}
-
-function handleSeekEvent(e) {
-  if (isSyncing) return;
-  isFirstSync = false;
-  sendMediaEvent(!videoElement.paused, videoElement.currentTime, true);
-}
-
-function handleWaitingEvent() {
-  if (!db || !roomId || !userId) return;
-  db.ref(`rooms/${roomId}/users/${userId}`).update({ isBuffering: true });
-}
-
-function handlePlayingEvent() {
-  if (!db || !roomId || !userId) return;
-  db.ref(`rooms/${roomId}/users/${userId}`).update({ isBuffering: false });
-}
-
-// --- 🎨 TELEPARTY UYUMLU DİKEY SOHBET VE KONTROL PANELİ ---
-let reactionContainer = null;
-
-function createChatUI() {
-  if (document.getElementById('filmsync-root')) return;
-
-  const root = document.createElement('div');
-  root.id = 'filmsync-root';
-  root.setAttribute('style', [
-    'position: fixed',
-    'top: 0',
-    'left: 0',
-    'width: 100%',
-    'height: 100%',
-    'z-index: 2147483640',
-    'pointer-events: none',
-    'font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif'
-  ].join(' !important; ') + ' !important;');
-
-  const style = document.createElement('style');
-  style.textContent = `
-    /* Mini Dikey Araç Çubuğu (Mini-Toolbar) */
-    #filmsync-mini-toolbar {
-      position: fixed !important;
-      right: 12px !important;
-      top: 25% !important;
-      width: 44px;
-      background: rgba(20, 20, 20, 0.85) !important;
-      backdrop-filter: blur(20px) !important;
-      -webkit-backdrop-filter: blur(20px) !important;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 22px;
-      padding: 6px 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      z-index: 2147483647 !important;
-      pointer-events: auto !important;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease !important;
-    }
-    #filmsync-mini-toolbar.panel-active {
-      right: 282px !important; /* Panel genişliği (270px) + boşluk */
-    }
-    .filmsync-tool-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: none;
-      background: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      position: relative;
-      transition: all 0.2s ease;
-    }
-    .filmsync-tool-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      transform: scale(1.08);
-    }
-    .filmsync-tool-btn.tp-logo {
-      background: linear-gradient(135deg, #e50914, #ff3d47) !important;
-      box-shadow: 0 4px 12px rgba(229, 9, 20, 0.4);
-    }
-    .filmsync-tool-btn.tp-logo svg {
-      fill: #fff !important;
-    }
-    .filmsync-tool-btn svg {
-      width: 18px;
-      height: 18px;
-      fill: #ccc;
-      transition: fill 0.2s;
-    }
-    .filmsync-tool-btn:hover svg {
-      fill: #fff;
-    }
-    .filmsync-tool-btn.exit-btn:hover {
-      background: rgba(229, 9, 20, 0.2);
-    }
-    .filmsync-tool-btn.exit-btn:hover svg {
-      fill: #e50914;
-    }
-    
-    /* TP Logosu Kırmızı Ripple Efekti */
-    @keyframes red-ripple {
-      0% {
-        box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.8), 0 0 0 0 rgba(229, 9, 20, 0.5);
-      }
-      100% {
-        box-shadow: 0 0 0 15px rgba(229, 9, 20, 0), 0 0 0 30px rgba(229, 9, 20, 0);
-      }
-    }
-    .filmsync-tool-btn.tp-logo.clicked {
-      animation: red-ripple 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards !important;
-    }
-    
-    /* Araç İpucu (Tooltip) */
-    .filmsync-tool-btn::after {
-      content: attr(data-tooltip);
-      position: absolute;
-      right: 48px;
-      top: 50%;
-      transform: translateY(-50%) scale(0.95);
-      background: rgba(10, 10, 10, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #fff;
-      padding: 5px 10px;
-      border-radius: 6px;
-      font-size: 12px !important;
-      white-space: nowrap;
-      pointer-events: none;
-      opacity: 0;
-      transition: all 0.15s ease;
-    }
-    .filmsync-tool-btn:hover::after {
-      opacity: 1;
-      transform: translateY(-50%) scale(1);
-    }
-
-    /* Dikey Sohbet Paneli (Sidebar) & Font İzolasyonu */
-    #filmsync-chat-panel * {
-      box-sizing: border-box !important;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-    }
-    #filmsync-chat-panel {
-      position: fixed !important;
-      top: 0 !important;
-      right: 0 !important;
-      transform: translateX(280px) !important;
-      width: 270px;
-      height: 100%;
-      background: rgba(15, 15, 15, 0.65) !important;
-      backdrop-filter: blur(20px) saturate(120%) !important;
-      -webkit-backdrop-filter: blur(20px) saturate(120%) !important;
-      border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease !important;
-      will-change: transform;
-      z-index: 2147483646 !important;
-      box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6);
-      pointer-events: auto !important;
-      font-size: 14px !important;
-    }
-    #filmsync-chat-panel.active {
-      transform: translateX(0) !important;
-    }
-
-    /* Header Bileşenleri */
-    .filmsync-header {
-      padding: 16px 15px;
-      background: rgba(20, 20, 20, 0.4) !important;
-      backdrop-filter: blur(10px) !important;
-      -webkit-backdrop-filter: blur(10px) !important;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .filmsync-header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .filmsync-header-title {
-      font-size: 16px !important;
-      font-weight: 800;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .filmsync-header-title span {
-      background: linear-gradient(135deg, #e50914, #ff3d47);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .filmsync-premium-badge {
-      font-size: 10px !important;
-      font-weight: 700;
-      background: #e1b12c;
-      color: #000;
-      padding: 2px 6px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-    .filmsync-premium-badge:hover {
-      opacity: 0.9;
-    }
-    .filmsync-close-btn {
-      background: transparent;
-      border: none;
-      color: #aaa;
-      cursor: pointer;
-      font-size: 22px !important;
-      line-height: 1;
-      transition: color 0.2s;
-    }
-    .filmsync-close-btn:hover {
-      color: #fff;
-    }
-    .filmsync-users {
-      font-size: 12px !important;
-      font-weight: 500;
-      color: #aaa;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .filmsync-users-dot {
-      width: 8px;
-      height: 8px;
-      background-color: #2ed573;
-      border-radius: 50%;
-      display: inline-block;
-      box-shadow: 0 0 8px #2ed573;
-    }
-
-    /* Mesaj Listesi */
-    #filmsync-messages {
-      flex: 1;
-      padding: 20px 15px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      background: #141414;
-    }
-    #filmsync-messages::-webkit-scrollbar {
-      width: 6px;
-    }
-    #filmsync-messages::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
-    }
-
-    .filmsync-msg-row {
-      display: flex;
-      flex-direction: column;
-      max-width: 82%;
-    }
-    .filmsync-msg-row.self { align-self: flex-end; }
-    .filmsync-msg-row.other { align-self: flex-start; }
-    .filmsync-msg-row.system { align-self: center; max-width: 90%; }
-
-    .filmsync-msg-sender {
-      font-size: 12px !important;
-      color: #888 !important;
-      margin-bottom: 4px !important;
-      margin-left: 6px !important;
-      font-weight: 600 !important;
-    }
-    .filmsync-msg-row.self .filmsync-msg-sender {
-      text-align: right !important;
-      margin-right: 6px !important;
-    }
-
-    .filmsync-msg-bubble {
-      padding: 10px 14px !important;
-      border-radius: 14px !important;
-      font-size: 14px !important;
-      line-height: 1.45 !important;
-      word-break: break-word !important;
-      color: #fff !important;
-    }
-    .filmsync-msg-row.self .filmsync-msg-bubble {
-      background: #e50914 !important;
-      border-bottom-right-radius: 3px !important;
-      box-shadow: 0 4px 12px rgba(229, 9, 20, 0.25) !important;
-    }
-    .filmsync-msg-row.other .filmsync-msg-bubble {
-      background: #2f2f2f !important;
-      border-bottom-left-radius: 3px !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-    }
-    .filmsync-msg-row.system .filmsync-msg-bubble {
-      background: transparent !important;
-      border: none !important;
-      color: #e1b12c !important;
-      font-size: 12px !important;
-      text-align: center !important;
-      font-style: italic !important;
-      box-shadow: none !important;
-      padding: 4px !important;
-    }
-
-    /* Buffering Göstergesi */
-    .filmsync-buffering-indicator {
-      font-size: 12px !important;
-      color: #aaa;
-      padding: 4px 15px;
-      background: rgba(229, 9, 20, 0.15);
-      border-top: 1px solid rgba(229, 9, 20, 0.3);
-      display: none;
-      align-items: center;
-      gap: 6px;
-    }
-    .filmsync-buffering-indicator.active {
-      display: flex;
-    }
-    .filmsync-spinner {
-      width: 12px;
-      height: 12px;
-      border: 2px solid rgba(255,255,255,0.2);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: fs-spin 0.8s linear infinite;
-    }
-
-    /* Reaksiyon Emojileri Barı */
-    .filmsync-reaction-bar {
-      display: flex;
-      justify-content: space-around;
-      padding: 8px 10px;
-      background: rgba(20, 20, 20, 0.4) !important;
-      backdrop-filter: blur(10px) !important;
-      -webkit-backdrop-filter: blur(10px) !important;
-      border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
-    }
-    .filmsync-react-btn {
-      font-size: 18px !important;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      transition: transform 0.15s ease;
-      padding: 4px;
-    }
-    .filmsync-react-btn:hover {
-      transform: scale(1.3) translateY(-2px);
-    }
-
-    /* Mesaj Giriş Alanı */
-    .filmsync-input-area {
-      padding: 14px 15px 20px 15px;
-      background: rgba(20, 20, 20, 0.4) !important;
-      backdrop-filter: blur(10px) !important;
-      -webkit-backdrop-filter: blur(10px) !important;
-      border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-      display: flex;
-      gap: 8px;
-    }
-    .filmsync-input-area input {
-      flex: 1;
-      padding: 11px 14px;
-      background: #2f2f2f !important;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 20px;
-      color: #fff;
-      font-size: 13px !important;
-      outline: none;
-      transition: all 0.2s ease;
-    }
-    .filmsync-input-area input:focus {
-      border-color: #e50914;
-      background: #3a3a3a !important;
-      box-shadow: 0 0 10px rgba(229, 9, 20, 0.2);
-    }
-    .filmsync-send-btn {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: #e50914;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: #fff;
-      font-size: 14px !important;
-      transition: all 0.2s;
-    }
-    .filmsync-send-btn:hover {
-      background: #ff2d38;
-      box-shadow: 0 0 10px rgba(229, 9, 20, 0.4);
-    }
-    .filmsync-send-btn svg {
-      width: 16px;
-      height: 16px;
-      fill: #fff;
-      margin-left: 2px;
-    }
-
-    /* Uçan Emojiler Animasyon Alanı */
-    #filmsync-reaction-layer {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 2147483645 !important;
-      overflow: hidden;
-    }
-    .flying-emoji {
-      position: absolute;
-      bottom: -50px;
-      font-size: 32px !important;
-      animation: flyUp 3.5s cubic-bezier(0.075, 0.82, 0.165, 1) forwards;
-      opacity: 0.9;
-    }
-
-    /* Toast Bildirim */
-    .filmsync-toast {
-      position: fixed !important;
-      top: 20px !important;
-      right: 20px !important;
-      transform: translateX(340px) !important;
-      width: 280px;
-      background: rgba(20, 20, 20, 0.95) !important;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 12px;
-      padding: 14px 18px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      z-index: 2147483647 !important;
-      cursor: pointer;
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-      will-change: transform;
-      pointer-events: auto !important;
-    }
-    .filmsync-toast.active { transform: translateX(0) !important; }
-    .filmsync-toast-header {
-      font-size: 11px !important;
-      font-weight: 700;
-      color: #e50914;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .filmsync-toast-body {
-      font-size: 13px !important;
-      color: #fff;
-    }
-
-    /* Sayfa Daraltma & Kaydırma Kuralları */
-    body.filmsync-sidebar-open {
-      width: calc(100% - 270px) !important;
-      transition: width 0.3s ease;
-    }
-    /* Netflix, YouTube, Disney+ Player İzolasyonları */
-    body.filmsync-sidebar-open .watch-video,
-    body.filmsync-sidebar-open .nf-player-container,
-    body.filmsync-sidebar-open #ytd-player,
-    body.filmsync-sidebar-open .html5-video-player,
-    body.filmsync-sidebar-open disney-web-player,
-    body.filmsync-sidebar-open .btm-media-player,
-    body.filmsync-sidebar-open .media-client-container {
-      width: 100% !important;
-      max-width: 100% !important;
-      left: 0 !important;
-    }
-
-    @keyframes fs-spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    @keyframes flyUp {
-      0% {
-        transform: translateY(0) rotate(0deg) scale(0.5);
-        opacity: 0;
-      }
-      10% {
-        opacity: 1;
-        transform: translateY(-100px) rotate(15deg) scale(1.1);
-      }
-      90% {
-        opacity: 0.8;
-      }
-      100% {
-        transform: translateY(-100vh) rotate(-15deg) scale(0.9);
-        opacity: 0;
-      }
-    }
-  `;
-
-  root.innerHTML = `
-    <!-- Dikey Araç Çubuğu (Mini-Toolbar) -->
-    <div id="filmsync-mini-toolbar" class="panel-active">
-      <button class="filmsync-tool-btn tp-logo" data-tooltip="Evo & Beko Partisi">
-        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
-      </button>
-    </div>
-    
-    <!-- Sohbet Dikey Paneli (Sidebar) -->
-    <div id="filmsync-chat-panel" class="active">
-      <div class="filmsync-header">
-        <div class="filmsync-header-top">
-          <div class="filmsync-header-title">Evo & Beko<span>.</span>🍿</div>
-          <div class="filmsync-premium-badge">PREMIUM</div>
-          <button class="filmsync-close-btn" id="filmsyncCloseBtn">×</button>
-        </div>
-        <div class="filmsync-users" id="filmsyncUserList">
-          <span class="filmsync-users-dot"></span>
-          <span id="filmsyncUserListText">${username || 'Aktif Üye'} Online</span>
-        </div>
-      </div>
-
-      <div id="filmsync-messages"></div>
-      
-      <!-- Yükleniyor / Buffer Göstergesi -->
-      <div class="filmsync-buffering-indicator" id="filmsyncBufferingIndicator">
-        <div class="filmsync-spinner"></div>
-        <span id="filmsyncBufferingText">Birileri yükleniyor...</span>
-      </div>
-
-      <!-- Emoji Reaksiyon Barı -->
-      <div class="filmsync-reaction-bar">
-        <button class="filmsync-react-btn" data-emoji="👍">👍</button>
-        <button class="filmsync-react-btn" data-emoji="😮">😮</button>
-        <button class="filmsync-react-btn" data-emoji="😢">😢</button>
-        <button class="filmsync-react-btn" data-emoji="😂">😂</button>
-        <button class="filmsync-react-btn" data-emoji="🤯">🤯</button>
-        <button class="filmsync-react-btn" data-emoji="🔥">🔥</button>
-      </div>
-      
-      <!-- Mesaj Girişi -->
-      <div class="filmsync-input-area">
-        <input type="text" id="filmsyncMsgInput" placeholder="Mesaj yazın..." autocomplete="off">
-        <button class="filmsync-send-btn" id="filmsyncSendBtn">
-          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Reaksiyon Katmanı -->
-    <div id="filmsync-reaction-layer"></div>
-  `;
-
-  document.body.appendChild(root);
-  document.head.appendChild(style);
-
-  // Arayüz açıkken sayfa yerleşimini daralt
-  document.body.classList.add('filmsync-sidebar-open');
-
-  chatPanel = document.getElementById('filmsync-chat-panel');
-  messageInput = document.getElementById('filmsyncMsgInput');
-  messageList = document.getElementById('filmsync-messages');
-  userListDisplay = document.getElementById('filmsyncUserListText');
-  reactionContainer = document.getElementById('filmsync-reaction-layer');
-  const sendBtn = document.getElementById('filmsyncSendBtn');
-
-  // Input durumuna göre gönder butonu aktifliği
-  if (sendBtn && messageInput) {
-    sendBtn.disabled = true;
-    sendBtn.style.opacity = '0.4';
-    messageInput.addEventListener('input', () => {
-      const hasText = messageInput.value.trim().length > 0;
-      sendBtn.disabled = !hasText;
-      sendBtn.style.opacity = hasText ? '1' : '0.4';
-    });
-    messageInput.addEventListener('focus', () => {
-      isInputFocused = true;
-      showPanelAndToolbar();
-      resetIdleTimer(5000);
-    });
-    messageInput.addEventListener('blur', () => {
-      isInputFocused = false;
-      resetIdleTimer(3000);
-    });
-    messageInput.addEventListener('keydown', () => {
-      if (isInputFocused) {
-        resetIdleTimer(5000);
-      }
-    });
-  }
-
-  // Mini kapatma butonu
-  document.getElementById('filmsyncCloseBtn').addEventListener('click', toggleChatPanel);
-  
-  // TP Logosuna basınca kırmızı ripple dalgası tetikle ve paneli toggle et
-  const logoBtn = document.querySelector('.filmsync-tool-btn.tp-logo');
-  if (logoBtn) {
-    logoBtn.addEventListener('click', () => {
-      logoBtn.classList.remove('clicked');
-      void logoBtn.offsetWidth; // Reflow tetikle
-      logoBtn.classList.add('clicked');
-      toggleChatPanel();
-    });
-  }
-
-  // Gönderme olayları
-  sendBtn.addEventListener('click', sendChatMessage);
-  messageInput.addEventListener('keydown', (e) => {
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    if (e.key === 'Enter') {
-      sendChatMessage();
-    }
-  });
-
-  messageInput.addEventListener('keyup', (e) => {
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-  });
-
-  messageInput.addEventListener('keypress', (e) => {
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-  });
-
-  // Emoji reaksiyonları gönderme olayları
-  document.querySelectorAll('.filmsync-react-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const emoji = btn.getAttribute('data-emoji');
-      sendEmojiReaction(emoji);
-    });
-  });
-
-  document.addEventListener('keydown', handleGlobalEnterKey, true);
-
-  // Eğer kuyrukta birikmiş geçmiş mesajlar varsa onları anında render et!
-  if (messagesQueue.length > 0) {
-    console.log(`[Evo ve Beko Queue] Kuyrukta biriken ${messagesQueue.length} mesaj ekrana basılıyor.`);
-    messagesQueue.forEach(msg => appendMessage(msg));
-    messagesQueue = [];
-  }
-
-  // Eğer Firebase zaten kurulmuşsa, yeni DOM oluşturulduğu için geçmiş mesajları tekrar çekip render edelim!
-  if (db && roomId) {
-    renderedMessageKeys.clear();
-    db.ref(`rooms/${roomId}/messages`).limitToLast(50).once('value').then((snapshot) => {
-      const messages = snapshot.val();
-      if (messages) {
-        if (messageList) messageList.innerHTML = '';
-        Object.entries(messages).forEach(([key, msg]) => {
-          // child_added ile çakışmayı önlemek için renderedMessageKeys kontrolü ekle
-          if (!renderedMessageKeys.has(key)) {
-            renderedMessageKeys.add(key);
-            appendMessage({ ...msg, timestamp: msg.timestamp || Date.now() });
-          }
-        });
-      }
-    });
-  }
-}
-
-// Reaksiyon Gönderme (Firebase)
-function sendEmojiReaction(emoji) {
-  if (!db || !roomId) return;
-  db.ref(`rooms/${roomId}/reactions`).push({
-    emoji,
-    senderId: userId,
-    timestamp: firebase.database.ServerValue.TIMESTAMP
-  });
-}
-
-// Uçan Emoji Animasyonu Tetikleme
-function spawnFlyingEmoji(emoji) {
-  if (!reactionContainer) return;
-  
-  const el = document.createElement('div');
-  el.className = 'flying-emoji';
-  el.textContent = emoji;
-  
-  // Rastgele yatay pozisyon ve hafif rotasyon
-  const randomLeft = Math.random() * 80 + 10; // %10 - %90 arası
-  el.style.left = `${randomLeft}%`;
-  
-  reactionContainer.appendChild(el);
-  
-  // Animasyon bitiminde elementi temizle
-  setTimeout(() => el.remove(), 4000);
-}
-
-function stopAllTimers() {
-  if (window.filmsyncUiKeeperInterval) {
-    clearInterval(window.filmsyncUiKeeperInterval);
-    window.filmsyncUiKeeperInterval = null;
-  }
-  if (window.filmsyncVideoTrackingInterval) {
-    clearInterval(window.filmsyncVideoTrackingInterval);
-    window.filmsyncVideoTrackingInterval = null;
-  }
-  if (window.filmsyncDriftInterval) {
-    clearInterval(window.filmsyncDriftInterval);
-    window.filmsyncDriftInterval = null;
-  }
-}
-
-function startUIKeeper() {
-  if (window.filmsyncUiKeeperInterval) clearInterval(window.filmsyncUiKeeperInterval);
-  window.filmsyncUiKeeperInterval = setInterval(() => {
-    if (roomId && !document.getElementById('filmsync-root') && window === window.top) {
-      console.log('[FilmSync UI Keeper] Arayüz yenileniyor.');
-      createChatUI();
-    }
-  }, 2000);
-}
-
-function removeChatUI() {
-  stopAllTimers();
-  roomId = null;
-  chatPanel = null;
-  chatBtn = null;
-  chatCount = null;
-  const root = document.getElementById('filmsync-root');
-  if (root) root.remove();
-  document.body.classList.remove('filmsync-sidebar-open');
-  document.removeEventListener('keydown', handleGlobalEnterKey, true);
-}
-
-function toggleChatPanel() {
-  if (!chatPanel) return;
-
-  const miniToolbar = document.getElementById('filmsync-mini-toolbar');
-  chatPanel.classList.toggle('active');
-  
-  const isOpened = chatPanel.classList.contains('active');
-  const chatToggleBtn = document.getElementById('fs-tool-toggle-chat');
-
-  if (isOpened) {
-    document.body.classList.add('filmsync-sidebar-open');
-    if (miniToolbar) miniToolbar.classList.add('panel-active');
-    messageInput?.focus();
-    if (messageList) messageList.scrollTop = messageList.scrollHeight;
-    if (chatToggleBtn) {
-      chatToggleBtn.setAttribute('data-tooltip', 'Sohbeti Gizle');
-      chatToggleBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>';
-    }
-  } else {
-    document.body.classList.remove('filmsync-sidebar-open');
-    if (miniToolbar) miniToolbar.classList.remove('panel-active');
-    if (chatToggleBtn) {
-      chatToggleBtn.setAttribute('data-tooltip', 'Sohbeti Göster');
-      chatToggleBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>';
-    }
-  }
-  
-  // Oynatıcı boyutlandırmasını tetiklemek için resize olayı fırlat
-  window.dispatchEvent(new Event('resize'));
-}
-
-
-function handleGlobalEnterKey(e) {
-  const activeEl = document.activeElement;
-  const isInput = activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable;
-  if (isInput) return;
-
-  // 1. Enter tuşu ile paneli açma/kapatma
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    
-    if (chatPanel) {
-      toggleChatPanel();
-      if (chatPanel.classList.contains('active') && messageInput) {
-        messageInput.focus();
-      }
-    }
-    return;
-  }
-
-  // 2. Alfanümerik tuşlar ve Space (boşluk) tuşlarının yakalanması
-  const isAlphanumericOrSpace = (e.key.length === 1 || e.key === 'Spacebar' || e.key === ' ') && 
-                                 !e.ctrlKey && !e.metaKey && !e.altKey;
-
-  if (isAlphanumericOrSpace) {
-    // Oynatıcının kısayollarını tamamen bloke et!
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-
-    // Paneli aç (eğer açık değilse)
-    if (chatPanel && !chatPanel.classList.contains('active')) {
-      toggleChatPanel();
-    }
-
-    // Input alanına odaklan ve basılan karakteri yaz
-    if (messageInput) {
-      messageInput.focus();
-      const char = e.key === ' ' || e.key === 'Spacebar' ? ' ' : e.key;
-      messageInput.value += char;
-      messageInput.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  }
-}
-
-function sendChatMessage() {
-  const text = messageInput.value.trim();
-  if (!text || !db) return;
-
-  db.ref(`rooms/${roomId}/messages`).push({
-    username,
-    message: text,
-    timestamp: firebase.database.ServerValue.TIMESTAMP
-  });
-  messageInput.value = '';
-  
-  if (messageInput) {
-    messageInput.blur();
-  }
-  resetIdleTimer(5000);
-}
-
-function sendSystemMessage(text) {
-  if (!db || !roomId) return;
-  db.ref(`rooms/${roomId}/messages`).push({
-    username: 'Sistem',
-    message: text,
-    timestamp: firebase.database.ServerValue.TIMESTAMP,
-    isSystem: true
-  });
-}
-
-function appendMessage({ username: msgUser, message, isSystem, timestamp }) {
-  if (!messageList) {
-    messagesQueue.push({ username: msgUser, message, isSystem, timestamp });
-    return;
-  }
-
-  const row = document.createElement('div');
-  row.classList.add('filmsync-msg-row');
-
-  // Mesaj zamanını Türkçe formatta elde et
-  const dateObj = timestamp ? new Date(timestamp) : new Date();
-  const timeStr = dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-
-  if (isSystem) {
-    row.classList.add('system');
-    const systemBubble = document.createElement('div');
-    systemBubble.className = 'filmsync-msg-bubble';
-    systemBubble.textContent = message;
-    row.appendChild(systemBubble);
-  } else {
-    const isSelf = msgUser === username;
-    row.classList.add(isSelf ? 'self' : 'other');
-
-    const msgSender = document.createElement('div');
-    msgSender.className = 'filmsync-msg-sender';
-    msgSender.textContent = msgUser + ' ';
-
-    const timeSpan = document.createElement('span');
-    timeSpan.setAttribute('style', 'font-size: 0.65rem; color: #666; font-weight: normal; margin-left: 6px;');
-    timeSpan.textContent = timeStr;
-    msgSender.appendChild(timeSpan);
-
-    const msgBubble = document.createElement('div');
-    msgBubble.className = 'filmsync-msg-bubble';
-    msgBubble.textContent = message;
-
-    row.appendChild(msgSender);
-    row.appendChild(msgBubble);
-  }
-
-// Canlı Film / Yeni Bölüm Yönlendirme Bildirimi (Kapatılabilir Sağ Üst Toast)
-let lastNotifiedMovieUrl = null;
-
-function showMovieRedirectBanner(targetUrl) {
-  if (!targetUrl || isEmbedUrl(targetUrl) || targetUrl === window.location.href) return;
-  if (lastNotifiedMovieUrl === targetUrl) return;
-
-  lastNotifiedMovieUrl = targetUrl;
-
-  const existing = document.getElementById('filmsyncRedirectBanner');
-  if (existing) existing.remove();
-
-  const banner = document.createElement('div');
-  banner.id = 'filmsyncRedirectBanner';
-  banner.setAttribute('style', `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 2147483647;
-    background: linear-gradient(135deg, #1f1f1f, #141414);
-    border: 1px solid rgba(229, 9, 20, 0.7);
-    border-radius: 12px;
-    padding: 10px 14px;
-    color: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    font-size: 13px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(229, 9, 20, 0.3);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  `);
-
-  banner.innerHTML = `
-    <div style="font-size: 22px;">🎬</div>
-    <div style="display: flex; flex-direction: column; gap: 2px;">
-      <div style="font-weight: 700; color: #ff3d47; font-size: 12px;">Yeni Bölüm / Film Başlatıldı!</div>
-      <div style="font-size: 11px; color: #aaa;">Oda yeni bir içeriğe geçti. İzlemek için tıklayın.</div>
-    </div>
-    <button id="btnBannerGo" style="
-      background: linear-gradient(135deg, #e50914, #ff3d47);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 6px 12px;
-      font-weight: 700;
-      font-size: 11px;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(229,9,20,0.4);
-    ">İzle 🍿</button>
-    <button id="btnBannerClose" style="
-      background: transparent;
-      color: #888;
-      border: none;
-      font-size: 18px;
-      cursor: pointer;
-      line-height: 1;
-      padding: 0 4px;
-    ">×</button>
-  `;
-
-  document.body.appendChild(banner);
-
-  document.getElementById('btnBannerGo').addEventListener('click', () => {
-    window.location.href = targetUrl;
-  });
-
-  document.getElementById('btnBannerClose').addEventListener('click', () => {
-    banner.remove();
-  });
-}
-
-  messageList.appendChild(row);
-  messageList.scrollTop = messageList.scrollHeight;
-}
-
-function updateUsersDisplay(usersList) {
-  if (!userListDisplay) return;
-  userListDisplay.innerHTML = '';
-  
-  usersList.forEach(u => {
-    const userBadge = document.createElement('span');
-    userBadge.className = 'filmsync-user-badge';
-    userBadge.setAttribute('style', 'margin-right: 6px; margin-bottom: 4px; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.08); padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; color: #fff;');
-    
-    const avatarSpan = document.createElement('span');
-    avatarSpan.textContent = u.avatar || '🍿';
-    
-    const nameSpan = document.createElement('span');
-    nameSpan.textContent = u.username;
-    nameSpan.style.fontWeight = '600';
-    
-    userBadge.appendChild(avatarSpan);
-    userBadge.appendChild(nameSpan);
-    
-    if (u.isBuffering) {
-      const bufferDot = document.createElement('span');
-      bufferDot.setAttribute('style', 'width: 6px; height: 6px; background-color: #ff3d47; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px #ff3d47; margin-left: 2px;');
-      userBadge.appendChild(bufferDot);
-    }
-    
-    userListDisplay.appendChild(userBadge);
-  });
-}
-
-// --- 🔔 APPLE TARZI BİLDİRİM TOAST MOTORU ---
-function showNotificationToast(sender, text) {
-  const container = document.getElementById('filmsync-root') || document.body;
-
-  const toast = document.createElement('div');
-  toast.classList.add('filmsync-toast');
-  
-  const toastHeader = document.createElement('div');
-  toastHeader.className = 'filmsync-toast-header';
-  toastHeader.textContent = sender;
-
-  const toastBody = document.createElement('div');
-  toastBody.className = 'filmsync-toast-body';
-  toastBody.setAttribute('style', 'font-size: 0.95rem; line-height: 1.3; font-weight: 500;');
-  toastBody.textContent = text;
-
-  toast.appendChild(toastHeader);
-  toast.appendChild(toastBody);
-
-  container.appendChild(toast);
-  
-  setTimeout(() => {
-    toast.classList.add('active');
-  }, 50);
-
-  // Toast'a tıklanınca paneli aç ve toast'u kaldır
-  toast.addEventListener('click', () => {
-    toast.classList.remove('active');
-    setTimeout(() => toast.remove(), 400);
-    
-    // Eğer panel kapalıysa veya idle ile gizlendiyse aç
-    const toolbar = document.getElementById('filmsync-mini-toolbar');
-    const panel = document.getElementById('filmsync-chat-panel');
-    if (toolbar) {
-      toolbar.style.opacity = '1';
-      toolbar.style.pointerEvents = 'auto';
-    }
-    if (panel) {
-      panel.style.opacity = '1';
-      panel.style.pointerEvents = 'auto';
-      if (!panel.classList.contains('active')) {
-        toggleChatPanel();
-      }
-    }
-  });
-
-  // Mesaj uzunluğuna göre dinamik bekleme süresi (Minimum 5 saniye)
-  const duration = Math.max(5000, text.length * 100);
-
-  setTimeout(() => {
-    if (toast.parentNode) {
-      toast.classList.remove('active');
-      setTimeout(() => toast.remove(), 400);
-    }
-  }, duration);
-}
-
-// --- 🎬 YÖNLENDİRME BİLDİRİM TOASTI ---
-function showMovieRedirectNotification(targetUrl) {
-  if (isEmbedUrl(targetUrl)) {
-    console.log('[FilmSync] Hedef URL bir embed adresi olduğundan yönlendirme toastu engellendi:', targetUrl);
-    return;
-  }
-  // Eğer sayfada zaten video/film oynatıcısı varsa veya toast zaten açık ise gösterme
-  if (videoElement || document.querySelector('video')) {
-    console.log('[FilmSync] Sayfada zaten video/film oynatıcısı var, yeni film bildirim toastu atlanıyor.');
-    return;
-  }
-  if (document.getElementById('filmsync-redirect-toast')) return;
-
-  const container = document.getElementById('filmsync-root') || document.body;
-  const toast = document.createElement('div');
-  toast.id = 'filmsync-redirect-toast';
-  toast.classList.add('filmsync-toast');
-  toast.style.background = 'rgba(69, 243, 255, 0.2)';
-  toast.style.borderColor = '#45f3ff';
-  toast.style.position = 'relative'; // Kapatma butonu için relative
-  
-  // Kapatma Tuşu (X)
-  const closeBtn = document.createElement('span');
-  closeBtn.textContent = '✕';
-  closeBtn.setAttribute('style', 'position: absolute; top: 6px; right: 10px; color: #888; font-weight: bold; cursor: pointer; font-size: 0.8rem; z-index: 10;');
-  closeBtn.addEventListener('mouseover', () => closeBtn.style.color = '#fff');
-  closeBtn.addEventListener('mouseout', () => closeBtn.style.color = '#888');
-  closeBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); // Toast tıklama olayını engelle
-    toast.classList.remove('active');
-    setTimeout(() => toast.remove(), 400);
-  });
-  
-  const toastHeader = document.createElement('div');
-  toastHeader.className = 'filmsync-toast-header';
-  toastHeader.textContent = 'Yeni Film Akışı 🎬';
-
-  const toastBody = document.createElement('div');
-  toastBody.className = 'filmsync-toast-body';
-  toastBody.setAttribute('style', 'color: #45f3ff; font-weight: bold; cursor: pointer; padding-right: 15px;');
-  toastBody.textContent = 'Oda sahibi yeni bir film açtı. Katılmak için tıklayın! 🍿';
-
-  toast.appendChild(closeBtn);
-  toast.appendChild(toastHeader);
-  toast.appendChild(toastBody);
-
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.classList.add('active');
-  }, 50);
-
-  // 10 saniye sonra otomatik kaldır
-  const autoRemoveTimer = setTimeout(() => {
-    toast.classList.remove('active');
-    setTimeout(() => toast.remove(), 400);
-  }, 10000);
-
-  toast.addEventListener('click', () => {
-    clearTimeout(autoRemoveTimer);
-    toast.classList.remove('active');
-    setTimeout(() => toast.remove(), 400);
-    chrome.runtime.sendMessage({ type: 'redirect-tab', url: targetUrl });
-  });
-}
-
-// --- 📺 TAM EKRAN DESTEĞİ ---
+// Tam Ekran Dinleyicileri
 function setupFullscreenListener() {
-  const events = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
-  events.forEach(eventName => {
-    document.addEventListener(eventName, () => {
-      const fsElement = document.fullscreenElement || 
-                        document.webkitFullscreenElement || 
-                        document.mozFullScreenElement || 
-                        document.msFullscreenElement;
-
-      if (window !== window.top) {
-        // IFRAME BAĞLAMINDA (Dizipal, Vidmoly vb. player içi tam ekran)
-        if (fsElement) {
-          console.log('[FilmSync Iframe FS] Iframe tam ekran oldu, arayüz enjekte ediliyor.');
-          createChatUI();
-          
-          // Arayüzü tam ekrana geçen elementin içine taşı (video katmanının üstünde görünmesi için!)
-          const root = document.getElementById('filmsync-root');
-          if (root && fsElement && fsElement !== root) {
-            fsElement.appendChild(root);
-            root.style.position = 'absolute';
-            root.style.zIndex = '2147483647';
-          }
-          
-          // Firebase bağlantısını doğrula ve senkronizasyonu tetikle
-          initializeFirebase(firebaseConfig);
-        } else {
-          console.log('[FilmSync Iframe FS] Iframe tam ekrandan çıktı, arayüz siliniyor.');
-          removeChatUI();
-        }
-      } else {
-        // ANA SAYFA (TOP WINDOW) BAĞLAMINDA
-        const root = document.getElementById('filmsync-root');
-        if (!root) return;
-
-        const targetContainer = fsElement || document.body;
-        targetContainer.appendChild(root);
-        
-        console.log(`[FilmSync] Tam ekran: root → ${fsElement ? 'fullscreenElement' : 'body'}`);
-      }
-    });
-  });
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 }
 
-// --- ⚙️ AUTO-JOIN (DAVET LİNKİ) EKRAN EFEKTİ ---
-function showAutoJoinOverlay(roomName) {
-  const overlay = document.createElement('div');
-  overlay.id = 'filmsync-autojoin-overlay';
-  overlay.setAttribute('style', 'position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11, 12, 16, 0.9); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2147483647 !important; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;');
-
-  overlay.innerHTML = `
-    <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 10px;">FilmSync 🍿</div>
-    <div style="font-size: 1.2rem; color: #45f3ff; font-weight: 600; margin-bottom: 20px;">
-      "${roomName}" Odasına Katılınıyor...
-    </div>
-    <div style="width: 40px; height: 40px; border: 4px solid rgba(69, 243, 255, 0.1); border-top-color: #45f3ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-    <style>
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
-  `;
-  document.body.appendChild(overlay);
-}
-
-// --- 🏷️ İSİM PROMPT MODALI ---
-function showNamePromptModal(roomName, callback) {
-  if (document.getElementById('filmsync-name-prompt-modal')) return;
-
-  const modal = document.createElement('div');
-  modal.id = 'filmsync-name-prompt-modal';
-  modal.setAttribute('style', 'position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11, 12, 16, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 2147483647 !important; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;');
-
-  modal.innerHTML = `
-    <div style="width: 320px; background: rgba(31, 40, 51, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; color: #fff;">
-      <div style="font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; color: #fff;">FilmSync <span>Partisi</span> 🍿</div>
-      <div style="font-size: 0.85rem; color: #66fcf1; margin-bottom: 20px;">"${roomName}" odasına katılacaksınız.</div>
-      
-      <div style="text-align: left; margin-bottom: 15px;">
-        <label style="font-size: 0.75rem; text-transform: uppercase; color: #45f3ff; font-weight: 600; display: block; margin-bottom: 5px;">Adınız</label>
-        <input type="text" id="promptNameInput" placeholder="Kullanıcı adınızı yazın" style="width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 0.85rem; outline: none; transition: border 0.3s;" />
-      </div>
-      
-      <button id="promptJoinBtn" style="width: 100%; padding: 11px; border: none; border-radius: 8px; background: linear-gradient(135deg, #45f3ff, #66fcf1); color: #0b0c10; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: transform 0.2s;">Odaya Katıl</button>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  const nameInput = document.getElementById('promptNameInput');
-  const joinBtn = document.getElementById('promptJoinBtn');
-
-  nameInput.focus();
-
-  const handleJoin = () => {
-    const name = nameInput.value.trim();
-    if (!name) {
-      alert('Lütfen bir isim girin!');
-      return;
-    }
-    modal.remove();
-    callback(name);
-  };
-
-  joinBtn.addEventListener('click', handleJoin);
-  nameInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      handleJoin();
-    }
-  });
-}
-
-// --- 🎬 NETFLIX DETAY KARTLARINA "EVO & BEKO PARTİSİ BAŞLAT" BUTONU ENJEKSİYONU ---
-function injectNetflixStartButton() {
-  const buttonContainers = document.querySelectorAll('.previewModal--buttons, .jawbone-actions, .l-play-parent');
-  buttonContainers.forEach(container => {
-    if (container.querySelector('.filmsync-netflix-start-btn')) return;
-
-    const startBtn = document.createElement('button');
-    startBtn.className = 'filmsync-netflix-start-btn';
-    startBtn.setAttribute('style', `
-      background-color: #ff3d47;
-      background-image: linear-gradient(135deg, #e50914, #ff3d47);
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 4px;
-      font-weight: 800;
-      font-size: 0.95rem;
-      cursor: pointer;
-      margin-left: 10px;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
-      transition: all 0.2s ease;
-      font-family: inherit;
-    `);
-    startBtn.innerHTML = '<span>Evo & Beko Partisi Başlat</span> 🍿';
-
-    startBtn.addEventListener('mouseover', () => {
-      startBtn.style.transform = 'scale(1.04)';
-      startBtn.style.boxShadow = '0 6px 20px rgba(229, 9, 20, 0.6)';
-    });
-    startBtn.addEventListener('mouseout', () => {
-      startBtn.style.transform = 'scale(1)';
-      startBtn.style.boxShadow = '0 4px 15px rgba(229, 9, 20, 0.4)';
-    });
-
-    startBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const playBtn = container.querySelector('a[href*="/watch/"], button[aria-label*="Oynat"], button[aria-label*="Play"], .playLink');
-      if (playBtn) {
-        // 4 Harfli Oda Kodu üret
-        const generate4LetterCode = () => {
-          const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-          let result = '';
-          for (let i = 0; i < 4; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-          }
-          return result;
-        };
-        const randomRoomId = generate4LetterCode();
-        const randomUserId = 'user_' + Math.random().toString(36).substr(2, 9);
-
-        // Firebase üzerinde odayı anında başlat
-        if (!firebase.apps.length) {
-          firebase.initializeApp(firebaseConfig);
-        }
-        const tempDb = firebase.database();
-        
-        let playUrl = '';
-        if (playBtn.tagName === 'A' && playBtn.href) {
-          playUrl = playBtn.href;
-        } else {
-          // Play linki yoksa mevcut URL üzerinden /watch/ parametresi oluşturmaya çalış
-          const movieCard = container.closest('[id*="post-"], .card-container, .previewModal--wrapper, .jawbone-container');
-          const movieLink = movieCard?.querySelector('a[href*="/watch/"]');
-          playUrl = movieLink ? movieLink.href : window.location.href;
-        }
-
-        tempDb.ref(`rooms/${randomRoomId}`).set({
-          password: '',
-          hostId: randomUserId,
-          hostOnly: false,
-          lastState: {
-            isPlaying: true,
-            currentTime: 0,
-            url: playUrl,
-            lastUpdated: firebase.database.ServerValue.TIMESTAMP
-          }
-        }).then(() => {
-          // Depolamaya oda durumunu yaz
-          chrome.storage.local.get(['username'], (res) => {
-            const savedName = res.username || '';
-            chrome.storage.local.set({
-              roomId: randomRoomId,
-              userId: randomUserId,
-              username: savedName,
-              password: '',
-              hostOnly: false,
-              selectedAvatar: '🍿'
-            }, () => {
-              // Davet linkini kopyala
-              const inviteUrl = `https://github.com/bekircansnk/filmsync-watch-party?join=${encodeURIComponent(randomRoomId)}&pass=`;
-              
-              // Clipboard Fallback kopyalama (Web page context)
-              try {
-                const dummy = document.createElement("textarea");
-                document.body.appendChild(dummy);
-                dummy.value = inviteUrl;
-                dummy.select();
-                document.execCommand("copy");
-                document.body.removeChild(dummy);
-                console.log('[FilmSync] Davet linki panoya kopyalandı.');
-              } catch (err) {
-                navigator.clipboard.writeText(inviteUrl);
-              }
-
-              // Videoyu başlat
-              playBtn.click();
-            });
-          });
-        }).catch(err => {
-          console.error('[FilmSync] Oynatma butonuyla oda kurulumu hatası:', err);
-          playBtn.click();
-        });
-      } else {
-        alert('Film oynatma butonu bulunamadı.');
-      }
-    });
-
-    container.appendChild(startBtn);
-  });
-}
-
-function startButtonObserver() {
-  if (!window.location.host.includes('netflix.com')) return;
+function handleFullscreenChange() {
+  const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  const miniToolbar = document.getElementById('filmsync-mini-toolbar');
+  const sidebar = document.getElementById('filmsync-sidebar');
   
-  // İlk yüklemede çalıştır
-  setTimeout(injectNetflixStartButton, 1000);
-
-  // Değişimleri izle
-  const observer = new MutationObserver((mutations) => {
-    injectNetflixStartButton();
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
+  if (isFS) {
+    if (miniToolbar) miniToolbar.style.zIndex = '2147483647';
+    if (sidebar) sidebar.style.zIndex = '2147483646';
+  }
 }
 
-// --- 🖥️ TAM EKRAN IDLE GİZLEME MOTORU (FARE HAREKET ETMEDİĞİNDE GİZLE) ---
 let idleTimer = null;
-let isFullscreen = false;
-
 function setupFullscreenIdleDetector() {
-  const handleMouseMove = () => {
-    if (!isFullscreen) return;
-    
-    showPanelAndToolbar();
-    resetIdleTimer(isInputFocused ? 5000 : 3000);
-  };
-
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('keydown', handleMouseMove);
-
-  // Tam ekran durum değişikliklerini dinle
-  const fsEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
-  fsEvents.forEach(eventName => {
-    document.addEventListener(eventName, () => {
-      isFullscreen = !!(document.fullscreenElement || 
-                        document.webkitFullscreenElement || 
-                        document.mozFullScreenElement || 
-                        document.msFullscreenElement);
-      
-      const toolbar = document.getElementById('filmsync-mini-toolbar');
-      const panel = document.getElementById('filmsync-chat-panel');
-      
-      if (!isFullscreen) {
-        // Tam ekrandan çıkıldığında görünürlüğü sıfırla
-        clearTimeout(idleTimer);
-        if (toolbar) {
-          toolbar.style.opacity = '1';
-          toolbar.style.pointerEvents = 'auto';
-        }
-        if (panel) {
-          panel.style.opacity = '1';
-          panel.style.pointerEvents = 'auto';
-        }
-      }
-    });
-  });
+  const resetTimer = () => resetIdleTimer(3000);
+  window.addEventListener('mousemove', resetTimer);
+  window.addEventListener('click', resetTimer);
+  window.addEventListener('keydown', resetTimer);
 }
 
-// --- ⚙️ YARDIMCI OTOMATİK GİZLEME FONKSİYONLARI ---
-function showPanelAndToolbar() {
-  const toolbar = document.getElementById('filmsync-mini-toolbar');
-  const panel = document.getElementById('filmsync-chat-panel');
-  if (toolbar) {
-    toolbar.style.opacity = '1';
-    toolbar.style.pointerEvents = 'auto';
-  }
-  if (panel && panel.classList.contains('active')) {
-    panel.style.opacity = '1';
-    panel.style.pointerEvents = 'auto';
-  }
-  clearTimeout(idleTimer);
-}
+function resetIdleTimer(delay = 3000) {
+  const miniToolbar = document.getElementById('filmsync-mini-toolbar');
+  const sidebar = document.getElementById('filmsync-sidebar');
 
-function resetIdleTimer(duration = 3000) {
-  clearTimeout(idleTimer);
+  if (miniToolbar) miniToolbar.style.opacity = '1';
+  if (sidebar) sidebar.style.opacity = '1';
+
+  if (idleTimer) clearTimeout(idleTimer);
   idleTimer = setTimeout(() => {
-    if (isFullscreen) {
-      if (messageInput && document.activeElement === messageInput) {
-        messageInput.blur();
-      }
-      isInputFocused = false;
-      
-      const toolbar = document.getElementById('filmsync-mini-toolbar');
-      const panel = document.getElementById('filmsync-chat-panel');
-      if (toolbar) {
-        toolbar.style.opacity = '0';
-        toolbar.style.pointerEvents = 'none';
-      }
-      if (panel) {
-        panel.style.opacity = '0';
-        panel.style.pointerEvents = 'none';
-      }
+    const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    const isChatOpen = sidebar && sidebar.classList.contains('active');
+    
+    if (isFS && !isChatOpen) {
+      if (miniToolbar) miniToolbar.style.opacity = '0';
     }
-  }, duration);
+  }, delay);
 }
 
-// --- 🖥️ IFRAME TAM EKRAN KORUYUCUSU (DİZİPAL, Vidmoly VB.) ---
 function startIframeFullscreenKeeper() {
-  if (window === window.top) return; // Sadece iframe'lerde çalışsın
-  
   setInterval(() => {
-    const fsElement = document.fullscreenElement || 
-                      document.webkitFullscreenElement || 
-                      document.mozFullScreenElement || 
-                      document.msFullscreenElement;
-                      
-    const root = document.getElementById('filmsync-root');
-    
-    if (fsElement) {
-      // Iframe tam ekrandaysa ve UI yoksa oluştur
-      if (!root) {
-        console.log('[FilmSync Iframe Keeper] Tam ekran algılandı, UI oluşturuluyor.');
-        createChatUI();
-        initializeFirebase(firebaseConfig);
-      }
-      
-      // filmsync-root'u tam ekran elementinin içine taşı (eğer henüz taşınmadıysa)
-      const currentRoot = document.getElementById('filmsync-root');
-      if (currentRoot && currentRoot.parentNode !== fsElement) {
-        fsElement.appendChild(currentRoot);
-        currentRoot.style.position = 'absolute';
-        currentRoot.style.zIndex = '2147483647';
-      }
-    } else {
-      // Iframe tam ekranda değilse ve UI varsa kesinlikle yok et!
-      if (root) {
-        console.log('[FilmSync Iframe Keeper] Tam ekrandan çıkış algılandı, UI temizleniyor.');
+    const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    if (!isFS) {
+      const root = document.getElementById('filmsync-root');
+      if (root && window !== window.top) {
         removeChatUI();
       }
     }
   }, 1000);
 }
 
-function formatTime(seconds) {
-  if (isNaN(seconds)) return '00:00';
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+function startButtonObserver() {
+  if (!window.location.host.includes('netflix.com')) return;
+  const observer = new MutationObserver(() => {
+    injectNetflixWatchPartyButton();
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
-function isEmbedUrl(urlStr) {
-  if (!urlStr) return false;
-  const lower = urlStr.toLowerCase();
-  return (
-    lower.includes('/embed') ||
-    lower.includes('embed-') ||
-    lower.includes('embed.') ||
-    lower.includes('vidsrc') ||
-    lower.includes('player.php') ||
-    lower.includes('video.php') ||
-    lower.includes('stream.php')
-  );
+function injectNetflixWatchPartyButton() {
+  if (document.getElementById('filmsync-netflix-btn')) return;
+  const targetContainer = document.querySelector('.watch-party-btn-container') || document.querySelector('.hero-image-wrapper') || document.querySelector('.jawBoneContainer');
+  if (targetContainer) {
+    const btn = document.createElement('button');
+    btn.id = 'filmsync-netflix-btn';
+    btn.style.cssText = 'background:#ff3d47;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:bold;cursor:pointer;margin:10px;';
+    btn.textContent = '🍿 FilmSync Partisi Başlat';
+    btn.addEventListener('click', () => {
+      chrome.runtime.sendMessage({ type: 'open-popup' });
+    });
+    targetContainer.appendChild(btn);
+  }
 }
-

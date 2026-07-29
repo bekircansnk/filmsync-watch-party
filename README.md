@@ -35,6 +35,18 @@
 
 ---
 
+## 🏗️ Architecture & Modules / Mimari Yapı
+
+[TR] FilmSync v1.2.0, Clean Architecture standartlarına uygun olarak modüler bir yapıda tasarlanmıştır (`extension/modules/`):
+
+- **`modules/utils.js`**: Zaman biçimlendirme (`formatTime`), film sayfası doğrulama (`checkIsMoviePage`), toast bildirimleri ve yardımcı araçlar.
+- **`modules/playerAdapter.js`**: HTML5, Netflix, Disney+, YouTube ve Embed film siteleri için hata korumalı `play/pause/seek` adaptörü.
+- **`modules/chatUI.js`**: Teleparty uyumlu dikey sohbet paneli, uçan emoji reaksiyonları, klavye kısayolları ve DOM yönetimi.
+- **`modules/syncEngine.js`**: Firebase Realtime DB senkronizasyon motoru, `serverTimeOffset` atomik saat eşitlemesi, `sendMediaEvent` ve `applyRemoteState`.
+- **`content.js`**: Modülleri bağlayan, depolama (storage) ve sekme dinleyicilerini yöneten hafif ana koordinatör script.
+
+---
+
 ## ⚡ Firebase Configuration / Firebase Yapılandırması
 
 [TR] Eklentinin içinde varsayılan olarak tanımlı bir veritabanı bulunmaktadır. Kendi özel veritabanınızı entegre etmek isterseniz:

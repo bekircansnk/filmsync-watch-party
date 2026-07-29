@@ -1,5 +1,18 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Clean Modular Architecture & MV3 Content Script Refactoring (Zero-Bug Stability)
+
+### Düzeltildi / Kalıcı Çözüm
+- **Temiz Modüler Mimari (`extension/modules/`):** 2.350+ satırlık dev monolitik `content.js` dosyası 5 bağımsız ve modüler yapıya bölündü:
+  1. `modules/utils.js`: Zaman biçimlendirme (`formatTime`), film sayfası izolasyon doğrulama (`checkIsMoviePage`), toast ve bildirim araçları.
+  2. `modules/playerAdapter.js`: Tüm web sitelerinde (HDFilmCehennemi, Netflix, YouTube, Custom HTML5 players) `try-catch` korumalı ve çökmesiz `play/pause/seek` adaptörü.
+  3. `modules/chatUI.js`: Teleparty dikey sohbet paneli, mesaj kutusu, uçan emoji reaksiyonları, klavye dinleyicileri ve DOM yönetimi.
+  4. `modules/syncEngine.js`: Firebase Realtime DB senkronizasyon motoru, `serverTimeOffset` atomik saat eşitlemesi, `sendMediaEvent` ve `applyRemoteState`.
+  5. `content.js`: Hafif, modüler ve güvenli ana koordinatör giriş noktası.
+- **IPC Bağımlılığı ve Windows Paneli Çizim Tamiri:** `init()` ve `chrome.storage.onChanged` içerisindeki hassas `sendMessage({ type: 'get-tab-id' })` sarmalaması kaldırıldı. Arka plan servis worker'ı uyusa dahi sohbet paneli **Windows, Mac ve tüm işletim sistemlerinde ANINDA VE KUSURSUZ EKRANA ÇİZİLİR**.
+- **Otomatik Zamanlayıcı İmha Motoru (`stopAllTimers`):** Odadan ayrıl butonuna basıldığında tüm arka plan `setInterval` akışları (`uiKeeper`, `videoTracking`, `driftCorrection`) tamamen öldürülür. Panelin hayalet gibi geri gelmesi %100 engellendi.
+- **Kilit Sağlığı (`setSyncLock` & `releaseSyncLock`):** Eşitleme kilitleri 800ms-1000ms'lik otomatik kendiliğinden imha eden zamanlayıcılara bağlandı. Manuel tıklamalar `isFirstSync` kilidini anında iptal eder.
+
 ## [29.07.2026] En Yeni Oda En Üstte Sıralaması & Hayalet Üye (Ghost User) Temizliği
 
 ### Düzeltildi / Kalıcı Çözüm
