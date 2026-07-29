@@ -804,6 +804,13 @@ function startDriftCorrection() {
       // 2. EĞER BEN LİDER DEĞİLSEM (Son Durumu Başkası Göndermişse): Sapma varsa otomatik düzelt
       if (isSyncing) return;
 
+      // EĞER ben daha yeni (son 3 saniye içinde) bilinçli bir eylem gönderdiysem, otomatik düzeltmeyi YUT!
+      // (Çünkü Firebase sunucusundan gelen yanıt veya .once cache'i henüz güncellenmemiş olabilir)
+      if (Date.now() - lastSentMediaState.timestamp < 3000) {
+        console.log('[FilmSync Auto-Sync] Yerel bir eylem yapıldığı için otomatik düzeltme ertelendi.');
+        return;
+      }
+
       const currentServerTime = Date.now() + serverTimeOffset;
       const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
       const expectedTime = state.currentTime + timeDiff;
