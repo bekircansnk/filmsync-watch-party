@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [Güncel] - Yarış Durumu (Race Condition) Çözümü ve PlayerAdapter İyileştirmesi
+- **Hata Düzeltmeleri ve Optimizasyonlar:**
+  - Global `isSyncing` zaman aşımı kilit mekanizması kaldırılarak yerine doğrudan `PlayerAdapter` içine entegre edilmiş olay kilitleme/debounce (`lockEvents`) sistemi getirildi. Bu sayede manuel kullanıcı hareketleri (oynat/duraklat/ilerlet) ile uzak `applyRemoteState` çağrıları arasındaki senkronizasyon döngüleri ve kekelemeler önlendi.
+  - Olası tarayıcı eklentisi çökmelerini engellemek amacıyla `videoElement.play()` çağrılarına Promise `.catch()` hata ayıklama blokları eklendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
