@@ -665,11 +665,7 @@ let lastSentMediaState = { isPlaying: null, currentTime: -1, timestamp: 0 };
 function sendMediaEvent(isPlaying, currentTime) {
   if (!db || !roomId || isSyncing || isFirstSync) return;
   
-  // Sadece host kontrolü aktifse ve ben host değilsem engelle
-  if (hostOnly && userId !== hostId) {
-    console.log('[FilmSync] Medya kontrolü engellendi: Sadece oda sahibi kontrol edebilir.');
-    return;
-  }
+  // Herhangi bir yetki kısıtlaması yok: Tüm kullanıcılar tam yetkiye sahiptir.
 
   // Video sayfası olmayan sayfalardan veritabanına play/pause/seek yazılmasını engelle
   const activeVideo = document.querySelector('video');
@@ -698,8 +694,8 @@ function sendMediaEvent(isPlaying, currentTime) {
     lastUpdated: firebase.database.ServerValue.TIMESTAMP
   };
 
-  // URL güncelleme yetkisi (hostOnly kapalıysa odaya katılan herkes yeni bölüm/film açabilir ve odayı senkronize edebilir)
-  if ((!hostOnly || userId === hostId) && window === window.top && !isEmbedUrl(window.location.href)) {
+  // URL güncelleme yetkisi: Tüm kullanıcılar yeni film/bölüm açabilir ve odayı senkronize edebilir
+  if (window === window.top && !isEmbedUrl(window.location.href)) {
     updatePayload.url = window.location.href;
   }
 
@@ -746,29 +742,31 @@ function startDriftCorrection() {
     if (!db || !roomId || !videoElement || isSyncing) return;
     if (videoElement.readyState < 3) return; // Oynatıcı hazır değilse bekle
 
-    // 1. BEN HOST (ODA SAHİBİ) İSEM: Firebase'deki durumu periyodik güncelle (Heartbeat)
-    if (userId === hostId) {
-      if (!videoElement.paused) {
-        db.ref(`rooms/${roomId}/lastState`).update({
-          isPlaying: true,
-          currentTime: videoElement.currentTime,
-          senderId: userId,
-          lastUpdated: firebase.database.ServerValue.TIMESTAMP
-        });
-      }
-      return;
-    }
-
-    // 2. BEN GUEST (KATILAN KİŞİ) İSEM: Host durumunu oku ve sapma varsa otomatik düzelt
     db.ref(`rooms/${roomId}/lastState`).once('value').then((snapshot) => {
       const state = snapshot.val();
-      if (!state || state.senderId === userId || isSyncing) return;
+      if (!state) return;
+
+      // 1. EĞER SON DURUMU BEN GÖNDERMİŞSEM (Lider Benim): Firebase'deki durumu periyodik güncelle (Heartbeat)
+      // İlk başta state.senderId boşsa ve host isem ben devralırım.
+      if (state.senderId === userId || (!state.senderId && userId === hostId)) {
+        if (!videoElement.paused) {
+          db.ref(`rooms/${roomId}/lastState`).update({
+            isPlaying: true,
+            currentTime: videoElement.currentTime,
+            senderId: userId,
+            lastUpdated: firebase.database.ServerValue.TIMESTAMP
+          });
+        }
+        return;
+      }
+
+      // 2. EĞER BEN LİDER DEĞİLSEM (Son Durumu Başkası Göndermişse): Sapma varsa otomatik düzelt
+      if (isSyncing) return;
 
       const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
       const expectedTime = state.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
 
       if (playStateMismatch || drift > 2.5) {
