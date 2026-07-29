@@ -213,59 +213,48 @@ function checkIsMoviePage() {
 }
 
   // Normal Başlatma
-  chrome.runtime.sendMessage({ type: 'get-tab-id' }, (tabResponse) => {
-    const myTabId = tabResponse ? tabResponse.tabId : null;
-
-    chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
-      if (result.roomId) {
-        // Film dışı sayfalarda (Vercel, GitHub vb.) sohbet panelini KESİNLİKLE ÇİZME!
-        const isMoviePage = checkIsMoviePage();
-        if (!isMoviePage) {
-          console.log(`[FilmSync İzolasyon] Film dışı sayfa (${window.location.hostname}) tespit edildi. Panel engelleniyor.`);
-          removeChatUI();
-          cleanupFirebase();
-          return;
-        }
-
-        if (!result.activeTabId || (myTabId !== null && myTabId !== result.activeTabId)) {
-          if (myTabId !== null) {
-            console.log(`[FilmSync Sekme Kurtarma] Sekme ID (${myTabId}) aktif sekme olarak güncelleniyor ve odaya bağlanılıyor.`);
-            chrome.storage.local.set({ activeTabId: myTabId });
-          }
-        }
-
-        roomId = result.roomId;
-        username = result.username || 'Anonim';
-        password = result.password || '';
-        selectedAvatar = result.selectedAvatar || '🍿';
-        
-        if (result.userId) {
-          userId = result.userId;
-        } else {
-          userId = 'user_' + Math.random().toString(36).substr(2, 9);
-          chrome.storage.local.set({ userId });
-        }
-        
-        console.log(`[FilmSync] Canlı odaya bağlanılıyor: ${roomId}, Kullanıcı: ${username}`);
-        
-        initializeFirebase(firebaseConfig);
-        if (window === window.top) {
-          createChatUI();
-          startUIKeeper();
-        }
-        
-        startVideoTracking();
-        startDriftCorrection();
-        setupFullscreenListener();
-        setupFullscreenIdleDetector();
-        startIframeFullscreenKeeper();
-      } else {
+  chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
+    if (result.roomId) {
+      // Film dışı sayfalarda (Vercel, GitHub vb.) sohbet panelini KESİNLİKLE ÇİZME!
+      const isMoviePage = checkIsMoviePage();
+      if (!isMoviePage) {
+        console.log(`[FilmSync İzolasyon] Film dışı sayfa (${window.location.hostname}) tespit edildi. Panel engelleniyor.`);
         removeChatUI();
+        cleanupFirebase();
+        return;
+      }
+
+      roomId = result.roomId;
+      username = result.username || 'Anonim';
+      password = result.password || '';
+      selectedAvatar = result.selectedAvatar || '🍿';
+      
+      if (result.userId) {
+        userId = result.userId;
+      } else {
+        userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        chrome.storage.local.set({ userId });
       }
       
-      // Netflix detay sayfaları için buton enjeksiyonunu başlat
-      startButtonObserver();
-    });
+      console.log(`[FilmSync] Canlı odaya bağlanılıyor: ${roomId}, Kullanıcı: ${username}`);
+      
+      initializeFirebase(firebaseConfig);
+      if (window === window.top) {
+        createChatUI();
+        startUIKeeper();
+      }
+      
+      startVideoTracking();
+      startDriftCorrection();
+      setupFullscreenListener();
+      setupFullscreenIdleDetector();
+      startIframeFullscreenKeeper();
+    } else {
+      removeChatUI();
+    }
+    
+    // Netflix detay sayfaları için buton enjeksiyonunu başlat
+    startButtonObserver();
   });
 }
 
@@ -308,46 +297,35 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
       cleanupFirebase();
       isFirebaseInitialized = false;
       
-      chrome.runtime.sendMessage({ type: 'get-tab-id' }, (tabResponse) => {
-        const myTabId = tabResponse ? tabResponse.tabId : null;
+      chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
+        const isMoviePage = checkIsMoviePage();
+        if (!isMoviePage) {
+          console.log(`[FilmSync İzolasyon Storage] Film dışı sayfa (${window.location.hostname}) tespit edildi. Panel kaldırılıyor.`);
+          removeChatUI();
+          cleanupFirebase();
+          return;
+        }
 
-        chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
-          const isMoviePage = checkIsMoviePage();
-          if (!isMoviePage) {
-            console.log(`[FilmSync İzolasyon Storage] Film dışı sayfa (${window.location.hostname}) tespit edildi. Panel kaldırılıyor.`);
-            removeChatUI();
-            cleanupFirebase();
-            return;
-          }
+        roomId = result.roomId;
+        username = result.username || 'Anonim';
+        password = result.password || '';
+        selectedAvatar = result.selectedAvatar || '🍿';
+        
+        if (result.userId) userId = result.userId;
 
-          if (!result.activeTabId || (myTabId !== null && myTabId !== result.activeTabId)) {
-            if (myTabId !== null && result.roomId) {
-              console.log(`[FilmSync Storage Sekme Kurtarma] Sekme ID (${myTabId}) aktif yapılıyor.`);
-              chrome.storage.local.set({ activeTabId: myTabId });
+        if (roomId) {
+          console.log(`[FilmSync Storage] Yeni oda bağlantısı tetikleniyor: ${roomId}`);
+          initializeFirebase(firebaseConfig);
+          if (window === window.top) {
+            if (!document.getElementById('filmsync-root')) {
+              createChatUI();
+              startUIKeeper();
             }
           }
-
-          roomId = result.roomId;
-          username = result.username || 'Anonim';
-          password = result.password || '';
-          selectedAvatar = result.selectedAvatar || '🍿';
-          
-          if (result.userId) userId = result.userId;
-
-          if (roomId) {
-            console.log(`[FilmSync Storage] Yeni oda bağlantısı tetikleniyor: ${roomId}`);
-            initializeFirebase(firebaseConfig);
-            if (window === window.top) {
-              if (!document.getElementById('filmsync-root')) {
-                createChatUI();
-                startUIKeeper();
-              }
-            }
-            startVideoTracking();
-          } else {
-            removeChatUI();
-          }
-        });
+          startVideoTracking();
+        } else {
+          removeChatUI();
+        }
       });
     }
   }

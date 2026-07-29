@@ -17,7 +17,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'get-tab-id') {
     const tabId = sender.tab ? sender.tab.id : null;
     sendResponse({ tabId: tabId });
-    return true;
+    return false;
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId } = message;
     if (roomId && username) {
