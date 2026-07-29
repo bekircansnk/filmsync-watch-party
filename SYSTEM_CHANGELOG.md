@@ -1,5 +1,12 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Sonsuz "Odadan Ayrıldı" Kısırdöngüsü & Storage Event Koruması Kalıcı Tamiri
+
+### Düzeltildi / Kalıcı Çözüm
+- **Sonsuz "Odadan Ayrıldı" Döngüsünün Kırılması:** Dahili Firebase dinleyici temizleme metodu `cleanupFirebase()` içerisinden otomatik `sendSystemMessage(`${username} odadan ayrıldı.`)` ve `user.remove()` çağrıları kaldırıldı. Bu işlevler ayrı bir `leaveRoom()` metoduna taşındı.
+- **Dahili Re-Connect / Storage Event Koruması (`content.js`):** `chrome.storage.onChanged` dinleyicisi `activeTabId` değişikliklerinde tetiklendiğinde `cleanupFirebase()`'in baştan çalışarak aynı mesajı sonsuz döngüye sokması engellendi.
+- **Ayrılma Mesajı Ayrıştırması:** "Odadan ayrıldı" mesajı yalnızca kullanıcı Popup üzerindeki **"Odadan Ayrıl"** düğmesine bastığında (`leave-room` mesajı) veya sekme tamamen kapandığında gönderilir.
+
 ## [29.07.2026] REST API Tabanlı 0ms Latency Oda Kurulumu & HDFilmCehennemi Tamiri
 
 ### Kalıcı Çözüm / Düzeltildi

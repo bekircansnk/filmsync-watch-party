@@ -307,6 +307,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // "Odadan Ayrıl"
   btnLeaveRoom.addEventListener('click', () => {
     cleanupFirebaseListeners();
+    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+      if (tabs && tabs[0]) {
+        chrome.tabs.sendMessage(tabs[0].id, { type: 'leave-room' }, () => {
+          if (chrome.runtime.lastError) {}
+        });
+      }
+    });
     chrome.storage.local.remove(['roomId', 'password', 'activeTabId'], () => {
       notifyContentScript();
       updateUI();

@@ -1,5 +1,14 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] Sonsuz "Odadan Ayrıldı" Kısırdöngüsü & Storage Event Koruması
+
+### 1. Sonsuz Döngü Mekanizmasının Tespiti
+- **Kök Neden:** `cleanupFirebase()` metodu her çalıştırıldığında otomatik olarak `sendSystemMessage(`${username} odadan ayrıldı.`)` çağrıyordu. `chrome.storage.onChanged` dinleyicisi ise `activeTabId` güncellendiğinde `cleanupFirebase()`'i tetikliyor, bu da `activeTabId`'yi tekrar tetikleyerek sonsuz bir kısırdöngü yaratıyordu (`beko odadan ayrıldı` mesajı saniyede onlarca kez basılıyordu).
+- **Kalıcı Çözüm:** 
+  1. `cleanupFirebase()` dahili dinleyici temizleyicisi haline getirildi (sadece `.off()` yapar, sistem mesajı atmaz).
+  2. Gerçek ayrılma işlemleri için `leaveRoom()` metodu yazıldı.
+  3. `chrome.storage.onChanged` dinleyicisi `activeTabId` değişikliklerinde kısırdöngüye girmeyecek şekilde filtrelendi.
+
 ## [29.07.2026] REST API Tabanlı 0ms Latency Oda Kurulumu & HDFilmCehennemi Tamiri
 
 ### 1. Web Socket / Firebase SDK Popup Kilitlenmelerinin Çözümü

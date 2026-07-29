@@ -249,16 +249,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('[FilmSync] Popup mesajı alındı, bağlantı ve Chat UI yenileniyor.');
     init();
     sendResponse({ status: 'success' });
+  } else if (message.type === 'leave-room') {
+    console.log('[FilmSync] Odadan ayrıl mesajı alındı, leaveRoom tetikleniyor.');
+    leaveRoom();
+    removeChatUI();
+    sendResponse({ status: 'success' });
   }
 });
 
 // Canlı Depolama Değişikliği Dinleyicisi (Iframe'ler ve Üst Sayfa Eşleşmesi İçin)
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'local') {
-    if (changes.roomId || changes.username || changes.password || changes.activeTabId) {
-      console.log('[FilmSync Storage] Depolama değişikliği algılandı, oda ayarları yenileniyor.');
+    // Yalnızca roomId, username veya password değiştiğinde sıfırla, activeTabId değişikliklerinde kısırdöngüye girme
+    if (changes.roomId || changes.username || changes.password) {
+      console.log('[FilmSync Storage] Oda ayarları değişti, bağlantı tazeleniyor.');
       
-      // Mevcut Firebase dinleyicilerini temizle
       cleanupFirebase();
       isFirebaseInitialized = false;
       
@@ -607,8 +612,23 @@ function forceSync() {
   });
 }
 
-// Bağlantı Temizleme
+// Dahili Firebase Dinleyici Temizleme (Sadece listener kapatır, odadan ayrıldı mesajı atmaz)
 function cleanupFirebase() {
+  if (db && roomId) {
+    try {
+      db.ref(`rooms/${roomId}/lastState`).off();
+      db.ref(`rooms/${roomId}/messages`).off();
+      db.ref(`rooms/${roomId}/users`).off();
+      db.ref(`rooms/${roomId}/reactions`).off();
+    } catch (e) {
+      console.error('[FilmSync] Firebase dinleyici temizleme hatası:', e);
+    }
+    renderedMessageKeys.clear();
+  }
+}
+
+// Kullanıcının Gerçekten Odadan Ayrılması
+function leaveRoom() {
   if (db && roomId && userId) {
     if (window === window.top) {
       sendSystemMessage(`${username} odadan ayrıldı.`);
@@ -621,14 +641,9 @@ function cleanupFirebase() {
           db.ref(`rooms/${roomId}`).remove();
         }
       });
-    });
+    }).catch(err => console.error('[FilmSync] User remove hatası:', err));
 
-    db.ref(`rooms/${roomId}/lastState`).off();
-    db.ref(`rooms/${roomId}/messages`).off();
-    db.ref(`rooms/${roomId}/users`).off();
-    db.ref(`rooms/${roomId}/reactions`).off();
-    
-    renderedMessageKeys.clear();
+    cleanupFirebase();
   }
 }
 
