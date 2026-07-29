@@ -725,11 +725,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
           publicRoomList.appendChild(card);
         });
-
-        publicRoomCountBadge.textContent = `${validRoomsCount} Aktif Oda`;
-        if (validRoomsCount === 0) {
-          publicRoomList.innerHTML = '<div style="font-size: 0.72rem; color: #888; text-align: center; padding: 6px 0;">Şu anda açık oda bulunmuyor. Hemen yukarıdan parti başlatın! 🍿</div>';
-        }
       })
       .catch(err => {
         console.error('[FilmSync Public Rooms REST Hatası]', err);
