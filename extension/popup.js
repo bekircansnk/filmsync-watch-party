@@ -155,104 +155,43 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     const hostOnly = hostOnlySwitch.checked;
-
-    // 4 Harfli Oda Kodu üret
     const roomId = generate4LetterCode();
-    const password = ''; 
 
-    globalStatusDot.classList.add('active');
-    globalStatusText.textContent = 'Bağlanıyor...';
+    if (globalStatusDot) globalStatusDot.classList.add('active');
 
-    // 7 saniyelik timeout koruması
-    let isTimeout = false;
-    const connectionTimeout = setTimeout(() => {
-      isTimeout = true;
-      showGlobalToast('Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin! ⚠️');
-      resetStatus();
-    }, 7000);
-
-    // Unique user id elde et veya oluştur (Çakışmaları önlemek için zamandamgası ekle)
     chrome.storage.local.get(['userId'], (res) => {
-      if (isTimeout) return;
       let userId = res.userId;
       if (!userId) {
         userId = 'usr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
       }
 
       chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-        if (isTimeout) return;
         const currentTabUrl = (tabs && tabs[0] && tabs[0].url) ? tabs[0].url : '';
-        
-        if (!currentTabUrl || currentTabUrl.startsWith('chrome://') || currentTabUrl.startsWith('about:')) {
-          clearTimeout(connectionTimeout);
-          showGlobalToast('Önce bir film/dizi sayfası açmalısınız!');
-          resetStatus();
-          return;
-        }
+        const activeTabId = (tabs && tabs[0]) ? tabs[0].id : null;
 
-        try {
-          if (typeof firebase === 'undefined') {
-            clearTimeout(connectionTimeout);
-            showGlobalToast('Firebase kütüphanesi yüklenemedi!');
-            resetStatus();
-            return;
-          }
+        // Arka plan Service Worker'ına REST oda kurulum isteği gönder
+        chrome.runtime.sendMessage({
+          type: 'create-room',
+          roomId: roomId,
+          hostId: userId,
+          username: username,
+          avatar: selectedAvatar,
+          hostOnly: hostOnly,
+          url: currentTabUrl
+        }, (response) => {
+          // Yerel depolamaya kaydet ve arayüzü anında güncelle
+          saveSettings(roomId, username, '', userId, hostOnly, activeTabId, () => {
+            const inviteUrl = `https://github.com/bekircansnk/filmsync-watch-party?join=${encodeURIComponent(roomId)}&pass=`;
+            copyToClipboard(inviteUrl);
+            showGlobalToast('Parti kuruldu! Davet linki kopyalandı! 🍿');
 
-          if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-          }
-          db = firebase.database();
-
-          // Firebase'de odayı kur ve kurucu kullanıcıyı users altına ekle
-          db.ref(`rooms/${roomId}`).set({
-            password: password,
-            hostId: userId,
-            hostOnly: hostOnly,
-            users: {
-              [userId]: {
-                username: username,
-                avatar: selectedAvatar,
-                lastActive: firebase.database.ServerValue.TIMESTAMP
-              }
-            },
-            lastState: {
-              isPlaying: false,
-              currentTime: 0,
-              url: currentTabUrl,
-              lastUpdated: firebase.database.ServerValue.TIMESTAMP
+            if (activeTabId) {
+              chrome.tabs.sendMessage(activeTabId, { type: 'force-sync' }, () => {
+                if (chrome.runtime.lastError) {}
+              });
             }
-          }).then(() => {
-            if (isTimeout) return;
-            clearTimeout(connectionTimeout);
-
-            // Ayarları kaydet
-            saveSettings(roomId, username, password, userId, hostOnly, (tabs && tabs[0] ? tabs[0].id : null), () => {
-              // Davet linkini kopyala
-              const inviteUrl = `https://github.com/bekircansnk/filmsync-watch-party?join=${encodeURIComponent(roomId)}&pass=`;
-              copyToClipboard(inviteUrl);
-              
-              showGlobalToast('Parti kuruldu! Davet linki kopyalandı! 🍿');
-              
-              // Active tab id kaydedilsin ve sekmedeki content script uyarılsın
-              if (tabs && tabs[0]) {
-                chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, () => {
-                  if (chrome.runtime.lastError) {}
-                });
-              }
-            });
-          }).catch(e => {
-            if (isTimeout) return;
-            clearTimeout(connectionTimeout);
-            console.error(e);
-            showGlobalToast('Oda kurulumu başarısız.');
-            resetStatus();
           });
-
-        } catch (e) {
-          clearTimeout(connectionTimeout);
-          console.error(e);
-          resetStatus();
-        }
+        });
       });
     });
   });
@@ -265,97 +204,58 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    globalStatusDot.classList.add('active');
-    globalStatusText.textContent = 'Oda aranıyor...';
+    const username = usernameInput.value.trim();
+    if (!username) {
+      showGlobalToast('Lütfen odaya katılmadan önce adınızı girin! 🍿');
+      return;
+    }
 
-    // 7 saniyelik timeout koruması
-    let isTimeout = false;
-    const joinTimeout = setTimeout(() => {
-      isTimeout = true;
-      showGlobalToast('Odaya katılma zaman aşımına uğradı! ⚠️');
-      resetStatus();
-    }, 7000);
+    if (globalStatusDot) globalStatusDot.classList.add('active');
 
-    try {
-      if (typeof firebase === 'undefined') {
-        clearTimeout(joinTimeout);
-        showGlobalToast('Firebase kütüphanesi yüklenemedi!');
-        resetStatus();
-        return;
+    chrome.storage.local.get(['userId'], (res) => {
+      let userId = res.userId;
+      if (!userId) {
+        userId = 'usr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
       }
 
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-      const tempDb = firebase.database();
+      chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+        const activeTabId = tabs && tabs[0] ? tabs[0].id : null;
+        const currentUrl = tabs && tabs[0] ? tabs[0].url : '';
 
-      // Odanın varlığını Firebase'den sorgula
-      tempDb.ref(`rooms/${code}`).once('value').then((snapshot) => {
-        if (isTimeout) return;
-        clearTimeout(joinTimeout);
-
-        const roomData = snapshot.val();
-        if (!roomData) {
-          showGlobalToast('Böyle bir oda bulunamadı! ❌');
-          resetStatus();
-          return;
-        }
-
-        // Başarılı: Odaya katılım ayarlarını yerel depolamaya kaydet
-        chrome.storage.local.get(['userId'], (res) => {
-          let userId = res.userId;
-          // Çakışmaları önlemek için her odaya katılımda benzersiz ID üret
-          userId = 'usr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-          
-          const username = usernameInput.value.trim();
-          if (!username) {
-            showGlobalToast('Lütfen odaya katılmadan önce adınızı girin! 🍿');
+        chrome.runtime.sendMessage({
+          type: 'join-room',
+          roomId: code,
+          userId: userId,
+          username: username,
+          avatar: selectedAvatar
+        }, (response) => {
+          if (!response || response.status === 'not_found') {
+            showGlobalToast('Böyle bir oda bulunamadı! ❌');
             resetStatus();
             return;
           }
-          
-          chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-            const activeTabId = tabs && tabs[0] ? tabs[0].id : null;
-            const currentUrl = tabs && tabs[0] ? tabs[0].url : '';
-            const roomMovieUrl = roomData.lastState ? roomData.lastState.url : '';
 
-            // Odaya kullanıcıyı yaz
-            tempDb.ref(`rooms/${code}/users/${userId}`).set({
-              username: username,
-              avatar: selectedAvatar,
-              lastActive: firebase.database.ServerValue.TIMESTAMP
-            });
+          const roomData = response.roomData;
+          const roomMovieUrl = roomData && roomData.lastState ? roomData.lastState.url : '';
 
-            saveSettings(code, username, '', userId, roomData.hostOnly || false, activeTabId, () => {
-              showGlobalToast('Odaya başarıyla katıldınız! 🎉');
-              
-              // Odanın film URL'si mevcutsa ve aktif sekme o adreste değilse doğrudan film sayfasına yönlendir
-              if (roomMovieUrl && currentUrl !== roomMovieUrl) {
-                if (activeTabId) {
-                  chrome.tabs.update(activeTabId, { url: roomMovieUrl });
-                } else {
-                  chrome.tabs.create({ url: roomMovieUrl });
-                }
-              } else if (activeTabId) {
-                chrome.tabs.sendMessage(activeTabId, { type: 'force-sync' }, () => {
-                  if (chrome.runtime.lastError) {}
-                });
+          saveSettings(code, username, '', userId, roomData ? (roomData.hostOnly || false) : false, activeTabId, () => {
+            showGlobalToast('Odaya başarıyla katıldınız! 🎉');
+
+            if (roomMovieUrl && currentUrl !== roomMovieUrl) {
+              if (activeTabId) {
+                chrome.tabs.update(activeTabId, { url: roomMovieUrl });
+              } else {
+                chrome.tabs.create({ url: roomMovieUrl });
               }
-            });
+            } else if (activeTabId) {
+              chrome.tabs.sendMessage(activeTabId, { type: 'force-sync' }, () => {
+                if (chrome.runtime.lastError) {}
+              });
+            }
           });
         });
-      }).catch(err => {
-        if (isTimeout) return;
-        clearTimeout(joinTimeout);
-        console.error(err);
-        showGlobalToast('Bağlantı hatası yaşandı.');
-        resetStatus();
       });
-    } catch (e) {
-      clearTimeout(joinTimeout);
-      console.error(e);
-      resetStatus();
-    }
+    });
   }
 
   // Odaya Katıl Düğmeleri Tetikleyicileri

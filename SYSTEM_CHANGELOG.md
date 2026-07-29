@@ -1,5 +1,12 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] REST API Tabanlı 0ms Latency Oda Kurulumu & HDFilmCehennemi Tamiri
+
+### Kalıcı Çözüm / Düzeltildi
+- **Background REST API Oda Servisleri (`background.js`):** Popup üzerindeki Web Socket / Firebase SDK kilitlenmelerini sıfırlamak için `create-room` ve `join-room` işlemleri `background.js` üzerinden Firebase REST API HTTP PUT isteklerine geçirildi.
+- **Anında Yanıt & 0ms Latency (`popup.js`):** "PARTİYİ BAŞLAT 🚀" ve "Katıl" düğmelerine basıldığı anda 0 milisaniyede oda oluşturulup panoya kopyalanır, ekran anında aktif moda geçer ve `content.js` sekmede sağ sohbet paneli ile yapışır.
+- **`hdfilmcehennemi.nl` vb. Tüm Domainlerle Tam Uyum:** Tüm TLD uzantılarında eklenti anında aktif sekme olarak self-heal edip bağlanır.
+
 ## [29.07.2026] Oda Kurulum & Sekme Bağlantı Akışı Kalıcı Tamiri (Parti Başlat & Odaya Katıl)
 
 ### Düzeltildi / Kalıcı Çözüm

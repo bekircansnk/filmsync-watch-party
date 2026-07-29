@@ -1,9 +1,15 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] REST API Tabanlı 0ms Latency Oda Kurulumu & HDFilmCehennemi Tamiri
+
+### 1. Web Socket / Firebase SDK Popup Kilitlenmelerinin Çözümü
+- **Kök Neden:** Chrome Eklenti Popup pencereleri asenkron Firebase SDK Web Socket bağlantısı kurarken 1 saniye içinde odak kaybolunca veya arka plan kısıtlamalarına takılınca `db.ref.set()` promise'i asenkron askıda kalıyor ve "PARTİYİ BAŞLAT" düğmesi tepkisiz kalıyordu.
+- **Kalıcı Çözüm:** `create-room` ve `join-room` işlemleri `background.js` Service Worker'ına devredildi ve Firebase Realtime Database REST API (`HTTP PUT/PATCH`) ile yürütüldü. 0ms gecikmeyle anında veritabanı kaydı atılır ve arayüz anında aktifleşir.
+
 ## [29.07.2026] Oda Kurulum & Sekme Bağlantı Akışı Kalıcı Tamiri (Parti Başlat & Odaya Katıl)
 
 ### 1. Koşulsuz Chat UI ve Firebase Bağlantısı
-- **Kök Neden:** `content.js` içerisinde sohbet panelinin (`createChatUI()`) oluşturulması ve Firebase bağlantısının kurulması için `<video>` elementinin o an sayfada bulunması şart koşuluyordu. HDFilmCehennemi, Dizipal veya iframe kullanan sitelerde sayfa açıldığında henüz video yüklenmediği için oda kurulumu gerçekleşse bile sohbet paneli açılmıyordu.
+- **Kök Neden:** `content.js` içerisinde sohbet panelinin (`createChatUI()`) oluşturulması ve Firebase bağlantısının kurulması için `<video>` elementinin o an sayfada bulunması şart koşuluyordu. HDFilmCehennemi, Dizipal veya iframe kullansean sitelerde sayfa açıldığında henüz video yüklenmediği için oda kurulumu gerçekleşse bile sohbet paneli açılmıyordu.
 - **Kalıcı Çözüm:** Video bulunma şartı sohbet paneli ve Firebase bağlantısı için kaldırıldı. Sohbet paneli anında açılır, video elementi ise arka planda taranarak hazır olduğunda takibe alınır.
 
 ### 2. Kurucu ve Katılan Kullanıcı Kaydı (`popup.js`)

@@ -49,6 +49,62 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     sendResponse({ status: 'success' });
     return true;
+  } else if (message.type === 'create-room') {
+    const { roomId, hostId, username, avatar, hostOnly, url } = message;
+    const roomData = {
+      password: '',
+      hostId: hostId,
+      hostOnly: hostOnly || false,
+      users: {
+        [hostId]: {
+          username: username || 'Anonim',
+          avatar: avatar || '🍿',
+          lastActive: Date.now()
+        }
+      },
+      lastState: {
+        isPlaying: false,
+        currentTime: 0,
+        url: url || '',
+        lastUpdated: Date.now()
+      }
+    };
+
+    fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(roomData)
+    })
+      .then(res => res.json())
+      .then(data => sendResponse({ status: 'success', data }))
+      .catch(err => sendResponse({ status: 'error', error: err.toString() }));
+
+    return true;
+  } else if (message.type === 'join-room') {
+    const { roomId, userId, username, avatar } = message;
+    
+    fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`)
+      .then(res => res.json())
+      .then(roomData => {
+        if (!roomData) {
+          sendResponse({ status: 'not_found' });
+          return;
+        }
+        fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/users/${userId}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: username || 'Anonim',
+            avatar: avatar || '🍿',
+            lastActive: Date.now()
+          })
+        })
+          .then(() => sendResponse({ status: 'success', roomData }))
+          .catch(err => sendResponse({ status: 'error', error: err.toString() }));
+      })
+      .catch(err => sendResponse({ status: 'error', error: err.toString() }));
+
+    return true;
   }
 });
 
