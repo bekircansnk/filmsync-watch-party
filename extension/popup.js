@@ -203,11 +203,18 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           db = firebase.database();
 
-          // Firebase'de odayı kur
+          // Firebase'de odayı kur ve kurucu kullanıcıyı users altına ekle
           db.ref(`rooms/${roomId}`).set({
             password: password,
             hostId: userId,
             hostOnly: hostOnly,
+            users: {
+              [userId]: {
+                username: username,
+                avatar: selectedAvatar,
+                lastActive: firebase.database.ServerValue.TIMESTAMP
+              }
+            },
             lastState: {
               isPlaying: false,
               currentTime: 0,
@@ -224,14 +231,14 @@ document.addEventListener('DOMContentLoaded', () => {
               const inviteUrl = `https://github.com/bekircansnk/filmsync-watch-party?join=${encodeURIComponent(roomId)}&pass=`;
               copyToClipboard(inviteUrl);
               
-              showGlobalToast('Evo & Beko Partisi kuruldu! Davet linki kopyalandı! 🍿');
+              showGlobalToast('Parti kuruldu! Davet linki kopyalandı! 🍿');
               
-              // Content script'e hemen bağlanma mesajı gönder
-              chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, (response) => {
-                if (chrome.runtime.lastError) {
-                  console.log("[Evo ve Beko Film Partisi] Content script mesaj alma hatası.");
-                }
-              });
+              // Active tab id kaydedilsin ve sekmedeki content script uyarılsın
+              if (tabs && tabs[0]) {
+                chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, () => {
+                  if (chrome.runtime.lastError) {}
+                });
+              }
             });
           }).catch(e => {
             if (isTimeout) return;
@@ -311,6 +318,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const activeTabId = tabs && tabs[0] ? tabs[0].id : null;
             const currentUrl = tabs && tabs[0] ? tabs[0].url : '';
             const roomMovieUrl = roomData.lastState ? roomData.lastState.url : '';
+
+            // Odaya kullanıcıyı yaz
+            tempDb.ref(`rooms/${code}/users/${userId}`).set({
+              username: username,
+              avatar: selectedAvatar,
+              lastActive: firebase.database.ServerValue.TIMESTAMP
+            });
 
             saveSettings(code, username, '', userId, roomData.hostOnly || false, activeTabId, () => {
               showGlobalToast('Odaya başarıyla katıldınız! 🎉');

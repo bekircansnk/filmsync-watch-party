@@ -1,5 +1,13 @@
 # SYSTEM CHANGELOG
 
+## [29.07.2026] Oda Kurulum & Sekme Bağlantı Akışı Kalıcı Tamiri (Parti Başlat & Odaya Katıl)
+
+### Düzeltildi / Kalıcı Çözüm
+- **Koşulsuz Chat UI ve Firebase Bağlantısı (`content.js`):** Sayfada o an `<video>` bulunmasa dahi (HDFilmCehennemi, Dizipal, Netflix vb.) sohbet paneli (`createChatUI()`) ve Firebase canlı bağlantısı artık %100 koşulsuz olarak başlatılır. Video elementleri arka planda 500ms tarama ile tespit edildiğinde eşitlemeye dahil edilir.
+- **Dizi/Film Sayfalarında Sekme Kurtarma:** `isMoviePage` tanımı genişletilerek HDFilmCehennemi, Dizipal ve tüm web sayfaları kapsama alındı. Sekme değişse de eklenti kendini aktif sekme olarak self-heal edip odaya bağlanır.
+- **Firebase Kurucu ve Üye Kaydı (`popup.js`):** "PARTİYİ BAŞLAT 🚀" butonuna basıldığında kurucu kullanıcı bilgisi (`users/${userId}`) odaya anında yazılır. Aynı şekilde oda koduyla katılmada da kullanıcı derhal kaydedilir.
+- **Anlık Popup → Content Script Mesajlaşması:** `force-sync` ve `settings-updated` mesajları alındığında `content.js` `init()` fonksiyonunu derhal çağırarak sohbet panelini ekranda saniyesinde görünür kılar.
+
 ## [29.07.2026] Oda Koduyla Manuel Katılma (joinCodeSection) & Kompakt UX Tamiri
 
 ### Eklendi / Düzeltildi

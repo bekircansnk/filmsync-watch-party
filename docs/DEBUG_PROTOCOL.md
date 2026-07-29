@@ -1,5 +1,18 @@
 # 🐞 DEBUG PROTOCOL & HATA ÇÖZÜM GÜNLÜĞÜ
 
+## [29.07.2026] Oda Kurulum & Sekme Bağlantı Akışı Kalıcı Tamiri (Parti Başlat & Odaya Katıl)
+
+### 1. Koşulsuz Chat UI ve Firebase Bağlantısı
+- **Kök Neden:** `content.js` içerisinde sohbet panelinin (`createChatUI()`) oluşturulması ve Firebase bağlantısının kurulması için `<video>` elementinin o an sayfada bulunması şart koşuluyordu. HDFilmCehennemi, Dizipal veya iframe kullanan sitelerde sayfa açıldığında henüz video yüklenmediği için oda kurulumu gerçekleşse bile sohbet paneli açılmıyordu.
+- **Kalıcı Çözüm:** Video bulunma şartı sohbet paneli ve Firebase bağlantısı için kaldırıldı. Sohbet paneli anında açılır, video elementi ise arka planda taranarak hazır olduğunda takibe alınır.
+
+### 2. Kurucu ve Katılan Kullanıcı Kaydı (`popup.js`)
+- **Kök Neden:** Odayı kurarken `rooms/${roomId}` altına `users/${userId}` düğümü yazılmıyordu, bu durum kurucunun Firebase canlı üye listesinde görünmemesine yol açıyordu.
+- **Kalıcı Çözüm:** `btnStartParty` ve `joinRoomWithCode` akışında `users/${userId}` düğümü nesne şeklinde kaydedilerek anında Firebase'e aktarıldı.
+
+### 3. Sekme İzolasyonu & Self-Heal Uyum Genişletmesi
+- **Kalıcı Çözüm:** HDFilmCehennemi, Dizipal, Netflix vb. tüm dizi/film siteleri `isMoviePage` kapsamına alındı. Sekme ID değiştiğinde eklenti kendini aktif sekme olarak self-heal edip odaya anında bağlanır.
+
 ## [29.07.2026] Oda Koduyla Katılma (joinCodeSection) & UX Tamiri
 
 ### 1. Manuel 4 Haneli Oda Kodu Giriş Alanı

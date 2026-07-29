@@ -168,9 +168,17 @@ function init() {
 
     chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
       if (result.roomId) {
-        // Aktif Sekme İzolasyonu & Otomatik Kurtarma:
-        // Eğer kullanıcı bir film izleme sayfasındaysa ve roomId mevcutsa, sekme değişmiş veya tarayıcı yeniden başlatılmış olsa bile aktif sekme olarak güncellensin.
-        const isMoviePage = !!(document.querySelector('video') || PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube());
+        // Sekme İzolasyonu & Otomatik Kurtarma:
+        // Kullanıcı bir web/film sayfasındaysa ve roomId mevcutsa aktif sekme olarak self-heal yapıp odaya bağlansın.
+        const isMoviePage = !!(
+          document.querySelector('video') || 
+          PlayerAdapter.isNetflix() || 
+          PlayerAdapter.isDisney() || 
+          PlayerAdapter.isYouTube() ||
+          window.location.href.includes('hdfilmcehennemi') ||
+          window.location.href.includes('dizipal') ||
+          (window.location.protocol.startsWith('http') && !window.location.href.includes('google.com'))
+        );
 
         if (!result.activeTabId || (myTabId !== null && myTabId !== result.activeTabId)) {
           if (isMoviePage && myTabId !== null) {
@@ -237,11 +245,9 @@ window.addEventListener('beforeunload', () => {
 
 // Storage ve Popup Mesaj Dinleyicileri
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'settings-updated') {
-    init(); // Ayarlar güncellendiğinde tekrar başlat
-    sendResponse({ status: 'success' });
-  } else if (message.type === 'force-sync') {
-    forceSync();
+  if (message.type === 'settings-updated' || message.type === 'force-sync') {
+    console.log('[FilmSync] Popup mesajı alındı, bağlantı ve Chat UI yenileniyor.');
+    init();
     sendResponse({ status: 'success' });
   }
 });
@@ -260,14 +266,22 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         const myTabId = tabResponse ? tabResponse.tabId : null;
 
         chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId'], (result) => {
-          const isMoviePage = !!(document.querySelector('video') || PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube());
+          const isMoviePage = !!(
+            document.querySelector('video') || 
+            PlayerAdapter.isNetflix() || 
+            PlayerAdapter.isDisney() || 
+            PlayerAdapter.isYouTube() ||
+            window.location.href.includes('hdfilmcehennemi') ||
+            window.location.href.includes('dizipal') ||
+            (window.location.protocol.startsWith('http') && !window.location.href.includes('google.com'))
+          );
 
           if (!result.activeTabId || (myTabId !== null && myTabId !== result.activeTabId)) {
             if (isMoviePage && myTabId !== null && result.roomId) {
               console.log(`[FilmSync Storage Sekme Kurtarma] Sekme ID (${myTabId}) aktif yapılıyor.`);
               chrome.storage.local.set({ activeTabId: myTabId });
             } else {
-              console.log(`[FilmSync İzolasyon Storage] Eklenti bu sekmede pasif hale getiriliyor.`);
+              console.log(`[FilmSync İzolasyon Storage] Eklenti bu sekmede pasif.`);
               removeChatUI();
               return;
             }
@@ -282,15 +296,14 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 
           if (roomId) {
             console.log(`[FilmSync Storage] Yeni oda bağlantısı tetikleniyor: ${roomId}`);
-            initializeFirebase(firebaseConfig);
-            
-            if (videoElement) {
-              forceSync();
+            if (window === window.top) {
+              initializeFirebase(firebaseConfig);
               if (!document.getElementById('filmsync-root')) {
                 createChatUI();
                 startUIKeeper();
               }
             }
+            startVideoTracking();
           } else {
             removeChatUI();
           }
