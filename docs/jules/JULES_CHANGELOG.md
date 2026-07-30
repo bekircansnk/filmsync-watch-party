@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [20.07.2026] - Güvenlik Düzeltmeleri (XSS Önlemleri)
+- **Hata Düzeltmeleri:**
+  - `extension/content.js` dosyasındaki `showAutoJoinOverlay` fonksiyonunda bulunan XSS (Cross-Site Scripting) açığı `innerHTML` kullanımı yerine güvenli `textContent` kullanılarak giderildi.
+  - `extension/content.js` dosyasındaki `showNamePromptModal` fonksiyonunda bulunan XSS açığı `innerHTML` yerine `textContent` kullanılarak kapatıldı. Ayrıca hatalı bir regex ('/\\/$/') sözdizimi ('/\/$/') olarak düzeltildi.
+  - `extension/popup.js` dosyasındaki `publicRoomList` içerisinde oda bilgilerinin render edilmesi sırasındaki string interpolasyonu (`innerHTML`) kaldırılarak, oda bilgileri (Oda ID, Platform Adı, Aktif Üye Sayısı) güvenli `textContent` ile eklendi. Oda silme butonu güvenli DOM elemanı (document.createElement) olarak oluşturulacak şekilde refaktör edildi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
