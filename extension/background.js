@@ -21,6 +21,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId } = message;
     if (roomId && username) {
+      if (!/^[a-zA-Z0-9_-]+$/.test(roomId)) {
+        console.error('[FilmSync] Invalid roomId format');
+        return false;
+      }
+
+      const safeUserId = userId && /^[a-zA-Z0-9_-]+$/.test(userId) ? userId : 'unloaded_user';
       // 1. lastState nesnesini duraklatıldı olarak güncelle
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
         method: 'PATCH',
@@ -28,7 +34,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         body: JSON.stringify({
           isPlaying: false,
           lastUpdated: Date.now(),
-          senderId: userId || 'unloaded_user'
+          senderId: safeUserId
         })
       }).catch(err => console.error('[FilmSync Unload Patch Hatası]', err));
 
@@ -52,6 +58,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'create-room') {
     const { roomId, hostId, username, avatar, hostOnly, url } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
+
+    if (!/^[A-Z0-9_-]+$/.test(cleanRoomId)) {
+      sendResponse({ status: 'error', error: 'Invalid roomId format' });
+      return false;
+    }
+
+    if (!/^[a-zA-Z0-9_-]+$/.test(hostId)) {
+      sendResponse({ status: 'error', error: 'Invalid hostId format' });
+      return false;
+    }
 
     const roomData = {
       password: '',
@@ -86,6 +102,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const { roomId, userId, username, avatar } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
 
+    if (!/^[a-zA-Z0-9_-]+$/.test(userId)) {
+      sendResponse({ status: 'error', error: 'Invalid userId format' });
+      return false;
+    }
+
     // Önce tüm odaları çekip büyük/küçük harf bağımsız sorgula
     fetch('https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json')
       .then(res => res.json())
@@ -109,6 +130,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (!matchedRoomData || !matchedRoomId) {
           sendResponse({ status: 'not_found' });
           return;
+        }
+
+        if (!/^[A-Z0-9_-]+$/.test(matchedRoomId)) {
+           sendResponse({ status: 'error', error: 'Invalid matchedRoomId format' });
+           return false;
         }
 
         // Kullanıcıyı odaya ekle
