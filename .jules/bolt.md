@@ -1,0 +1,3 @@
+## 2026-01-01 - Throttling and Passive Event Listeners for Video Player Idle Detector
+**Learning:** Attaching continuous event listeners like `mousemove` globally without throttling and without the `{ passive: true }` flag causes significant main-thread contention and layout thrashing, especially when the handler repeatedly queries the DOM (`getElementById`) and resets timeouts hundreds of times a second over a video player.
+**Action:** Always throttle continuous global events (like `mousemove` or `scroll`) and apply `{ passive: true }` to inform the browser that default behavior won't be prevented, ensuring smooth scrolling and video playback.
