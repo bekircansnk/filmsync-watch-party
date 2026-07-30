@@ -1,0 +1,4 @@
+## 2026-05-18 - Prevent Path Traversal in Firebase REST API
+**Vulnerability:** The application was passing dynamic variables derived from untrusted Chrome message payloads (`roomId`, `userId`) directly into `fetch()` URL paths in `background.js` (e.g. `https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`). This creates a Path Traversal vulnerability where malicious data could target arbitrary database paths.
+**Learning:** Background Service Workers often use REST API interactions (`fetch`) directly instead of Firebase Client SDKs, meaning SDK-level sanitization is bypassed. Untrusted parameters coming from clients via `chrome.runtime.onMessage` must be treated as external, untrusted input.
+**Prevention:** All dynamic keys (`roomId`, `userId`, `hostId`) injected into Firebase URLs must be validated against a strict regex mask (`/^[a-zA-Z0-9_-]+$/`) before being sent via `fetch` requests.
