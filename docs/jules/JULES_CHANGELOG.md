@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [30.07.2026] - Konsol Loglarının Temizlenmesi ve Oynatıcı Stabilite İyileştirmesi
+- **İyileştirmeler:**
+  - `extension/content.js`, `extension/popup.js` ve `extension/inject.js` dosyalarındaki düz `console.log` kullanımları yapılandırılmış `Logger` (`Logger.info`, `Logger.warn`, `Logger.error`) nesnesiyle değiştirildi.
+  - `inject.js` ve `content.js` içindeki `.play()` asenkron fonksiyonları olası promise reddedilmelerini (Örn. Netflix, Disney+, YouTube API'leri üzerindeki tarayıcı eklenti çökmeleri) önlemek amacıyla `.catch()` bloklarıyla sarmalandı.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
