@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [30.07.2026] - Bellek Sızıntısı ve Firebase Dinleyici Düzeltmeleri
+- **Hata Düzeltmeleri:**
+  - `setInterval` fonksiyonlarından kaynaklanan bellek sızıntılarını (memory leaks) önlemek amacıyla aralık (interval) referansları global değişkenlere atandı ve sekme değişikliği/kapanması durumunda `clearInterval` ile düzgün bir şekilde temizlenmesi sağlandı.
+  - `cleanupFirebase` içerisindeki Firebase `off()` çağrıları, temel referans yerine doğru sorgu örneklerine (`limitToLast` vb.) hedeflenerek düzeltildi, böylece hayalet (orphan) dinleyiciler engellendi.
+  - `hostId` ve `hostOnly` dinleyicileri için eksik olan `off()` temizleme çağrıları eklendi.
+  - `content.js` içerisindeki RegExp literal hatası düzeltildi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
