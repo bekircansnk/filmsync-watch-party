@@ -1,0 +1,3 @@
+## 2026-05-15 - Improve Form Accessibility with Semantic Labels
+**Learning:** In the Chrome extension popup (`popup.html`), descriptive text elements associated with inputs were implemented as `<span>` tags without explicit focus management or pointer cursors, reducing discoverability and screen reader support.
+**Action:** When defining input descriptors (e.g., switches, text inputs), use `<label for="...">` tags to explicitly associate the text with its input field. Selectively apply a `.clickable-label` class with `cursor: pointer` to make the interaction area more apparent, and always include `aria-label` for implicitly labeled inputs (like the username input field).
