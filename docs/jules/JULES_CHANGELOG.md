@@ -4,6 +4,15 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [31.07.2026] - Senkronizasyon ve Oynatıcı Kararlılık İyileştirmeleri
+- **Hata Düzeltmeleri ve Refaktör:**
+  - `extension/content.js` içerisindeki uzaktan durum uygulamaları (`applyRemoteState`, `forceSync`, `startDriftCorrection`) yarış durumlarını önlemek için merkezileştirildi.
+  - `PlayerAdapter` nesnesine kilitleme mekanizması (`lockEvents`) eklendi, böylece manuel eşitleme anlarında çoklu `setTimeout` yarış durumları engellendi.
+  - Video eylemleri (`play`, `pause`, `seek`) ile olay dinleyicileri (`handlePlayEvent`, `handlePauseEvent` vd.) çökmeleri önlemek amacıyla `try-catch` bloklarıyla sarıldı ve `play()` Promise reddi ele alındı.
+  - Önceden var olan hatalı Regex (`/\\/$/`) ifadesi düzeltildi.
+
+---
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
