@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [31.07.2026] - Güvenlik Güncellemesi (XSS İyileştirmeleri)
+- **Hata Düzeltmeleri:**
+  - `extension/content.js` dosyasında, kullanıcı tarafından belirlenen oda isimlerinin (roomName) doğrudan `innerHTML` aracılığıyla HTML şablonlarına aktarılması engellendi. İlgili yerler (`showAutoJoinOverlay` ve `showNamePromptModal` fonksiyonları) `document.createElement` ve `textContent` kullanacak şekilde yeniden yazıldı.
+  - `extension/popup.js` dosyasında, herkese açık odalar listelenirken kullanıcı adlarının (userNames) `innerHTML` ile şablona yerleştirilmesinden kaynaklanan potansiyel XSS zafiyeti giderildi. Elementler `document.createElement` ve `textContent` ile dinamik oluşturulacak şekilde refaktör edildi.
+  - `extension/content.js` içerisindeki geçersiz Regex bayrak hatası düzeltildi (`replace(/\\/$/, '')` -> `replace(/\//$/, '')`).
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
