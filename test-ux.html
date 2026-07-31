@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    :root { --primary: #e50914; }
+    .user-avatar-badge {
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .user-avatar-badge:hover { transform: scale(1.2); }
+    .user-avatar-badge:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 50%; }
+  </style>
+</head>
+<body>
+  <span id="userAvatarDisplay" class="user-avatar-badge" title="Profil Simgesini Değiştir" role="button" tabindex="0" aria-label="Profil Simgesini Değiştir">🍿</span>
+  <script>
+    const el = document.getElementById('userAvatarDisplay');
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        console.log('clicked via keyboard');
+      }
+    });
+  </script>
+</body>
+</html>

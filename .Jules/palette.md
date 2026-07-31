@@ -1,0 +1,3 @@
+## 2026-07-31 - Keyboard Accessibility for Custom Emoji/Icon UI Components
+**Learning:** Custom UI elements functioning as buttons (like `span` or `div` wrapping emojis/icons, e.g., `#userAvatarDisplay`) lack built-in keyboard accessibility and screen reader support. Just adding a `click` listener and CSS `cursor: pointer` is insufficient, and users cannot focus or interact with them without a mouse.
+**Action:** When creating or identifying custom button elements, ensure they include `role="button"`, `tabindex="0"`, a descriptive `aria-label`, visible `:focus-visible` CSS styles, and a `keydown` event listener to trigger the click action upon pressing the 'Enter' or 'Space' keys.
