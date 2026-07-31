@@ -1,0 +1,11 @@
+1. Read the exact implementation of intervals (`startVideoTracking`, `startDriftCorrection`, `startUIKeeper`, `startIframeFullscreenKeeper`) to identify variables needed to track the intervals in `extension/content.js`. I will use `run_in_bash_session` to make targeted sed/awk or direct file replacements to define those variables (e.g., `videoTrackingInterval`, `driftCorrectionInterval`, `uiKeeperInterval`, `iframeKeeperInterval`) and ensure `clearInterval` is called before setting them.
+2. In `extension/content.js`, modify `cleanupFirebase` via `run_in_bash_session` and `replace_with_git_merge_diff` to correctly turn off the queries:
+   - Call `.limitToLast(50).off()` for messages.
+   - Call `.limitToLast(5).off()` for reactions.
+   - Add `.off()` for `hostId` and `hostOnly`.
+3. Add `pagehide` event listener alongside `beforeunload` to handle interval teardown properly in `extension/content.js` via `replace_with_git_merge_diff`.
+4. Run `node -c extension/content.js` in bash to check for syntax errors.
+5. Update `docs/jules/JULES_CHANGELOG.md` in Turkish with the optimizations using `replace_with_git_merge_diff` or bash.
+6. Verify modifications using `run_in_bash_session` (e.g. `cat`).
+7. Complete pre commit steps to ensure proper testing, verification, review, and reflection are done.
+8. Submit the change.
