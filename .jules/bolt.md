@@ -1,0 +1,3 @@
+## 2026-07-22 - Throttling Global Events and Passive Listeners
+**Learning:** Attaching generic UI event listeners like `mousemove` and `keydown` to the document without throttling can cause DOM recalculation storms and main thread contention, especially over video players. Additionally, not using `{ passive: true }` can delay scrolling/interactions since the browser waits to see if `preventDefault()` is called.
+**Action:** Implement throttling (e.g. 250ms interval) on high-frequency events and always append `{ passive: true }` to document-level global event listeners (`mousemove`, `keydown`, `scroll`, etc) to improve main thread performance.
