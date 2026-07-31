@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [31.07.2026] - Güvenlik İyileştirmesi: Path Traversal (Yol Geçişi) Zafiyeti Giderildi
+- **Güvenlik İyileştirmeleri:**
+  - Firebase REST API çağrılarında (background.js içerisinde) kullanılan dinamik yol parametrelerinin (`roomId`, `userId` vb.) denetimsiz olarak URL'lere eklenmesi engellendi.
+  - Olası "Path Traversal" (Dizin Geçişi) saldırılarına karşı `isValidPathId` adında düzenli ifade (Regex: `/^[a-zA-Z0-9_-]+$/`) tabanlı bir doğrulama fonksiyonu eklendi.
+  - Geçersiz parametre içeren isteklerin işlenmeden reddedilmesi sağlandı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
