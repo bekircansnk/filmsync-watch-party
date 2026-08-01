@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -671,11 +671,18 @@ function startDriftCorrection() {
       const expectedTime = state.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
+      // Oynatma durumu uyuşmuyorsa veya süre sapması dinamik eşik değerinden büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
 
-      if (playStateMismatch || drift > 2.5) {
-        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
+      // Dinamik tolerans eşiği: Durum uyuşmazlığı varsa anında (daha küçük eşik) müdahale et, yoksa ağ gecikmesine göre ayarla
+      let driftThreshold = playStateMismatch ? 1.0 : 2.5;
+      if (!playStateMismatch) {
+         // Ağ gecikmesine bağlı (timeDiff) eşiği ölçeklendir, minimum 2.0, maksimum 5.0 saniye
+         driftThreshold = Math.max(2.0, Math.min(2.0 + (timeDiff * 0.5), 5.0));
+      }
+
+      if (playStateMismatch || drift > driftThreshold) {
+        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn (Eşik: ${driftThreshold.toFixed(1)}sn)`);
         isSyncing = true;
         
         removeVideoListeners(); // Dinleyicileri kaldır
