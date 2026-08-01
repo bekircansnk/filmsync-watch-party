@@ -1,0 +1,3 @@
+## 2026-08-01 - Add Proper Labels for Switch Accessibility
+**Learning:** Custom toggle switches in the popup UI were built using standard `<span>` text next to a checkbox, causing the text to be non-interactive and failing to provide context to screen readers focusing on the checkbox input. Inputs like `usernameInput` and `joinRoomCodeInput` also lacked accessible names (`aria-label`) despite having placeholders.
+**Action:** Use semantic `<label for="id">` instead of `<span>` for text associated with toggles, and selectively apply a `.clickable-label` class (`cursor: pointer;`) so it is clear that clicking the text will toggle the input. Additionally, ensure all text inputs without explicit visual labels have an `aria-label` attribute set.
