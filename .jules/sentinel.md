@@ -1,0 +1,4 @@
+## 2026-08-01 - [CRITICAL] Prevent Path Traversal in Firebase REST API Calls
+**Vulnerability:** Path traversal vulnerability exists due to unsanitized, user-provided values (like `roomId` and `userId`) being directly concatenated into Firebase Realtime Database REST API URL endpoints in `extension/background.js`.
+**Learning:** In standard SDK interactions with Firebase, paths might be sanitized implicitly, but when utilizing manual REST API fetch requests (e.g. background service workers operating independently of the Client SDK), untrusted Chrome messaging payloads allow arbitrary URL generation which could let an attacker manipulate the path (e.g., read or write to `/rooms/../another_path`).
+**Prevention:** Always strictly validate any dynamically provided parameters derived from untrusted payloads against an explicit regex mask (e.g., `/^[a-zA-Z0-9_-]+$/`) before performing URL concatenation.
