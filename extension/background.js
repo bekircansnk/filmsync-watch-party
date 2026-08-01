@@ -20,6 +20,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId } = message;
+    const idRegex = /^[a-zA-Z0-9_-]+$/;
+
+    if (!roomId || !idRegex.test(roomId) || (userId && !idRegex.test(userId))) {
+      sendResponse({ status: 'error', error: 'Invalid ID format' });
+      return true;
+    }
+
     if (roomId && username) {
       // 1. lastState nesnesini duraklatıldı olarak güncelle
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
@@ -52,6 +59,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'create-room') {
     const { roomId, hostId, username, avatar, hostOnly, url } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
+    const idRegex = /^[a-zA-Z0-9_-]+$/;
+
+    if (!cleanRoomId || !idRegex.test(cleanRoomId) || !hostId || !idRegex.test(hostId)) {
+      sendResponse({ status: 'error', error: 'Invalid ID format' });
+      return true;
+    }
 
     const roomData = {
       password: '',
@@ -85,6 +98,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'join-room') {
     const { roomId, userId, username, avatar } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
+    const idRegex = /^[a-zA-Z0-9_-]+$/;
+
+    if (!cleanRoomId || !idRegex.test(cleanRoomId) || !userId || !idRegex.test(userId)) {
+      sendResponse({ status: 'error', error: 'Invalid ID format' });
+      return true;
+    }
 
     // Önce tüm odaları çekip büyük/küçük harf bağımsız sorgula
     fetch('https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json')
@@ -186,7 +205,8 @@ function syncCurrentTabMovieUrl(tabId, url) {
   if (!isMovieWatchUrl(url)) return;
 
   chrome.storage.local.get(['roomId'], (res) => {
-    if (res.roomId) {
+    const idRegex = /^[a-zA-Z0-9_-]+$/;
+    if (res.roomId && idRegex.test(res.roomId)) {
       console.log(`[FilmSync Background] Canlı film adresi Firebase'e yazılıyor: ${url}`);
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/lastState.json`, {
         method: 'PATCH',
