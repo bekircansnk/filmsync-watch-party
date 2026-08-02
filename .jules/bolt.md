@@ -1,0 +1,3 @@
+## 2026-08-02 - Throttle Global Event Listeners Over Video Players
+**Learning:** Frequent UI events like `mousemove` and `keydown` in the fullscreen idle detector were firing too often without throttling, causing potential main thread contention and DOM recalculation storms over active video players.
+**Action:** When adding generic UI event listeners (like `mousemove` or `scroll`) to the global `document`, especially those tracking continuous input, apply a timestamp-based throttle (e.g., 250ms) and use the `{ passive: true }` option to ensure they do not block main thread operations and video frame rendering.
