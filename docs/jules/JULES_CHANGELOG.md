@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [02.08.2026] - Dinamik Eşitleme Toleransı ve Ağ Gecikmesi Hesaplama
+- **Hata Düzeltmeleri ve İyileştirmeler:**
+  - `startDriftCorrection` fonksiyonuna ağ gecikmesini (latency) hesaba katan dinamik bir eşik değeri mantığı eklendi.
+  - Oynatma durumu uyuşmazlığında temel tolerans süresi 1.0 saniyeye düşürüldü.
+  - Video url karşılaştırmalarındaki regexp hatası düzeltildi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
