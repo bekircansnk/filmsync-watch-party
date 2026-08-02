@@ -114,17 +114,25 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Kullanıcı adı değiştiğinde veya tıklanıldığında dinamik avatar ata
+  const handleAvatarChange = () => {
+    selectedAvatar = MOVIE_AVATARS[Math.floor(Math.random() * MOVIE_AVATARS.length)];
+    userAvatarDisplay.textContent = selectedAvatar;
+    chrome.storage.local.set({ selectedAvatar });
+
+    chrome.storage.local.get(['roomId', 'userId'], (res) => {
+      if (res.roomId && res.userId && db) {
+        db.ref(`rooms/${res.roomId}/users/${res.userId}/avatar`).set(selectedAvatar);
+      }
+    });
+  };
+
   if (userAvatarDisplay) {
-    userAvatarDisplay.addEventListener('click', () => {
-      selectedAvatar = MOVIE_AVATARS[Math.floor(Math.random() * MOVIE_AVATARS.length)];
-      userAvatarDisplay.textContent = selectedAvatar;
-      chrome.storage.local.set({ selectedAvatar });
-      
-      chrome.storage.local.get(['roomId', 'userId'], (res) => {
-        if (res.roomId && res.userId && db) {
-          db.ref(`rooms/${res.roomId}/users/${res.userId}/avatar`).set(selectedAvatar);
-        }
-      });
+    userAvatarDisplay.addEventListener('click', handleAvatarChange);
+    userAvatarDisplay.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleAvatarChange();
+      }
     });
   }
 
