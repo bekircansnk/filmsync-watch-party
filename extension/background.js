@@ -1,4 +1,11 @@
 // FilmSync Background Service Worker
+
+// 🛡️ Sentinel: Güvenlik amaçlı Path doğrulama (Path Traversal önlemi)
+function isValidPathParam(param) {
+  if (!param || typeof param !== 'string') return false;
+  return /^[a-zA-Z0-9_-]+$/.test(param);
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   console.log('FilmSync Watch Party eklentisi başarıyla kuruldu.');
 });
@@ -21,6 +28,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId } = message;
     if (roomId && username) {
+      if (!isValidPathParam(roomId)) {
+        console.error('[FilmSync Security] Geçersiz roomId formatı:', roomId);
+        sendResponse({ status: 'error', error: 'Invalid room format' });
+        return false;
+      }
+
+      const safeUserId = userId && isValidPathParam(userId) ? userId : 'unloaded_user';
+
       // 1. lastState nesnesini duraklatıldı olarak güncelle
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
         method: 'PATCH',
@@ -28,7 +43,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         body: JSON.stringify({
           isPlaying: false,
           lastUpdated: Date.now(),
-          senderId: userId || 'unloaded_user'
+          senderId: safeUserId
         })
       }).catch(err => console.error('[FilmSync Unload Patch Hatası]', err));
 
@@ -52,6 +67,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'create-room') {
     const { roomId, hostId, username, avatar, hostOnly, url } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
+
+    if (!isValidPathParam(cleanRoomId)) {
+      sendResponse({ status: 'error', error: 'Invalid room format' });
+      return false;
+    }
+
+    if (hostId && !isValidPathParam(hostId)) {
+      sendResponse({ status: 'error', error: 'Invalid hostId format' });
+      return false;
+    }
 
     const roomData = {
       password: '',
@@ -85,6 +110,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'join-room') {
     const { roomId, userId, username, avatar } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
+
+    if (!isValidPathParam(cleanRoomId)) {
+      sendResponse({ status: 'error', error: 'Invalid room format' });
+      return false;
+    }
+
+    if (userId && !isValidPathParam(userId)) {
+      sendResponse({ status: 'error', error: 'Invalid userId format' });
+      return false;
+    }
 
     // Önce tüm odaları çekip büyük/küçük harf bağımsız sorgula
     fetch('https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json')
@@ -187,6 +222,11 @@ function syncCurrentTabMovieUrl(tabId, url) {
 
   chrome.storage.local.get(['roomId'], (res) => {
     if (res.roomId) {
+      if (!isValidPathParam(res.roomId)) {
+        console.error('[FilmSync Security] Geçersiz roomId formatı:', res.roomId);
+        return;
+      }
+
       console.log(`[FilmSync Background] Canlı film adresi Firebase'e yazılıyor: ${url}`);
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/lastState.json`, {
         method: 'PATCH',
