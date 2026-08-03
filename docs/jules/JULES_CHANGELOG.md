@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [03.08.2026] - Senkronizasyon Hataları ve Race Condition Düzeltmeleri
+- **Hata Düzeltmeleri:**
+  - `PlayerAdapter` içindeki `.play()`, `.pause()` ve `.seek()` çağrıları, platform bazlı Promise reddedilmelerinden kaynaklanan çökmeleri önlemek için `try-catch` blokları içine alındı ve `.play()` için güvenli Promise kontrolü eklendi.
+  - `applyRemoteState` ve `forceSync` içindeki `isSyncing` kilidi, asenkron olan `ensureVideoReady` kontrolü öncesine alınarak "race condition" (yarış durumu) sorunları giderildi.
+  - Kilit süresi içerisinde sıraya alınan (queue) `pendingState` olaylarının (event) düşmesini engellemek için, `startDriftCorrection` ve `ensureVideoReady` erken geri dönüş durumlarına (early return) `applyRemoteState(nextState)` kontrolleri eklendi.
+  - Bellek (memory) gereksinimleri uyarınca `setupVideoListeners` ve `removeVideoListeners` fonksiyonlarındaki olay dinleyicisi yönetimi `try-catch` bloklarıyla korumaya alındı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
