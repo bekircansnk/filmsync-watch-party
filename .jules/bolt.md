@@ -1,0 +1,3 @@
+## 2026-08-03 - Throttle high-frequency global events and add passive listeners
+**Learning:** Attaching unthrottled global continuous event listeners like `mousemove` causes DOM recalculation storms and significant main thread contention, negatively impacting video playback performance, especially when checking state continually. Furthermore, not declaring event listeners as passive blocks the browser's default optimizations for input events.
+**Action:** Always implement a timestamp-based throttle (e.g., `Date.now() - lastCall < 250`) on high-frequency UI events (`mousemove`, `scroll`, `resize`) and explicitly add `{ passive: true }` when attaching generic event listeners that do not use `e.preventDefault()`.
