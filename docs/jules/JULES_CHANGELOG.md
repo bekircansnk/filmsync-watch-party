@@ -4,6 +4,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [03.08.2026] - Drift Düzeltme Mantığı İyileştirmesi
+- **Geliştirme:**
+  - `startDriftCorrection` fonksiyonundaki ağ gecikmesine ve durum uyumsuzluklarına göre dinamik olarak ayarlanan bir eşik (dynamic threshold) eklendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
