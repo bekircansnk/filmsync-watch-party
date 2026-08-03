@@ -1,0 +1,4 @@
+## 2026-08-03 - Path Traversal Vulnerability in Firebase REST API calls
+ **Vulnerability:** Unvalidated dynamic user inputs (`roomId` and `userId`) received from untrusted Chrome messages were directly interpolated into URL strings for Firebase REST API calls.
+ **Learning:** In a background service worker using raw REST requests (e.g., `fetch(url + roomId + '.json')`), malicious payloads (like `../`) can traverse the database structure, allowing unauthorized data access or modification beyond the intended scope.
+ **Prevention:** Implement strict input validation utilizing a regular expression whitelist (e.g., `/^[a-zA-Z0-9_-]+$/`) on all dynamic path parameters before appending them to URL strings.
