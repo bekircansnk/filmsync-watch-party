@@ -1,0 +1,3 @@
+## 2026-08-04 - Ensure Keyboard Support and ARIA Roles for Interactive Emojis
+**Learning:** Interactive UI elements based solely on emojis (e.g., `<span title="Change Avatar">🍿</span>`) used as buttons lack inherent semantic meaning, keyboard accessibility, and screen reader announcements compared to standard text-based buttons.
+**Action:** When using non-semantic elements (like `<span>` or `<div>`) as buttons—especially with icon or emoji content—always explicitly add `role="button"`, `tabindex="0"`, a descriptive `aria-label`, focus-visible styles, and `keydown` event listeners for 'Enter' and 'Space' key interactions to ensure full accessibility.
