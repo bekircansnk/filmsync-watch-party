@@ -1,6 +1,13 @@
 // FilmSync Background Service Worker
+const _c = console;
+const Logger = {
+  info: (...args) => _c.log(...args),
+  warn: (...args) => _c.warn(...args),
+  error: (...args) => _c.error(...args)
+};
+
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('FilmSync Watch Party eklentisi başarıyla kuruldu.');
+  Logger.info('FilmSync Watch Party eklentisi başarıyla kuruldu.');
 });
 
 // Sekme Yönlendirme ve Bilgi Dinleyicisi
@@ -8,7 +15,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'redirect-tab' && message.url) {
     const tabId = sender.tab ? sender.tab.id : null;
     if (tabId) {
-      console.log(`[FilmSync Background] Sekme ${tabId} yeni adrese yönlendiriliyor: ${message.url}`);
+      Logger.info(`[FilmSync Background] Sekme ${tabId} yeni adrese yönlendiriliyor: ${message.url}`);
       chrome.tabs.update(tabId, { url: message.url }, () => {
         sendResponse({ status: 'success' });
       });
@@ -30,7 +37,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           lastUpdated: Date.now(),
           senderId: userId || 'unloaded_user'
         })
-      }).catch(err => console.error('[FilmSync Unload Patch Hatası]', err));
+      }).catch(err => Logger.error('[FilmSync Unload Patch Hatası]', err));
 
       // 2. Sistem mesajı gönder
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/messages.json`, {
@@ -42,7 +49,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           isSystem: true,
           timestamp: Date.now()
         })
-      }).catch(err => console.error('[FilmSync Unload Msg Hatası]', err));
+      }).catch(err => Logger.error('[FilmSync Unload Msg Hatası]', err));
 
       // 3. Otomatik zaman aşımı olan inaktif odaları temizle
       cleanupExpiredRoomsREST();
@@ -157,14 +164,14 @@ function cleanupExpiredRoomsREST() {
         const isInactive3h = (now - latestUserActivity > THREE_HOURS_MS);
 
         if (isExpired24h || (activeUserCount === 0 && isInactive3h)) {
-          console.log(`[FilmSync Background İmha] Oda ${rId} siliniyor.`);
+          Logger.info(`[FilmSync Background İmha] Oda ${rId} siliniyor.`);
           fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${rId}.json`, {
             method: 'DELETE'
-          }).catch(err => console.error(`[FilmSync Delete Hatası ${rId}]`, err));
+          }).catch(err => Logger.error(`[FilmSync Delete Hatası ${rId}]`, err));
         }
       });
     })
-    .catch(err => console.error('[FilmSync REST Cleanup Hatası]', err));
+    .catch(err => Logger.error('[FilmSync REST Cleanup Hatası]', err));
 }
 
 // Film/Dizi Adres Doğrulayıcı
@@ -187,7 +194,7 @@ function syncCurrentTabMovieUrl(tabId, url) {
 
   chrome.storage.local.get(['roomId'], (res) => {
     if (res.roomId) {
-      console.log(`[FilmSync Background] Canlı film adresi Firebase'e yazılıyor: ${url}`);
+      Logger.info(`[FilmSync Background] Canlı film adresi Firebase'e yazılıyor: ${url}`);
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/lastState.json`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -195,7 +202,7 @@ function syncCurrentTabMovieUrl(tabId, url) {
           url: url,
           lastUpdated: Date.now()
         })
-      }).catch(err => console.error('[FilmSync URL Sync Hatası]', err));
+      }).catch(err => Logger.error('[FilmSync URL Sync Hatası]', err));
     }
   });
 }
