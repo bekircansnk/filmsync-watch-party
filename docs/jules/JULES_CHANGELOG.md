@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [04.08.2026] - Medya Senkronizasyon Kilitleri ve Hata Giderme
+- **Hata Düzeltmeleri:**
+  - `PlayerAdapter` içerisindeki `play()`, `pause()` ve `seek()` metotları try-catch bloğu ile sarıldı.
+  - Video oynatma işlemleri sırasındaki reddedilen (rejected) Promise hatalarını yakalamak için `videoElement.play()` metoduna Promise yakalama kontrolü eklendi.
+  - `applyRemoteState` ve `forceSync` fonksiyonlarında yer alan kilit (`isSyncing = true`) asenkron `ensureVideoReady` kontrolü öncesine taşınarak, Remote State güncellemeleri ile kullanıcı hareketleri arasında oluşan yarış durumları (race conditions) giderildi.
+  - Kilitlerin erken sonlandırılması durumunda `pendingState` sırasındaki durumların atlanmadan uygulanması sağlandı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
