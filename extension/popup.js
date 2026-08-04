@@ -63,6 +63,8 @@ function copyToClipboard(text) {
   }
 }
 
+const validIdRegex = /^[a-zA-Z0-9_-]+$/;
+
 document.addEventListener('DOMContentLoaded', () => {
   const activeRoomContainer = document.getElementById('activeRoomContainer');
   const partyCreatorContainer = document.getElementById('partyCreatorContainer');
@@ -259,6 +261,12 @@ document.addEventListener('DOMContentLoaded', () => {
               lastActive: Date.now()
             };
 
+            if (!validIdRegex.test(matchedRoomId) || !validIdRegex.test(userId)) {
+              showGlobalToast('Geçersiz oda kodu veya kullanıcı kimliği!');
+              resetStatus();
+              return;
+            }
+
             fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${matchedRoomId}/users/${userId}.json`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
@@ -310,8 +318,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // "Film Sayfasına Git 🎬"
   btnGoToMovie.addEventListener('click', () => {
-    if (!currentRoomId) {
-      showGlobalToast('Aktif oda bulunamadı!');
+    if (!currentRoomId || !validIdRegex.test(currentRoomId)) {
+      showGlobalToast('Geçersiz veya aktif olmayan oda bulunamadı!');
       return;
     }
     
@@ -649,7 +657,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (isExpired24h || isInactive3h) {
             console.log(`[FilmSync İmha Motoru] Oda ${roomId} 3 saattir inaktif veya 24h dolduğu için siliniyor.`);
-            fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' }).catch(e => {});
+            if (validIdRegex.test(roomId)) {
+              fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' }).catch(e => {});
+            }
             return;
           }
 
@@ -711,6 +721,10 @@ document.addEventListener('DOMContentLoaded', () => {
           if (deleteBtn) {
             deleteBtn.addEventListener('click', (e) => {
               e.stopPropagation();
+              if (!validIdRegex.test(roomId)) {
+                showGlobalToast('Geçersiz oda kodu!');
+                return;
+              }
               fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' })
                 .then(() => {
                   showGlobalToast(`Oda ${roomId} başarıyla imha edildi! 🗑️`);
