@@ -1,0 +1,4 @@
+## 2026-08-04 - Path Traversal Vulnerability in Firebase REST API Calls
+**Vulnerability:** In `extension/background.js`, dynamic parameters like `roomId` and `userId` derived from Chrome messaging payloads were directly concatenated into Firebase Realtime Database REST API URLs (e.g., `https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`). This allowed potential path traversal if an attacker provided inputs like `../` to access or modify unauthorized paths.
+**Learning:** This existed because the extension uses the plain Firebase REST API without an SDK that might natively sanitize paths, and relied on untrusted client-side messaging payloads without validation before constructing URLs.
+**Prevention:** All dynamic path parameters derived from untrusted inputs must be strictly validated against a restrictive regex mask (e.g., `/^[a-zA-Z0-9_-]+$/`) before being interpolated into URL strings for REST API calls.
