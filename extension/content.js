@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -1982,15 +1982,24 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let lastMoveTime = 0;
+
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    // Throttle: Saniyede en fazla 5 kez (200ms'de bir) tetikle
+    // Bu optimizasyon video üzerindeki mouse hareketlerinin main thread'i boğmasını engeller
+    const now = Date.now();
+    if (now - lastMoveTime < 200) return;
+    lastMoveTime = now;
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
   };
 
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('keydown', handleMouseMove);
+  // Passive: true seçeneği, browser'a scroll/render blocking yapılmayacağını garanti eder
+  document.addEventListener('mousemove', handleMouseMove, { passive: true });
+  document.addEventListener('keydown', handleMouseMove, { passive: true });
 
   // Tam ekran durum değişikliklerini dinle
   const fsEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
