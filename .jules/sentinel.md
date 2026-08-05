@@ -1,0 +1,4 @@
+## 2026-05-15 - XSS via innerHTML Template Injection
+**Vulnerability:** Found both Reflected and Stored XSS vectors caused by directly injecting user-controlled variables (like `roomName` and `username`) into HTML template strings rendered via `innerHTML`.
+**Learning:** The codebase often constructs complex DOM elements (like modals or user lists) using template literals combined with `innerHTML`. This pattern inherently trusts the input strings, leading to XSS if the input comes from untrusted sources (e.g. URL parameters, Firebase DB).
+**Prevention:** Construct static HTML templates with placeholders (empty elements with specific classes or IDs) via `innerHTML`. Then, selectively populate dynamic content using `.textContent` or `.innerText`, and attach dynamic attributes via `.dataset` to ensure the data is always treated as text, never as executable code.
