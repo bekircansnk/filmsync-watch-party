@@ -1,4 +1,10 @@
 // Evo ve Beko Film Partisi (Teleparty Clone) 🍿
+const _c = console;
+const Logger = {
+  info: (...args) => _c.log(...args),
+  error: (...args) => _c.error(...args)
+};
+
 let roomId = null;
 let username = 'Anonim';
 let password = '';
@@ -453,8 +459,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -671,11 +677,13 @@ function startDriftCorrection() {
       const expectedTime = state.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
+      // Dinamik eşik hesapla: ağ gecikmesine göre 1.5s ile 3.0s arası
+      const dynamicThreshold = Math.max(1.5, Math.min(3.0, timeDiff * 1.5));
+      // Oynatma durumu uyuşmuyorsa veya süre sapması dinamik eşikten büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
 
-      if (playStateMismatch || drift > 2.5) {
-        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
+      if (playStateMismatch || drift > dynamicThreshold) {
+        Logger.info(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn, Eşik: ${dynamicThreshold.toFixed(1)}sn`);
         isSyncing = true;
         
         removeVideoListeners(); // Dinleyicileri kaldır
