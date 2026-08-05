@@ -1,3 +1,7 @@
+## 2026-08-05 - Structured Logging & Playback Stabilizasyonu
+- **Geliştirme**: `content.js`, `popup.js` ve `inject.js` içerisindeki düz `console` çıktıları yapılandırılmış `Logger` nesnesi (`Logger.info`, `Logger.error`, `Logger.warn`) ile değiştirildi.
+- **Hata Düzeltmesi**: Netflix, Disney+ ve YouTube API hook'larındaki `.play()` ve `.playVideo()` çağrılarına Promise kontrolleri eklenerek eklentinin çökmesine neden olan "Unhandled Promise Rejection" hataları giderildi.
+
 # 📝 Jules Otonom Görev Değişiklik Günlüğü (JULES_CHANGELOG.md)
 
 Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm otonom bakım, iyileştirme ve hata giderme seanslarının kaydını tutar.
