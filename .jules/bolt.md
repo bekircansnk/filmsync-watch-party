@@ -1,0 +1,3 @@
+## 2026-08-05 - Throttle Global Event Listeners and use `{ passive: true }`
+**Learning:** Attaching continuous global events (like `mousemove` and `keydown` for idle detection) over the entire document, especially on media-heavy pages with video players, causes severe DOM recalculation storms, blocking the main thread and degrading playback performance.
+**Action:** When implementing idle timers or global movement detection, always use timestamp-based throttling (e.g. throttle to max once per 100ms/200ms) and apply `{ passive: true }` so the browser knows `preventDefault()` won't be called, thereby freeing up main thread operations like scrolling.
