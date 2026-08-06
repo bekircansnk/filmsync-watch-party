@@ -1,0 +1,3 @@
+## 2026-05-15 - Throttling Global Events
+**Learning:** Frequent global events (like `mousemove` or `resize`), especially those interacting with the DOM directly or tied to full-screen video players, can cause severe layout thrashing and main-thread contention if unthrottled. Moreover, using passive event listeners for these events prevents the browser from holding up frame rendering to wait for `preventDefault()`.
+**Action:** Implement a timestamp-based throttle (e.g., 200ms) within continuous event handlers (e.g., `handleMouseMove` for idle detection) and append `{ passive: true }` to `addEventListener` calls when `preventDefault()` is not required, to ensure high video playback frame rates and reduce memory/CPU overhead.
