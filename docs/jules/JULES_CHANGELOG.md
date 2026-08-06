@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [06.08.2026] - Console Log Temizliği ve Hata Yönetimi
+- **İyileştirmeler:**
+  - Tüm sayfalardaki (content.js, popup.js, background.js, inject.js) `console.log` kullanımları yapısal `Logger` objesi ile değiştirildi.
+- **Hata Düzeltmeleri:**
+  - `play()` fonksiyonlarına promise hata yakalama blokları eklendi. Özel oynatıcılarda (Netflix, Disney+, YouTube) `play()` çağrılarının hatalı veya eksik dönmesi kaynaklı çökmeler önlendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
