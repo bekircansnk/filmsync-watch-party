@@ -1,0 +1,3 @@
+## 2026-08-06 - Interactive Emojis Needs Full A11y
+**Learning:** Custom UI components like emojis acting as buttons (e.g., the avatar selector) lack native accessibility features, meaning screen readers ignore them and keyboard users can't trigger them. Furthermore, `<label>` elements are crucial for context on inputs that might only rely on placeholders.
+**Action:** When creating text or span elements that function as inputs or buttons, always include `role="button"`, `tabindex="0"`, `aria-label`, focus states in CSS, and `keydown` event listeners for 'Enter'/'Space'. Replace non-interactive header spans with semantic `<label>` elements pointing to the respective input IDs.
