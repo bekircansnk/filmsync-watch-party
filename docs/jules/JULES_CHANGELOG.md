@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [06.08.2026] - Dinamik Sapma (Drift) Toleransı ve Ağ Gecikmesi Hesaplama
+- **Hata Düzeltmeleri ve İyileştirmeler:**
+  - `startDriftCorrection` içerisinde Firebase üzerinden host'un son durumunu çekerken geçen süre hesaplanarak ağ gecikmesi ölçüldü (`networkLatencySec`).
+  - Eşitleme sapma toleransı statik (2.5s) bir değerden, ağ gecikmesine bağlı olarak değişen dinamik bir değere (`Math.max(1.5, baseThreshold + networkLatencySec)`) dönüştürüldü.
+  - Video oynatma-durdurma durum uyumsuzluğunda, tolerans doğrudan 0.5s gibi sıkı bir değere çekilerek tepki hızı artırıldı.
+  - Kod kalitesini bozmadan `replace_with_git_merge_diff` kullanılarak eşitleme doğruluğu artırıldı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
