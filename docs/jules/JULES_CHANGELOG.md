@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [19.07.2026] - XSS Zafiyetlerinin Giderilmesi (Güvenlik İyileştirmesi)
+- **Güvenlik (XSS):**
+  - `extension/content.js` içerisinde bulunan `showAutoJoinOverlay` ve `showNamePromptModal` fonksiyonlarındaki `.innerHTML` kullanımları revize edildi. Dinamik olarak alınan `roomName` değişkeni, olası Cross-Site Scripting (XSS) saldırılarını engellemek amacıyla güvenli olan `.textContent` yöntemi ile DOM'a enjekte edilecek şekilde değiştirildi.
+  - `extension/popup.js` içerisindeki `loadPublicRooms` fonksiyonunda bulunan, açık odaların listelenmesi sırasındaki dinamik HTML metin yerleştirmeleri (interpolation) düzeltildi. `roomId`, `platformName` ve `displayUsersText` değişkenleri, statik bir şablon içerisine `.textContent` aracılığıyla güvenli bir biçimde yerleştirilerek DOM tabanlı XSS riskleri ortadan kaldırıldı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
