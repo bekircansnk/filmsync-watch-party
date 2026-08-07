@@ -1,0 +1,3 @@
+## 2026-08-07 - Throttling High-Frequency Global Events
+**Learning:** Attaching unthrottled `mousemove` listeners on the `document` that constantly call DOM updates and `setTimeout`/`clearTimeout` causes significant main thread contention, especially in video players where rendering performance is critical. Furthermore, global UI events without `passive: true` can block default browser interactions.
+**Action:** Always throttle continuous global events (like `mousemove`) using a timestamp-based check and append `{ passive: true }` to document-level generic listeners to optimize performance and unblock the main thread.
