@@ -671,11 +671,20 @@ function startDriftCorrection() {
       const expectedTime = state.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
+      // Oynatma durumu uyuşmuyorsa veya süre sapması dinamik eşik değerinden büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
 
-      if (playStateMismatch || drift > 2.5) {
-        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
+      // Dinamik eşik hesaplama (Ağ gecikmesine ve durum uyumsuzluğuna dayalı)
+      let dynamicThreshold = 2.5; // Varsayılan eşik
+      if (playStateMismatch) {
+        dynamicThreshold = 1.0; // Durum uyumsuzsa daha katı eşitleme
+      } else {
+        // Gecikme ne kadar fazlaysa, jitter'ı önlemek için toleransı o kadar artır (max 5 saniye)
+        dynamicThreshold = Math.min(5.0, Math.max(2.5, timeDiff * 1.5));
+      }
+
+      if (playStateMismatch || drift > dynamicThreshold) {
+        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn (Eşik: ${dynamicThreshold.toFixed(1)}sn)`);
         isSyncing = true;
         
         removeVideoListeners(); // Dinleyicileri kaldır
