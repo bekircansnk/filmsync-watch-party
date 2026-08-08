@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [08.08.2026] - Video Senkronizasyon Hata Düzeltmeleri
+- **Hata Düzeltmeleri:**
+  - `applyRemoteState` ve `forceSync` fonksiyonlarında yer alan race condition (yarış durumu) hatası giderildi. Senkronizasyon kilidi (`isSyncing = true`), asenkron olan `ensureVideoReady` kontrolünden *önce* devreye alınacak şekilde yeniden düzenlendi, böylece manuel kullanıcı eylemleri ile uzak durum güncellemeleri arasındaki senkronizasyon döngüleri önlendi.
+  - Video elementinin hazır olmadığı (timeout) durumlarda da senkronizasyon kilidinin kaldırılması ve bekleyen `pendingState` (sıradaki durum) verilerinin işlenmesi sağlandı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
