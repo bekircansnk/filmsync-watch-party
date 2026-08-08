@@ -1,0 +1,4 @@
+## 2026-08-08 - Throttle global event listeners and use passive option
+
+**Learning:** Global events like `mousemove` can cause significant main thread contention, DOM recalculation storms, and dropped frames, especially when active over video players which require high performance. Additionally, non-passive event listeners can block browser scrolling or default behaviors as the browser waits to see if `preventDefault()` will be called.
+**Action:** Always wrap high-frequency continuous global events (such as `mousemove`, `scroll`, or `resize`) in a throttling or debouncing mechanism (e.g., a timestamp check). Always add `{ passive: true }` when attaching generic UI event listeners to global objects like `document`, allowing the browser to optimize rendering and scroll interactions.
