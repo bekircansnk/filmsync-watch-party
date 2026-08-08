@@ -689,19 +689,39 @@ document.addEventListener('DOMContentLoaded', () => {
         processedRooms.forEach(({ roomId, platformName, displayUsersText, activeUserCount }) => {
           const card = document.createElement('div');
           card.className = 'public-room-card';
+
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
+                <span class="fs-room-id-display"></span>
               </div>
-              <div class="public-room-platform">${platformName}</div>
-              <div class="public-room-users">${displayUsersText}</div>
+              <div class="public-room-platform fs-platform-display"></div>
+              <div class="public-room-users fs-users-display"></div>
             </div>
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+            <div style="display: flex; align-items: center; gap: 4px;" class="fs-buttons-container">
             </div>
           `;
+
+          card.querySelector('.fs-room-id-display').textContent = '🔑 ' + roomId;
+          card.querySelector('.fs-platform-display').textContent = platformName;
+          card.querySelector('.fs-users-display').textContent = displayUsersText;
+
+          const buttonsContainer = card.querySelector('.fs-buttons-container');
+
+          const joinBtn = document.createElement('button');
+          joinBtn.className = 'btn-join-public';
+          joinBtn.setAttribute('data-code', roomId);
+          joinBtn.textContent = 'Katıl';
+          buttonsContainer.appendChild(joinBtn);
+
+          if (activeUserCount === 0) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn-delete-public';
+            deleteBtn.setAttribute('data-room', roomId);
+            deleteBtn.setAttribute('title', 'Boş Odayı Sil (İmha Et)');
+            deleteBtn.textContent = '🗑️';
+            buttonsContainer.appendChild(deleteBtn);
+          }
 
           card.querySelector('.btn-join-public').addEventListener('click', () => {
             joinRoomWithCode(roomId);
