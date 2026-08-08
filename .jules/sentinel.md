@@ -1,0 +1,4 @@
+## 2025-02-12 - DOM-based XSS via innerHTML and Template Literals
+**Vulnerability:** Found multiple instances where dynamic, externally-controlled variables like \`roomName\`, \`roomId\`, \`platformName\`, and \`displayUsersText\` were directly interpolated into \`.innerHTML\` using template literals in \`extension/content.js\` and \`extension/popup.js\`.
+**Learning:** Using template strings within \`.innerHTML\` exposes the extension to Cross-Site Scripting (XSS) attacks if any interpolated variables are manipulated or contain unsanitized input.
+**Prevention:** Avoid interpolating variables directly into \`.innerHTML\`. Instead, set the static HTML framework using \`.innerHTML\`, and then use DOM selection methods (e.g. \`querySelector\`) combined with \`.textContent\` to safely inject dynamic data as text, ensuring any malicious payload is safely escaped by the browser.
