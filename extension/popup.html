@@ -132,6 +132,11 @@
       transition: transform 0.2s ease;
     }
     .user-avatar-badge:hover { transform: scale(1.2); }
+    .user-avatar-badge:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+      border-radius: 50%;
+    }
 
     .username-input {
       flex: 1;
@@ -398,8 +403,8 @@
 
     <!-- Kullanıcı Girişi & Otomatik Emoji Rozeti -->
     <div id="commonUserConfig" class="user-input-wrapper">
-      <span id="userAvatarDisplay" class="user-avatar-badge" title="Profil Simgesini Değiştir">🍿</span>
-      <input type="text" id="usernameInput" class="username-input" placeholder="Kullanıcı Adınız...">
+      <span id="userAvatarDisplay" class="user-avatar-badge" title="Profil Simgesini Değiştir" role="button" tabindex="0" aria-label="Profil Simgesini Değiştir">🍿</span>
+      <input type="text" id="usernameInput" class="username-input" placeholder="Kullanıcı Adınız..." aria-label="Kullanıcı Adı">
     </div>
 
     <!-- AÇIK ODALAR REHBERİ -->
@@ -419,7 +424,7 @@
         <span class="section-title">Oda Koduyla Katıl</span>
       </div>
       <div class="join-code-row">
-        <input type="text" id="joinRoomCodeInput" class="join-code-input" placeholder="ABCD" maxlength="4">
+        <input type="text" id="joinRoomCodeInput" class="join-code-input" placeholder="ABCD" maxlength="4" aria-label="Oda Kodu">
         <button id="btnJoinWithCode" class="btn-join-code">Katıl</button>
       </div>
     </div>
