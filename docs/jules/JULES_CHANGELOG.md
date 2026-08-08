@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [08.08.2026] - Senkronizasyon Sapma Düzeltmesi
+- **Geliştirmeler:**
+  - `extension/content.js` içindeki `startDriftCorrection` fonksiyonunda kullanılan sabit 2.5 saniyelik eşik değeri (threshold) dinamik hale getirildi.
+  - Oynatma durumu uyuşmazlığı (`playStateMismatch`) durumunda daha sıkı senkronizasyon (1.0 sn) sağlandı.
+  - Ağ gecikmelerine (`timeDiff`) bağlı olarak jitter'ı önlemek amacıyla dinamik tolerans hesaplaması eklendi (maksimum 5.0 sn).
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
