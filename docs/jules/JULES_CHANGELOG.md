@@ -4,6 +4,14 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [09.08.2026] - Performans Optimizasyonu (DOM Reflow ve Animasyonlar)
+- **Performans İyileştirmeleri:**
+  - Sidebar açılış animasyonunda `right: 282px` gibi DOM reflow'a sebep olan (layout-triggering) CSS kuralları yerine GPU hızlandırmalı `transform: translateX()` yapısına geçildi.
+  - Video oynatıcı üzerinde sürekli yüksek kare hızını korumak için `body.filmsync-sidebar-open` genişlik daralması (width transition) anlık tepki verecek şekilde düzenlendi ve gereksiz yeniden boyutlandırma hesaplamaları (layout recalculations) engellendi.
+  - Kod genelinde kullanılan pahalı `transition: all` kuralları, sadece değişmesi gereken spesifik özellikleri hedefleyecek şekilde daraltıldı ve `will-change: transform` eklentileri ile animasyon performansı güvenceye alındı.
+
+---
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
