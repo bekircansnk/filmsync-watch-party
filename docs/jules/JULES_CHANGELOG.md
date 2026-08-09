@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [09.08.2026] - Sapma (Drift) Eşitleme Eşiğinin Dinamik Hale Getirilmesi
+- **Geliştirmeler:**
+  - `startDriftCorrection` fonksiyonundaki sabit 2.5 saniyelik eşik (threshold) değeri dinamik hale getirildi.
+  - Ağ gecikmesi (`timeDiff`) ve oynatma durumu uyuşmazlıkları (play state mismatch) dikkate alınarak dinamik eşik hesaplaması eklendi. Uyuşmazlık durumunda eşik 0.5s'ye çekilirken, aksi durumlarda süre gecikmesine bağlı olarak 1.5s ile 4.0s arasında değişecek şekilde uyarlandı. Bu sayede senkronizasyon deneyimi iyileştirildi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
