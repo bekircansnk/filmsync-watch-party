@@ -20,6 +20,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId } = message;
+
+    // Path Traversal Security Check
+    const safeRegex = /^[a-zA-Z0-9_-]+$/;
+    if (roomId && !safeRegex.test(roomId)) {
+      console.error('[FilmSync] Security Error: Invalid roomId format.');
+      sendResponse({ status: 'error', error: 'Invalid room ID' });
+      return false;
+    }
+
     if (roomId && username) {
       // 1. lastState nesnesini duraklatıldı olarak güncelle
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
@@ -53,6 +62,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const { roomId, hostId, username, avatar, hostOnly, url } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
 
+    // Path Traversal Security Check
+    const safeRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!safeRegex.test(cleanRoomId)) {
+      sendResponse({ status: 'error', error: 'Invalid room ID' });
+      return false;
+    }
+
     const roomData = {
       password: '',
       hostId: hostId,
@@ -85,6 +101,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'join-room') {
     const { roomId, userId, username, avatar } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
+
+    // Path Traversal Security Check
+    const safeRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!safeRegex.test(cleanRoomId)) {
+      sendResponse({ status: 'error', error: 'Invalid room ID format' });
+      return false;
+    }
+    if (userId && !safeRegex.test(userId)) {
+      sendResponse({ status: 'error', error: 'Invalid user ID format' });
+      return false;
+    }
 
     // Önce tüm odaları çekip büyük/küçük harf bağımsız sorgula
     fetch('https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json')
@@ -187,6 +214,13 @@ function syncCurrentTabMovieUrl(tabId, url) {
 
   chrome.storage.local.get(['roomId'], (res) => {
     if (res.roomId) {
+      // Path Traversal Security Check
+      const safeRegex = /^[a-zA-Z0-9_-]+$/;
+      if (!safeRegex.test(res.roomId)) {
+        console.error('[FilmSync] Security Error: Invalid roomId format for sync.');
+        return;
+      }
+
       console.log(`[FilmSync Background] Canlı film adresi Firebase'e yazılıyor: ${url}`);
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/lastState.json`, {
         method: 'PATCH',
