@@ -1982,15 +1982,21 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let lastMove = 0;
+
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    const now = Date.now();
+    if (now - lastMove < 200) return; // ⚡ Bolt: Throttle frequent continuous global events (like mousemove) to prevent DOM recalculation storms and main thread contention
+    lastMove = now;
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
   };
 
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('keydown', handleMouseMove);
+  document.addEventListener('mousemove', handleMouseMove, { passive: true }); // ⚡ Bolt: Append { passive: true } option to ensure the browser knows the handler won't block default main thread operations
+  document.addEventListener('keydown', handleMouseMove, { passive: true });
 
   // Tam ekran durum değişikliklerini dinle
   const fsEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
