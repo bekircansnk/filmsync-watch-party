@@ -1,0 +1,3 @@
+## 2026-08-09 - Interactive Emoji Accessibility
+**Learning:** Emojis used as interactive buttons lack native accessibility features, making them invisible or confusing to screen readers and unusable via keyboard navigation if not properly configured.
+**Action:** Always add `role="button"`, `tabindex="0"`, an appropriate `aria-label`, visible focus styles (`:focus-visible`), and `keydown` event listeners for 'Enter' and Space keys to interactive emojis.
