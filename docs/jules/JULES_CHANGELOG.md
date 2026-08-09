@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [09.08.2026] - Senkronizasyon ve Kararlılık İyileştirmeleri
+- **Hata Düzeltmeleri:**
+  - `extension/content.js` dosyasındaki `applyRemoteState` ve `forceSync` fonksiyonlarında oluşan senkronizasyon yarış koşulları (race conditions) düzeltildi. Uzaktan durum güncellemelerinde `isSyncing` kilidi asenkron video beklemesinden (`ensureVideoReady`) önce senkron olarak uygulanarak manuel kullanıcı eylemleriyle çakışma önlendi.
+  - Oynatıcı adaptöründe (`PlayerAdapter`) yer alan video oynatma fonksiyonları (`play()`, `pause()`, `seek()`) güvenli `try-catch` bloklarına alındı ve oynatma sırasındaki `Promise` ret (rejection) hataları yakalanarak eklentinin çökmesi engellendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
