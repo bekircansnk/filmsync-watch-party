@@ -63,6 +63,9 @@ function copyToClipboard(text) {
   }
 }
 
+
+// Security: Validates ID to prevent Path Traversal in REST API calls
+const isValidId = (id) => typeof id === 'string' && /^[a-zA-Z0-9_-]+$/.test(id.trim());
 document.addEventListener('DOMContentLoaded', () => {
   const activeRoomContainer = document.getElementById('activeRoomContainer');
   const partyCreatorContainer = document.getElementById('partyCreatorContainer');
@@ -161,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     chrome.storage.local.get(['userId'], (res) => {
       let userId = res.userId;
-      if (!userId) {
+      if (!userId || !isValidId(userId)) {
         userId = 'usr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
       }
 
@@ -199,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Odaya Kod ile Katılma Fonksiyonu (Sızdırmaz 0ms REST API + Otomatik Yönlendirme)
   function joinRoomWithCode(codeValue) {
     const code = codeValue.trim().toUpperCase();
-    if (!code || code.length !== 4) {
+    if (!code || code.length !== 4 || !isValidId(code)) {
       showGlobalToast('Lütfen 4 haneli geçerli bir oda kodu girin!');
       return;
     }
@@ -214,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     chrome.storage.local.get(['userId'], (res) => {
       let userId = res.userId;
-      if (!userId) {
+      if (!userId || !isValidId(userId)) {
         userId = 'usr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
       }
 
@@ -315,6 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
+    if (!isValidId(currentRoomId)) return;
     // Doğrudan oda düğümünden en güncel URL'yi oku
     fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${currentRoomId}.json`)
       .then(res => res.json())
