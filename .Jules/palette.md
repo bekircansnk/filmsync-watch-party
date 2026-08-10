@@ -1,0 +1,3 @@
+## 2026-08-10 - Interactive Emoji Buttons Need Full A11y Attributes
+**Learning:** Adding a generic `title` to a clickable emoji (like an avatar picker) is insufficient for accessibility and keyboard navigation. Visual icons used as buttons require a structural `role="button"` and focusability (`tabindex="0"`) to function correctly for all users.
+**Action:** When converting static visual elements like emojis into interactive actions, ensure they have `role="button"`, `tabindex="0"`, `aria-label`, visible `:focus-visible` styles, and keyboard event handlers (`Enter` and `Space`) to provide a fully accessible experience.
