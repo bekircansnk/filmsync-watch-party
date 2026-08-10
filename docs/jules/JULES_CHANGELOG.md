@@ -2,6 +2,12 @@
 
 Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm otonom bakım, iyileştirme ve hata giderme seanslarının kaydını tutar.
 
+## [10.08.2026] - Güvenlik ve Kimlik Bilgisi Denetimi (PROMPT-SEC-001)
+- **Güvenlik İyileştirmeleri:**
+  - `extension/manifest.json`, `extension/content.js`, `extension/popup.js` ve `extension/background.js` yapılandırma dosyaları incelendi.
+  - Sadece istemci tarafında kullanılan standart Firebase API anahtarlarının mevcut olduğu doğrulandı.
+  - Veritabanı yazma izinleri ve REST API çağrıları kontrol edilerek hiçbir `databaseSecret` veya yönetici seviyesinde token/kimlik bilgisinin ifşa edilmediğinden emin olundu.
+
 ---
 
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
