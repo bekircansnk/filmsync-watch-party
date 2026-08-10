@@ -1982,15 +1982,21 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let lastMoveTime = 0;
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    // Throttle: Sadece 100ms'de bir çalışsın
+    const now = Date.now();
+    if (now - lastMoveTime < 100) return;
+    lastMoveTime = now;
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
   };
 
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('keydown', handleMouseMove);
+  document.addEventListener('mousemove', handleMouseMove, { passive: true });
+  document.addEventListener('keydown', handleMouseMove, { passive: true });
 
   // Tam ekran durum değişikliklerini dinle
   const fsEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
