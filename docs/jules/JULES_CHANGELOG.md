@@ -4,6 +4,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+
+## [10.08.2026] - Drift Correction (Sapma Düzeltme) İyileştirmesi
+- **İyileştirmeler:**
+  - `extension/content.js` içerisindeki `startDriftCorrection` fonksiyonunda bulunan sabit 2.5 saniyelik sapma eşiği, ağ gecikmesine (`timeDiff`) göre dinamik olarak ayarlanacak şekilde güncellendi. Oynatma durumu uyuşmazlığında eşik bağımsız bırakılırken, normal sapmalarda gecikmeye bağlı olarak (1.5s - 4.0s arası) dinamikleşti.
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
