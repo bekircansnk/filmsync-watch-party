@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [11.08.2026] - DOM Yeniden Akış (Reflow) Optimizasyonu
+- **Performans İyileştirmeleri:**
+  - Sidebar açılıp kapandığında video oynatıcı (Netflix, Disney+, YouTube) ve sayfa gövdesinin genişliğinin (width) `transition: width 0.3s ease` ile anime edilmesi kaldırılarak, her animasyon karesinde meydana gelen maliyetli DOM yeniden akış (reflow) hesaplamalarının önüne geçildi. Bu sayede yüksek kare hızlarında (FPS) video oynatımı sırasında takılmalar önlendi.
+  - `extension/content.js` içindeki genel `transition: all` CSS kuralı, DOM yeniden akışına neden olan özellikleri dışlayacak şekilde spesifik GPU hızlandırmalı özelliklerle (`transform`, `opacity`, `background-color`, `box-shadow`, `border-color`) değiştirildi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
