@@ -3,6 +3,11 @@
 Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm otonom bakım, iyileştirme ve hata giderme seanslarının kaydını tutar.
 
 ---
+## [11.08.2026] - Otonom Sapma Düzeltme Geliştirmesi
+- **Geliştirme:**
+  - `startDriftCorrection` fonksiyonundaki sapma tolerans eşiği (eskiden sabit 2.5s) dinamikleştirildi.
+  - Ağ gecikmesine (`networkLatency`) bağlı olarak eşik dinamik olarak artırıldı ve oynatma durumu uyuşmazlığında anında eşitleme sağlandı.
+
 
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
