@@ -56,7 +56,14 @@ const PlayerAdapter = {
     if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
     } else if (videoElement) {
-      videoElement.play();
+      try {
+        const p = videoElement.play();
+        if (p && p.catch) {
+          p.catch(e => console.error('[FilmSync] Medya oynatma sözü reddedildi:', e));
+        }
+      } catch (e) {
+        console.error('[FilmSync] Medya oynatma hatası:', e);
+      }
     }
   },
 
@@ -451,6 +458,16 @@ function ensureVideoReady(callback, retriesLeft = 10) {
 function applyRemoteState(state) {
   if (!state) return;
   
+  isSyncing = true;
+  const releaseLockAndCheckPending = () => {
+    isSyncing = false;
+    if (pendingState) {
+      const nextState = pendingState;
+      pendingState = null;
+      applyRemoteState(nextState);
+    }
+  };
+
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
     const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
@@ -459,15 +476,17 @@ function applyRemoteState(state) {
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
         showMovieRedirectNotification(state.url);
+        releaseLockAndCheckPending();
         return;
       }
     }
   }
 
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
-
-    isSyncing = true;
+    if (!isReady || !videoElement) {
+      releaseLockAndCheckPending();
+      return;
+    }
     try {
       const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
       const targetTime = state.currentTime + timeDiff;
@@ -491,15 +510,8 @@ function applyRemoteState(state) {
     // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
     setTimeout(() => {
       setupVideoListeners();
-      isSyncing = false;
       isFirstSync = false; // İlk senkronizasyon kilidini kaldır
-      
-      // Kilit açıldığında sıradaki bekleyen durum varsa onu uygula
-      if (pendingState) {
-        const nextState = pendingState;
-        pendingState = null;
-        applyRemoteState(nextState);
-      }
+      releaseLockAndCheckPending();
     }, 1000);
   });
 }
@@ -511,19 +523,29 @@ function forceSync() {
     const state = snapshot.val();
     if (!state) return;
 
+    isSyncing = true;
+    const releaseLockAndCheckPending = () => {
+      isSyncing = false;
+      if (pendingState) {
+        const nextState = pendingState;
+        pendingState = null;
+        applyRemoteState(nextState);
+      }
+    };
+
     // Yönlendirme bildirimi (Eğer veritabanındaki URL ile mevcut URL farklıysa ve üst penceredeysek, yönlendirme bildirimini göster)
     if (state.url && state.url !== window.location.href && window === window.top) {
       showMovieRedirectNotification(state.url);
+      releaseLockAndCheckPending();
       return;
     }
 
     ensureVideoReady((isReady) => {
       if (!isReady || !videoElement) {
         isFirstSync = false;
+        releaseLockAndCheckPending();
         return;
       }
-
-      isSyncing = true;
       try {
         const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
         const targetTime = state.currentTime + timeDiff;
@@ -543,6 +565,11 @@ function forceSync() {
         isSyncing = false; 
         isFirstSync = false; // İlk senkronizasyon kilidini kaldır
         console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
+        if (pendingState) {
+          const nextState = pendingState;
+          pendingState = null;
+          applyRemoteState(nextState);
+        }
       }, 2000);
     });
   });
