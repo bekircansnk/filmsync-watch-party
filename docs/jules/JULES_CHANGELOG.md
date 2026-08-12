@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [12.08.2026] - Güvenlik İyileştirmeleri (XSS Koruması)
+- **Hata Düzeltmeleri:**
+  - `extension/content.js` dosyasında `showAutoJoinOverlay` ve `showNamePromptModal` fonksiyonlarında kullanılan `innerHTML` içindeki dinamik değişkenler kaldırılarak, güvenli `textContent` atamaları yapıldı.
+  - `extension/popup.js` dosyasında `loadPublicRooms` fonksiyonundaki `card.innerHTML` güncellendi, dinamik değişkenler kaldırılarak metin alanları ve butonlar `textContent` ve `createElement` ile güvenli şekilde oluşturuldu.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
