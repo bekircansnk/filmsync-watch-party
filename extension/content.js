@@ -1982,15 +1982,21 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let lastMouseMoveTime = 0;
+  // ⚡ BOLT OPTIMIZATION: Throttled mousemove to prevent reflow overhead during fullscreen playback
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    const now = Date.now();
+    if (now - lastMouseMoveTime < 250) return; // Throttle to 250ms
+    lastMouseMoveTime = now;
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
   };
 
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('keydown', handleMouseMove);
+  document.addEventListener('mousemove', handleMouseMove, { passive: true });
+  document.addEventListener('keydown', handleMouseMove, { passive: true });
 
   // Tam ekran durum değişikliklerini dinle
   const fsEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
