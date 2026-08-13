@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [13.08.2026] - Güvenlik İyileştirmesi: Firebase API Anahtarları
+- **Güvenlik (Security):**
+  - `extension/content.js` ve `extension/popup.js` içerisindeki hardcoded (sabit kodlanmış) Firebase API anahtarları (`apiKey`) proje güvenliğini artırmak amacıyla gizlendi/silindi (`"YOUR_API_KEY"`).
+  - Kullanıcıların kendi Firebase yapılandırmalarını README.md'deki talimatlara uygun olarak ayarlamaları gerekmektedir.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.

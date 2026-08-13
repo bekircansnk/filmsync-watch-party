@@ -24,7 +24,7 @@ let isInputFocused = false;
 
 // Firebase Canlı Yapılandırması
 const firebaseConfig = {
-  apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
+  apiKey: "YOUR_API_KEY",
   authDomain: "movieparty-af87f.firebaseapp.com",
   databaseURL: "https://movieparty-af87f-default-rtdb.firebaseio.com",
   projectId: "movieparty-af87f",
