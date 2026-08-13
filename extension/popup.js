@@ -1,4 +1,9 @@
 // Evo ve Beko Film Partisi Popup JS 🍿
+
+function isValidPathSegment(segment) {
+  return typeof segment === 'string' && /^[a-zA-Z0-9_-]+$/.test(segment);
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
   authDomain: "movieparty-af87f.firebaseapp.com",
@@ -259,6 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
               lastActive: Date.now()
             };
 
+            if (!isValidPathSegment(matchedRoomId) || !isValidPathSegment(userId)) return;
             fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${matchedRoomId}/users/${userId}.json`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
@@ -316,6 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Doğrudan oda düğümünden en güncel URL'yi oku
+    if (!isValidPathSegment(currentRoomId)) return;
     fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${currentRoomId}.json`)
       .then(res => res.json())
       .then(roomData => {
@@ -648,6 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const isInactive3h = (now - latestUserActivity > THREE_HOURS_MS);
 
           if (isExpired24h || isInactive3h) {
+            if (!isValidPathSegment(roomId)) return;
             console.log(`[FilmSync İmha Motoru] Oda ${roomId} 3 saattir inaktif veya 24h dolduğu için siliniyor.`);
             fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' }).catch(e => {});
             return;
@@ -711,6 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (deleteBtn) {
             deleteBtn.addEventListener('click', (e) => {
               e.stopPropagation();
+              if (!isValidPathSegment(roomId)) return;
               fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' })
                 .then(() => {
                   showGlobalToast(`Oda ${roomId} başarıyla imha edildi! 🗑️`);

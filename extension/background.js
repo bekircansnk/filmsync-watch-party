@@ -1,4 +1,9 @@
 // FilmSync Background Service Worker
+
+function isValidPathSegment(segment) {
+  return typeof segment === 'string' && /^[a-zA-Z0-9_-]+$/.test(segment);
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   console.log('FilmSync Watch Party eklentisi başarıyla kuruldu.');
 });
@@ -21,6 +26,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId } = message;
     if (roomId && username) {
+      if (!isValidPathSegment(roomId) || (userId && !isValidPathSegment(userId))) return;
       // 1. lastState nesnesini duraklatıldı olarak güncelle
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
         method: 'PATCH',
@@ -72,6 +78,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     };
 
+    if (!isValidPathSegment(cleanRoomId)) return;
     fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${cleanRoomId}.json`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -112,6 +119,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
 
         // Kullanıcıyı odaya ekle
+        if (!isValidPathSegment(matchedRoomId) || !isValidPathSegment(userId)) return;
         fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${matchedRoomId}/users/${userId}.json`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -158,6 +166,7 @@ function cleanupExpiredRoomsREST() {
 
         if (isExpired24h || (activeUserCount === 0 && isInactive3h)) {
           console.log(`[FilmSync Background İmha] Oda ${rId} siliniyor.`);
+          if (!isValidPathSegment(rId)) return;
           fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${rId}.json`, {
             method: 'DELETE'
           }).catch(err => console.error(`[FilmSync Delete Hatası ${rId}]`, err));
@@ -186,7 +195,7 @@ function syncCurrentTabMovieUrl(tabId, url) {
   if (!isMovieWatchUrl(url)) return;
 
   chrome.storage.local.get(['roomId'], (res) => {
-    if (res.roomId) {
+    if (res.roomId && isValidPathSegment(res.roomId)) {
       console.log(`[FilmSync Background] Canlı film adresi Firebase'e yazılıyor: ${url}`);
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/lastState.json`, {
         method: 'PATCH',
