@@ -4,6 +4,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [13.08.2026] - Dinamik Sapma Düzeltmesi (Drift Correction) İyileştirmesi
+- **Geliştirmeler:**
+  - `extension/content.js` dosyasındaki `startDriftCorrection` fonksiyonu güncellendi. Eşitleme sapması toleransı sabit (2.5 saniye) olmaktan çıkarılıp ağ gecikmesine (network latency) ve oynatma durumu uyuşmazlığına bağlı olarak dinamik hale getirildi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
