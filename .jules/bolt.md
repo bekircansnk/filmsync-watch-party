@@ -1,0 +1,3 @@
+## 2026-08-13 - Throttle continuous global event listeners to prevent main thread blocking
+**Learning:** Attaching continuous event listeners like `mousemove` directly to the `document` without throttling causes the callback to run on every frame. When the callback performs DOM lookups or modifies CSS classes (e.g. `showPanelAndToolbar` / `resetIdleTimer`), it can cause significant layout thrashing and drop frame rates on video players, particularly in full-screen mode.
+**Action:** Always throttle high-frequency events (like `mousemove`, `scroll`, or `resize`) using a simple timestamp check (e.g. `Date.now() - lastMove < 200`) and ensure the `{ passive: true }` option is applied so the browser can optimize event handling by knowing `preventDefault` won't be called.
