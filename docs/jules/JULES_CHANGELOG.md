@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [13.08.2026] - Performans Optimizasyonu: Sidebar Yeniden Boyutlandırma
+- **Performans İyileştirmesi (Bolt):**
+  - Netflix, Disney+ ve YouTube üzerinde sidebar (sohbet arayüzü) açılıp kapanırken yaşanan DOM reflow (yeniden hesaplama) yükünü azaltmak için `body.filmsync-sidebar-open` sınıfından `transition: width 0.3s ease;` özelliği kaldırıldı. Bu sayede `width` (genişlik) değişimi animasyonsuz olarak anında gerçekleşiyor, bu da animasyon sırasındaki her karede tetiklenen sürekli yeniden hesaplama (reflow) yükünü ortadan kaldırarak video kare hızının (framerate) düşmesini engelliyor.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
