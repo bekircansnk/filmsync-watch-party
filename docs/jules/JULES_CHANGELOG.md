@@ -4,6 +4,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [14.08.2026] - Drift Correction (Sapma Düzeltme) İyileştirmesi
+- **Geliştirmeler:**
+  - `startDriftCorrection` fonksiyonundaki sabit 2.5 saniyelik sapma eşiği, ağ gecikmesine (`timeDiff`) ve oynatma durumu uyuşmazlığına bağlı dinamik bir eşik (`dynamicThreshold`) ile değiştirildi. Kesintisiz senkronizasyon için dinamik eşik eklendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
