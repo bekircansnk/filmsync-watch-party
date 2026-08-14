@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [14.08.2026] - Firebase Dinleyicileri ve Bellek Sızıntısı Optimizasyonu
+- **Performans Optimizasyonları:**
+  - `extension/content.js` içerisindeki global olay dinleyicilerinin bellekte tutulmasını önlemek için eksik Firebase `.off()` çağrıları `cleanupFirebase` fonksiyonuna eklendi (`hostId`, `hostOnly`, spesifik query'ler).
+  - Video takibi, otomatik senkronizasyon (drift correction) ve arayüz koruyucu işlevlerde kullanılan sonsuz `setInterval` döngüleri değişkenlere atandı ve oda değişiminde/temizleme durumunda `clearInterval` ile sonlandırılması sağlandı.
+  - Sayfa kapanma ya da yenilenme anında tetiklenen mevcut `beforeunload` dinleyicisine ek olarak, tarayıcıların sayfa önbellekleme (bfcache) davranışlarına uyum sağlamak için `pagehide` olayı eklendi ve bu durumlarda da `cleanupFirebase`'in doğru şekilde çağrılması garantilendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
