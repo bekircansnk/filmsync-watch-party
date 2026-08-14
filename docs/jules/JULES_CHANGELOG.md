@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [14.08.2026] - XSS Güvenlik İyileştirmeleri
+- **Güvenlik (XSS):**
+  - `extension/content.js` ve `extension/popup.js` içindeki dinamik değişkenlerin doğrudan `innerHTML` kullanılarak DOM'a enjekte edilmesi engellendi.
+  - Olası Cross-Site Scripting (XSS) zafiyetlerini önlemek amacıyla `innerHTML` kullanımı statik şablonlarla sınırlandırıldı ve dinamik metinler `textContent` ile atandı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
