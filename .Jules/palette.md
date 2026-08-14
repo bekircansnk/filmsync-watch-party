@@ -1,0 +1,3 @@
+## 2026-08-14 - Accessibility for Emojis and Placeholder Inputs
+**Learning:** In the FilmSync extension, interactive UI elements like emoji avatars (`#userAvatarDisplay`) and text spans next to toggles lack proper ARIA attributes, keyboard support, and label associations. Also, inputs relying solely on placeholders without visual labels fail screen reader checks.
+**Action:** Always add `role="button"`, `tabindex="0"`, `aria-label`, and `keydown` event listeners to interactive non-button elements. Use `<label for="...">` instead of generic `<span>` for text next to inputs, and explicitly define `aria-label` on inputs without visible `<label>`s.
