@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [15.08.2026] - Logger Entegrasyonu ve Güvenli Oynatıcı Kontrolleri
+- **İyileştirmeler:**
+  - `extension/content.js`, `extension/popup.js` ve `extension/inject.js` dosyalarında yer alan tüm `console.*` çıktıları, sonsuz döngüleri engelleyen güvenli `Logger` yapısı ile değiştirildi.
+  - Oynatıcı kontrollerindeki `.play()` ve `.playVideo()` metotları, olası eklenti çökmelerini önlemek amacıyla `try-catch` benzeri güvenli Promise `.catch()` yapısı ile sarıldı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
