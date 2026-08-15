@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [15.08.2026] - Hafıza Sızıntısı ve Interval Optimizasyonları
+- **Hata Düzeltmeleri:**
+  - `cleanupFirebase()` içinde `.on()` ile bağlanan `hostId` ve `hostOnly` dinleyicileri için `.off()` çağrıları eklendi.
+  - Sorgu bağlı olan dinleyiciler (`messages` ve `reactions`) için base ref yerine doğru şekilde `limitToLast()` üzerinden `.off()` çağrıldı.
+  - Video tracking, auto-sync, UI keeper ve iframe fullscreen keeper fonksiyonlarında oluşturulan `setInterval` zamanlayıcıları globale taşınarak yeniden atanmadan ve bağlantı temizlenirken (cleanup) `clearInterval` ile sıfırlanması sağlandı. Bu sayede uzun süren video sekmelerinde hafıza sızıntısı önlendi.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
