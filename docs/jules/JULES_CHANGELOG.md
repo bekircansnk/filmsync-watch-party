@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [15.08.2026] - Dinamik Sapma Düzeltme Eşiği Optimizasyonu
+- **Geliştirmeler:**
+  - `startDriftCorrection` içindeki eşik hesaplama mantığı dinamik hale getirildi.
+  - Ağ gecikmesi ve oynatma durumu (play state) uyumsuzluğuna bağlı olarak dinamik bir eşik değeri (dynamicThreshold) hesaplanıyor.
+  - Senkronizasyon düzeltmeleri sırasında artık sabit bir değer (2.5s) yerine bu dinamik eşik kullanılarak daha akıcı bir senkronizasyon sağlanıyor.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
