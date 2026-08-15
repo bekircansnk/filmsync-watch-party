@@ -1,0 +1,3 @@
+## 2026-05-19 - Throttle and Make Global Event Listeners Passive
+**Learning:** Frequent continuous global events like `mousemove` and `keydown`, especially when attached to `document` without the `{ passive: true }` option, can cause main thread starvation and layout thrashing, severely dropping video framerates during playback when the UI attempts to show/hide elements.
+**Action:** Always throttle high-frequency events (e.g., using a simple `Date.now()` check every 100ms) and use `{ passive: true }` on events like `mousemove` and `scroll` when you don't need to call `preventDefault()`, ensuring the browser can optimize scrolling and inputs.
