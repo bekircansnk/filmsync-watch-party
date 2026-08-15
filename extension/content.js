@@ -56,7 +56,12 @@ const PlayerAdapter = {
     if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
     } else if (videoElement) {
-      videoElement.play();
+      try {
+        const p = videoElement.play();
+        if (p && p.catch) p.catch(e => console.error('[FilmSync] Medya oynatma hatası:', e));
+      } catch(e) {
+        console.error('[FilmSync] Medya oynatma senkron hatası:', e);
+      }
     }
   },
 
@@ -464,10 +469,19 @@ function applyRemoteState(state) {
     }
   }
 
-  ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+  isSyncing = true;
 
-    isSyncing = true;
+  ensureVideoReady((isReady) => {
+    if (!isReady || !videoElement) {
+      isSyncing = false;
+      if (pendingState) {
+        const nextState = pendingState;
+        pendingState = null;
+        applyRemoteState(nextState);
+      }
+      return;
+    }
+
     try {
       const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
       const targetTime = state.currentTime + timeDiff;
@@ -517,13 +531,15 @@ function forceSync() {
       return;
     }
 
+    isSyncing = true;
+
     ensureVideoReady((isReady) => {
       if (!isReady || !videoElement) {
         isFirstSync = false;
+        isSyncing = false;
         return;
       }
 
-      isSyncing = true;
       try {
         const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
         const targetTime = state.currentTime + timeDiff;
