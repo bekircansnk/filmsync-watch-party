@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [16.08.2026] - Güvenlik Taraması: Path Traversal ve API Key Kontrolü
+- **Güvenlik İyileştirmeleri:**
+  - Uzantı konfigürasyon dosyalarındaki Firebase API anahtarları incelendi ve istemci tarafı uygulamalar için kasıtlı olarak açık olduğu (güvenliğin Firebase Kurallarına dayandığı) doğrulandı. Hiçbir idari kimlik bilgisi sızdırılmıyor.
+  - `extension/background.js` ve `extension/popup.js` içerisindeki REST API (`fetch`) ve `db.ref` çağrılarında (`roomId` ve `userId` kullanımları için) **Path Traversal (Yol Aşma)** zafiyeti tespit edildi.
+  - Kötü niyetli Firebase veritabanı manipülasyonlarını önlemek amacıyla bu değişkenler, istek yapılmadan önce katı regex validasyon maskeleri (`/^[a-zA-Z0-9_-]+$/`) ile güvenli hale getirildi.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.

@@ -122,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       chrome.storage.local.get(['roomId', 'userId'], (res) => {
         if (res.roomId && res.userId && db) {
+          if (!/^[a-zA-Z0-9_-]+$/.test(res.roomId) || !/^[a-zA-Z0-9_-]+$/.test(res.userId)) return;
           db.ref(`rooms/${res.roomId}/users/${res.userId}/avatar`).set(selectedAvatar);
         }
       });
@@ -259,6 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
               lastActive: Date.now()
             };
 
+            if (!/^[a-zA-Z0-9_-]+$/.test(matchedRoomId) || !/^[a-zA-Z0-9_-]+$/.test(userId)) return;
             fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${matchedRoomId}/users/${userId}.json`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
@@ -316,6 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Doğrudan oda düğümünden en güncel URL'yi oku
+    if (!/^[a-zA-Z0-9_-]+$/.test(currentRoomId)) return;
     fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${currentRoomId}.json`)
       .then(res => res.json())
       .then(roomData => {
@@ -512,6 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Durumu aktif yap (Yeşil Neon Dot)
       if (globalStatusDot) globalStatusDot.classList.add('active');
 
+      if (!/^[a-zA-Z0-9_-]+$/.test(roomId)) return;
       // Eski dinleyicileri temizle
       db.ref(`rooms/${roomId}/users`).off();
       db.ref(`rooms/${roomId}/lastState/url`).off();
@@ -557,6 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function cleanupFirebaseListeners() {
     if (db && currentRoomId) {
+      if (!/^[a-zA-Z0-9_-]+$/.test(currentRoomId)) return;
       db.ref(`rooms/${currentRoomId}/users`).off();
       db.ref(`rooms/${currentRoomId}/lastState/url`).off();
     }
@@ -649,7 +654,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (isExpired24h || isInactive3h) {
             console.log(`[FilmSync İmha Motoru] Oda ${roomId} 3 saattir inaktif veya 24h dolduğu için siliniyor.`);
-            fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' }).catch(e => {});
+            if (/^[a-zA-Z0-9_-]+$/.test(roomId)) {
+              fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' }).catch(e => {});
+            }
             return;
           }
 
@@ -711,6 +718,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (deleteBtn) {
             deleteBtn.addEventListener('click', (e) => {
               e.stopPropagation();
+              if (!/^[a-zA-Z0-9_-]+$/.test(roomId)) return;
               fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' })
                 .then(() => {
                   showGlobalToast(`Oda ${roomId} başarıyla imha edildi! 🗑️`);
