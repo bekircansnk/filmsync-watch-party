@@ -1980,17 +1980,24 @@ function startButtonObserver() {
 // --- 🖥️ TAM EKRAN IDLE GİZLEME MOTORU (FARE HAREKET ETMEDİĞİNDE GİZLE) ---
 let idleTimer = null;
 let isFullscreen = false;
+let lastMoveTime = 0;
 
 function setupFullscreenIdleDetector() {
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    // ⚡ Bolt: Throttle to run at most once per 100ms
+    const now = Date.now();
+    if (now - lastMoveTime < 100) return;
+    lastMoveTime = now;
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
   };
 
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('keydown', handleMouseMove);
+  // ⚡ Bolt: Add passive: true to prevent blocking main thread
+  document.addEventListener('mousemove', handleMouseMove, { passive: true });
+  document.addEventListener('keydown', handleMouseMove, { passive: true });
 
   // Tam ekran durum değişikliklerini dinle
   const fsEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];

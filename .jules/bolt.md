@@ -1,0 +1,3 @@
+## 2026-03-05 - Throttle global mousemove event & apply passive listeners
+**Learning:** Frequent continuous global events like `mousemove` or `keydown` on the `document` (e.g., for idle detection) can cause significant main thread contention and trigger excessive DOM reflows when executing over high-framerate elements like video players.
+**Action:** Always throttle these continuous events (e.g., using a timestamp-based check like `Date.now() - lastMoveTime < 100`) and ensure they are attached with `{ passive: true }` so the browser knows they won't call `preventDefault()`, preventing them from blocking default main thread operations.
