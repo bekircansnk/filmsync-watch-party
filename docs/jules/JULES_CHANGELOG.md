@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [16.08.2026] - Performans ve Layout İyileştirmeleri
+- **Performans:**
+  - DOM reflow yükünü azaltmak ve video kare hızını (FPS) artırmak için `body.filmsync-sidebar-open` genişlik geçişi (`transition: width`) kaldırıldı.
+  - Mini araç çubuğu animasyonları GPU destekli `transform: translateX` ve `will-change: transform` ile değiştirildi.
+  - Tüm genel `transition: all` kullanımları spesifik özelliklere (opacity, transform, background vb.) dönüştürüldü.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
