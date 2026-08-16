@@ -1,0 +1,3 @@
+## 2026-08-16 - Make interactive emojis full buttons and label visual-less inputs
+**Learning:** Emojis acting as interactive buttons (like `#userAvatarDisplay`) in this app's components lacked full button accessibility attributes. Inputs without explicit visual `<label>` tags (like `#usernameInput` and `#joinRoomCodeInput`) relied solely on `placeholder` attributes which is bad for screen readers.
+**Action:** Always include `role="button"`, `tabindex="0"`, focus-visible styles, and `keydown` listeners (for 'Enter'/'Space') on interactive non-button elements like emojis. Add `aria-label` to form inputs missing visual labels.
