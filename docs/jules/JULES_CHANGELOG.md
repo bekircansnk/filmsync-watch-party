@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [17.08.2026] - Bellek Sızıntısı ve Event Listener İyileştirmeleri
+- **Hata Düzeltmeleri:**
+  - `cleanupFirebase()` fonksiyonunda eksik olan Firebase event listener iptalleri eklendi (`hostId` ve `hostOnly`).
+  - Sorgu tabanlı listener'ların iptalinde spesifik sorgular hedeflendi (`limitToLast` eklendi).
+  - Sekme kapanması (`beforeunload` ve `pagehide`) sırasında uzun süreli arkaplan döngülerini (intervals) sonlandırmak üzere `teardownIntervals()` fonksiyonu geliştirildi.
+  - Sınırsız arkaplan döngüleri, olası bellek sızıntılarını önlemek amacıyla atanmadan önce `clearInterval` ile sıfırlanacak şekilde optimize edildi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
