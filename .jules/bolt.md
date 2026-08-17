@@ -1,0 +1,3 @@
+## 2026-08-17 - Throttle Global Mouse Events on Video Players
+**Learning:** Attaching continuous global events (like `mousemove` and `keydown`) directly to the `document` without throttling or using `{ passive: true }` over a video player can cause severe DOM recalculation storms and framerate drops, especially when idle hiding logic frequently evaluates variables or DOM elements.
+**Action:** Implemented a timestamp-based debounce check (`let lastMouseMove = 0; if(now - lastMouseMove < 100) return`) in `handleMouseMove` and appended `{ passive: true }` to the event listeners in `extension/content.js`. This guarantees that high-frequency mouse actions do not block the main thread.
