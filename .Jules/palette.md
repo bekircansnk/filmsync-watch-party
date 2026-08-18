@@ -1,0 +1,3 @@
+## 2026-08-18 - Improve Avatar Interaction and Form Accessibility
+**Learning:** The user avatar emoji functions as a clickable button to change avatars, but it lacks keyboard support (no tabindex, no keydown listener) and lacks a proper `aria-label`. Moreover, inputs relying only on placeholders for labeling (like the username and join code) violate accessibility standards because screen readers may not read placeholders properly.
+**Action:** When implementing custom icon or emoji buttons, always ensure they have `role="button"`, `tabindex="0"`, a clear `aria-label`, a visible focus state, and a keydown listener for "Enter"/"Space". Inputs without explicit `<label>` tags should be given `aria-label`s.
