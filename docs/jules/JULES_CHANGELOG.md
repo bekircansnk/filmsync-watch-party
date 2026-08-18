@@ -3,6 +3,10 @@
 Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm otonom bakım, iyileştirme ve hata giderme seanslarının kaydını tutar.
 
 ---
+## [22.08.2026] - Güvenlik İyileştirmeleri
+- **Güvenlik İyileştirmeleri:**
+  - Firebase REST API çağrılarında (`fetch`) yol geçişi (path traversal) zafiyetlerini önlemek için `roomId` ve `userId` gibi değişkenlere düzenli ifade (regex mask) doğrulama kontrolleri eklendi (`background.js` ve `popup.js`).
+
 
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**

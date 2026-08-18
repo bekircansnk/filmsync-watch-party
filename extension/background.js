@@ -21,6 +21,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId } = message;
     if (roomId && username) {
+      if (!/^[a-zA-Z0-9_-]+$/.test(roomId)) { sendResponse({ status: 'error', message: 'Geçersiz ID' }); return true; }
       // 1. lastState nesnesini duraklatıldı olarak güncelle
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
         method: 'PATCH',
@@ -52,6 +53,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'create-room') {
     const { roomId, hostId, username, avatar, hostOnly, url } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
+    if (!/^[a-zA-Z0-9_-]+$/.test(cleanRoomId)) { sendResponse({ status: 'error', message: 'Geçersiz ID' }); return true; }
 
     const roomData = {
       password: '',
@@ -111,6 +113,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return;
         }
 
+        if (!/^[a-zA-Z0-9_-]+$/.test(matchedRoomId) || !/^[a-zA-Z0-9_-]+$/.test(userId)) return;
         // Kullanıcıyı odaya ekle
         fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${matchedRoomId}/users/${userId}.json`, {
           method: 'PUT',
@@ -157,6 +160,7 @@ function cleanupExpiredRoomsREST() {
         const isInactive3h = (now - latestUserActivity > THREE_HOURS_MS);
 
         if (isExpired24h || (activeUserCount === 0 && isInactive3h)) {
+          if (!/^[a-zA-Z0-9_-]+$/.test(rId)) return;
           console.log(`[FilmSync Background İmha] Oda ${rId} siliniyor.`);
           fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${rId}.json`, {
             method: 'DELETE'
@@ -187,6 +191,7 @@ function syncCurrentTabMovieUrl(tabId, url) {
 
   chrome.storage.local.get(['roomId'], (res) => {
     if (res.roomId) {
+      if (!/^[a-zA-Z0-9_-]+$/.test(res.roomId)) return;
       console.log(`[FilmSync Background] Canlı film adresi Firebase'e yazılıyor: ${url}`);
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/lastState.json`, {
         method: 'PATCH',
