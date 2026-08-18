@@ -21,6 +21,10 @@ let pendingState = null;
 let isFirstSync = true;
 let messagesQueue = [];
 let isInputFocused = false;
+let videoTrackingInterval = null;
+let driftCorrectionInterval = null;
+let uiKeeperInterval = null;
+let iframeFullscreenKeeperInterval = null;
 
 // Firebase Canlı Yapılandırması
 const firebaseConfig = {
@@ -175,7 +179,20 @@ function init() {
 }
 
 // Sayfa yenilenirken veya kapanırken durum güncellemesi tetikle (REST API üzerinden Service Worker ile çalışır)
+
+function fullTeardown() {
+  if (videoTrackingInterval) clearInterval(videoTrackingInterval);
+  if (driftCorrectionInterval) clearInterval(driftCorrectionInterval);
+  if (uiKeeperInterval) clearInterval(uiKeeperInterval);
+  if (iframeFullscreenKeeperInterval) clearInterval(iframeFullscreenKeeperInterval);
+  cleanupFirebase();
+}
+
+window.addEventListener('pagehide', () => {
+  fullTeardown();
+});
 window.addEventListener('beforeunload', () => {
+  fullTeardown();
   if (roomId && isFirebaseInitialized && window === window.top) {
     // Sayfa kapanırken oynatıcı eventlerinin tetiklenmesini önlemek için dinleyicileri derhal kaldır
     removeVideoListeners();
@@ -564,10 +581,12 @@ function cleanupFirebase() {
       });
     });
 
+    db.ref(`rooms/${roomId}/hostId`).off();
+    db.ref(`rooms/${roomId}/hostOnly`).off();
     db.ref(`rooms/${roomId}/lastState`).off();
-    db.ref(`rooms/${roomId}/messages`).off();
+    db.ref(`rooms/${roomId}/messages`).limitToLast(50).off();
     db.ref(`rooms/${roomId}/users`).off();
-    db.ref(`rooms/${roomId}/reactions`).off();
+    db.ref(`rooms/${roomId}/reactions`).limitToLast(5).off();
     
     renderedMessageKeys.clear();
   }
@@ -619,7 +638,8 @@ function sendMediaEvent(isPlaying, currentTime) {
 
 // Videolu Sayfalarda UI Motoru
 function startVideoTracking() {
-  setInterval(() => {
+  if (videoTrackingInterval) clearInterval(videoTrackingInterval);
+  videoTrackingInterval = setInterval(() => {
     const activeVideo = document.querySelector('video');
     if (activeVideo && activeVideo !== videoElement) {
       removeVideoListeners();
@@ -645,7 +665,8 @@ function startVideoTracking() {
 
 // Akıllı Eşitleme ve Sağlık Denetleyicisi (Heartbeat & Auto-Sync)
 function startDriftCorrection() {
-  setInterval(() => {
+  if (driftCorrectionInterval) clearInterval(driftCorrectionInterval);
+  driftCorrectionInterval = setInterval(() => {
     if (!db || !roomId || !videoElement || isSyncing) return;
     if (videoElement.readyState < 3) return; // Oynatıcı hazır değilse bekle
 
@@ -1412,7 +1433,8 @@ function spawnFlyingEmoji(emoji) {
 }
 
 function startUIKeeper() {
-  setInterval(() => {
+  if (uiKeeperInterval) clearInterval(uiKeeperInterval);
+  uiKeeperInterval = setInterval(() => {
     if (roomId && !document.getElementById('filmsync-root') && window === window.top) {
       console.log('[FilmSync UI Keeper] Arayüz yenileniyor.');
       createChatUI();
@@ -2062,7 +2084,8 @@ function resetIdleTimer(duration = 3000) {
 function startIframeFullscreenKeeper() {
   if (window === window.top) return; // Sadece iframe'lerde çalışsın
   
-  setInterval(() => {
+  if (iframeFullscreenKeeperInterval) clearInterval(iframeFullscreenKeeperInterval);
+  iframeFullscreenKeeperInterval = setInterval(() => {
     const fsElement = document.fullscreenElement || 
                       document.webkitFullscreenElement || 
                       document.mozFullScreenElement || 

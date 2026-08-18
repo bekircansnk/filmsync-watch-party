@@ -4,6 +4,14 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [18.08.2026] - Hafıza Sızıntısı ve Performans İyileştirmeleri
+- **Performans Optimizasyonları:**
+  - `extension/content.js` dosyasında setInterval çağrıları değişkenlere (`videoTrackingInterval`, `driftCorrectionInterval`, vb.) atandı.
+  - İlgili fonksiyonlarda interval'ler başlatılmadan önce eski interval'ler temizlenerek bellek sızıntıları önlendi.
+- **Hata Düzeltmeleri:**
+  - `cleanupFirebase()` içinde eksik `.off()` çağrıları düzeltildi, query'lere (`.limitToLast(50)`, `.limitToLast(5)`) tam eşleşen dinleyiciler `.off()` ile doğru şekilde temizlendi.
+  - Sayfa kapanışı veya yenilenmesi durumunda çalışan `beforeunload` ve `pagehide` eventleri içerisine kapsamlı `fullTeardown()` fonksiyonu entegre edilerek tüm interval ve Firebase listener'ları düzgünce temizlendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
