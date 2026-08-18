@@ -1,0 +1,3 @@
+## 2026-08-18 - [Debounce DOM Observation in startButtonObserver]
+**Learning:** The `startButtonObserver` in `extension/content.js` uses a `MutationObserver` on `document.body` with `subtree: true`, calling `injectNetflixStartButton()` synchronously on EVERY DOM mutation without debouncing. Since `injectNetflixStartButton` runs `querySelectorAll`, this is a massive performance bottleneck on a highly dynamic SPA like Netflix.
+**Action:** Always wrap heavy DOM querying callbacks triggered by `MutationObserver(subtree: true)` in a `requestAnimationFrame` or `setTimeout` debounce to batch the updates, preventing DOM layout thrashing and main thread blocking.
