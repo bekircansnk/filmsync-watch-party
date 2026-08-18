@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [18.08.2026] - Log Yapılandırması ve Güvenli Oynatma (Logger & Promise Checks)
+- **Hata Düzeltmeleri ve İyileştirmeler:**
+  - `extension/content.js`, `extension/popup.js`, `extension/inject.js` ve `extension/background.js` içindeki tüm `console.log` çağrıları temizlenerek yapılandırılmış bir `Logger` nesnesi (`Logger.info`, `Logger.error`, `Logger.warn`) ile değiştirildi.
+  - Olası öz yineleme (recursion) çökmelerini engellemek amacıyla `console` nesnesi güvenli bir şekilde alias'landı (`const _c = console;`).
+  - API hook'ları üzerinden gerçekleştirilen (Netflix, Disney+, YouTube ve yerel HTML5 video) medya oynatma (play/playVideo) işlemlerine güvenli `Promise` kontrolleri eklendi (ör. `const p = player.play(); if (p && p.catch) p.catch(...)`). Bu sayede promise dönmeyen özel oynatıcıların eklentiyi çökertmesi engellendi.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
