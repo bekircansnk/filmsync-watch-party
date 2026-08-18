@@ -1,0 +1,1 @@
+sed -i -e 's/const cleanRoomId = (roomId || '\'''\'').trim().toUpperCase();/const cleanRoomId = (roomId || '\'''\'').trim().toUpperCase();\n    if (!\/^[a-zA-Z0-9_-]+\$\/.test(cleanRoomId)) { sendResponse({ status: '\''error'\'', error: '\''Invalid roomId format'\'' }); return true; }/' extension/background.js
