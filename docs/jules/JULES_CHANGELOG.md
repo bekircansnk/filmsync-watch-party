@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [19.08.2026] - Log ve API Kancası İyileştirmeleri
+- **İyileştirmeler:**
+  - `extension/content.js`, `extension/popup.js` ve `extension/inject.js` dosyalarındaki standart `console.log`, `console.warn` ve `console.error` çağrıları `Logger` objesi ile yapısallaştırıldı.
+  - Olası rekürsif çökme hatalarını önlemek adına `_c` alias'ı kullanılarak güvenli bir log yapısı sağlandı.
+  - Netflix, Disney+ ve YouTube API kancalarında `.play()` ve `.playVideo()` çağrıları güvenli Promise denetimleri (`p && p.catch`) kullanılarak try-catch bloklarına sarıldı. Böylece üçüncü parti oynatıcılarda meydana gelebilecek eklenti çökmeleri engellendi.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
