@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [19.08.2026] - Eşitleme ve Sapma Kontrolü (Drift Correction) Geliştirmeleri
+- **İyileştirmeler:**
+  - `startDriftCorrection` fonksiyonundaki senkronizasyon mantığı geliştirildi.
+  - Ağ gecikmesi (network latency) ve oynatma durumu farklılıkları baz alınarak çalışan 2.5 saniyelik sabit eşik, dinamik bir eşik değeri ile değiştirildi.
+  - Oynatma uyumsuzluğu anında gecikmeli eşitleme 0.5 saniyeye düşürülerek daha hızlı tepki vermesi sağlandı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
