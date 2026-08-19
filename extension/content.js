@@ -1971,8 +1971,12 @@ function startButtonObserver() {
   setTimeout(injectNetflixStartButton, 1000);
 
   // Değişimleri izle
+  let timeoutId = null;
   const observer = new MutationObserver((mutations) => {
-    injectNetflixStartButton();
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      injectNetflixStartButton();
+    }, 250);
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
