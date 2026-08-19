@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [19.08.2026] - Firebase Performans İyileştirmesi ve Memory Leak Çözümü
+- **Performans İyileştirmeleri:**
+  - `extension/content.js` dosyasında `cleanupFirebase` fonksiyonu güncellendi.
+  - Odayı değiştirirken veya sekmeler arasında gezinirken uzun süreli video izlemelerinde meydana gelebilen bellek sızıntılarını (memory leaks) engellemek adına `.on()` ile başlatılan dinleyiciler (`hostId`, `hostOnly`, limitlenmiş `messages` ve `reactions` sorguları) için tam ve eksiksiz olarak `.off()` çağrıları eklendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
