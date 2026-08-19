@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [19.08.2026] - Güvenlik İyileştirmesi: Path Traversal Koruması
+- **Güvenlik (Sentinel):**
+  - `background.js` ve `popup.js` içindeki Firebase Realtime Database REST API `fetch` çağrılarında (URL birleştirme işlemlerinde) kullanıcıdan veya mesajlaşmadan gelen dinamik kimlik (`roomId` ve `userId`) parametrelerinin doğrudan kullanımı Path Traversal açıklarına sebep olabilirdi.
+  - Bu parametrelerin sadece güvenli karakterler (harf, rakam, alt çizgi, tire) içerdiğinden emin olmak için `/^[a-zA-Z0-9_-]+$/` maskesiyle sıkı bir şekilde doğrulayan `isValidId` fonksiyonu eklendi ve tüm ilgili `fetch` isteklerinde kullanıldı.
+  - `apiKey` güvenlik kuralı nedeniyle değiştirilmeden korundu; açık olarak bırakılması, Firebase'in doğası gereği kasıtlı bir davranıştır.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.

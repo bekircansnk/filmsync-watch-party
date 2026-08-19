@@ -1,5 +1,10 @@
 // Evo ve Beko Film Partisi (Teleparty Clone) 🍿
 let roomId = null;
+function isValidId(id) {
+  if (!id || typeof id !== 'string') return false;
+  return /^[a-zA-Z0-9_-]+$/.test(id);
+}
+
 let username = 'Anonim';
 let password = '';
 let userId = null;
