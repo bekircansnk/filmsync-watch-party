@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [19.08.2026] - Arayüz Performans Optimizasyonları
+- **Performans İyileştirmeleri:**
+  - Mini araç çubuğu animasyonları `right` özelliği yerine GPU hızlandırmalı `transform` kullanacak şekilde güncellendi, böylece DOM reflow maliyeti düşürüldü.
+  - `filmsync-sidebar-open` sınıfındaki `width` geçiş efekti kaldırılarak Netflix, YouTube ve Disney+ gibi platformlarda sohbet paneli açıldığında video oynatıcısının boyut hesaplamalarından kaynaklanan kare hızı (framerate) düşüşleri engellendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
