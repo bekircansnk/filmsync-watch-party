@@ -4,6 +4,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [20.08.2026] - Performans İyileştirmeleri (Bolt)
+- **Oynatıcı Performansı:**
+  - `body.filmsync-sidebar-open` CSS sınıfından `transition: width` özelliği kaldırılarak, Netflix, Disney+ ve YouTube'da yan panel açıldığında animasyon kaynaklı DOM reflow (yeniden hesaplama) engellendi. Bu sayede video kare hızındaki (framerate) düşüşler önlendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
