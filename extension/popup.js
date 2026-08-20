@@ -259,6 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
               lastActive: Date.now()
             };
 
+            if (!/^[a-zA-Z0-9_-]+$/.test(matchedRoomId) || !/^[a-zA-Z0-9_-]+$/.test(userId)) return;
             fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${matchedRoomId}/users/${userId}.json`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
@@ -316,6 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Doğrudan oda düğümünden en güncel URL'yi oku
+    if (!/^[a-zA-Z0-9_-]+$/.test(currentRoomId)) return;
     fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${currentRoomId}.json`)
       .then(res => res.json())
       .then(roomData => {
