@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [20.08.2026] - Güvenlik İyileştirmeleri (XSS)
+- **Güvenlik Düzeltmeleri:**
+  - `extension/popup.js` içindeki \`innerHTML\` kullanımları güvenli \`textContent\` atamalarıyla değiştirildi.
+  - `extension/content.js` içindeki davet ve isim prompt ekranlarında \`innerHTML\` tabanlı DOM manipülasyonu sanitize edilerek XSS açıkları kapatıldı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
