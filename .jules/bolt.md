@@ -1,0 +1,3 @@
+## 2026-08-20 - MutationObserver Performance Optimization
+**Learning:** Using `MutationObserver` on `document.body` with `subtree: true` without throttling or debouncing callback executions can lead to severe main-thread blocking and performance bottlenecks in highly dynamic Single Page Applications (SPAs) like Netflix, due to synchronous DOM queries executing on every single mutation.
+**Action:** Always debounce or throttle `MutationObserver` callbacks that involve DOM querying (e.g., using `setTimeout` or `requestAnimationFrame`) to ensure that multiple rapid mutations only trigger a single execution check, improving rendering performance and framerate.
