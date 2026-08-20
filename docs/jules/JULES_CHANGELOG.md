@@ -4,6 +4,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [20.08.2026] - Dinamik Drift Düzeltme İyileştirmesi
+- **Eşitleme Geliştirmesi:**
+  - `startDriftCorrection` içindeki drift eşiği (eskiden 2.5s) dinamikleştirildi. `playStateMismatch` (oynatma durumu uyumsuzluğu) olduğunda eşik 0.5s'ye düşürülerek daha hızlı tepki verilmesi sağlandı. Ağ gecikmesine bağlı olarak (`timeDiff`), eşiğin daha büyük gecikmeleri tolere etmesi adına `Math.max(2.5, timeDiff * 0.1)` formülüyle hesaplanmasına geçildi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
