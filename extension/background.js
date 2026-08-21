@@ -5,6 +5,15 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Sekme Yönlendirme ve Bilgi Dinleyicisi
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Gelen verilerde path traversal güvenlik kontrolü
+  const pathRegex = /^[a-zA-Z0-9_-]+$/;
+  if ((message.roomId && !pathRegex.test(message.roomId)) ||
+      (message.userId && !pathRegex.test(message.userId)) ||
+      (message.hostId && !pathRegex.test(message.hostId))) {
+    sendResponse({ status: 'error', error: 'Invalid parameter format' });
+    return false;
+  }
+
   if (message.type === 'redirect-tab' && message.url) {
     const tabId = sender.tab ? sender.tab.id : null;
     if (tabId) {
