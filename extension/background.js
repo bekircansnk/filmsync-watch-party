@@ -20,7 +20,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId } = message;
-    if (roomId && username) {
+    const safeRegex = /^[a-zA-Z0-9_-]+$/;
+    if (roomId && username && safeRegex.test(roomId)) {
       // 1. lastState nesnesini duraklatıldı olarak güncelle
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
         method: 'PATCH',
@@ -52,6 +53,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'create-room') {
     const { roomId, hostId, username, avatar, hostOnly, url } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
+    const safeRegex = /^[a-zA-Z0-9_-]+$/;
+
+    if (!safeRegex.test(cleanRoomId)) {
+        sendResponse({ status: 'error', error: 'Invalid roomId' });
+        return false;
+    }
 
     const roomData = {
       password: '',
@@ -109,6 +116,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (!matchedRoomData || !matchedRoomId) {
           sendResponse({ status: 'not_found' });
           return;
+        }
+
+        const safeRegex = /^[a-zA-Z0-9_-]+$/;
+        if (!safeRegex.test(matchedRoomId) || !safeRegex.test(userId)) {
+            sendResponse({ status: 'error', error: 'Invalid room or user ID' });
+            return;
         }
 
         // Kullanıcıyı odaya ekle
@@ -186,7 +199,8 @@ function syncCurrentTabMovieUrl(tabId, url) {
   if (!isMovieWatchUrl(url)) return;
 
   chrome.storage.local.get(['roomId'], (res) => {
-    if (res.roomId) {
+    const safeRegex = /^[a-zA-Z0-9_-]+$/;
+    if (res.roomId && safeRegex.test(res.roomId)) {
       console.log(`[FilmSync Background] Canlı film adresi Firebase'e yazılıyor: ${url}`);
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/lastState.json`, {
         method: 'PATCH',
