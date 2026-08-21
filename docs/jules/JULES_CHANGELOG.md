@@ -3,6 +3,11 @@
 Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm otonom bakım, iyileştirme ve hata giderme seanslarının kaydını tutar.
 
 ---
+## [21.08.2026] - Log ve API Kanca İyileştirmeleri
+- **Güvenlik ve Kararlılık İyileştirmeleri:**
+  - `console.log` çıktıları `Logger` yapısı ile değiştirildi.
+  - Olası çökmeleri engellemek için `inject.js` içerisindeki API kancalarına (Netflix, Disney+, YouTube) try-catch ve Promise `.catch` blokları eklendi.
+
 
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
