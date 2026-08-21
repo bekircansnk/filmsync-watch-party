@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [21.08.2026] - Video Senkronizasyonu Tolerans İyileştirmesi
+- **Geliştirme:**
+  - `extension/content.js` dosyasındaki `startDriftCorrection` fonksiyonunda kullanılan sabit 2.5 saniyelik sapma toleransı (drift threshold) dinamik hale getirildi.
+  - Ağ gecikmesi (`timeDiff`) ve oynatma durumu (`playStateMismatch`) baz alınarak esnek bir senkronizasyon eşiği hesaplanması sağlandı, böylece gereksiz yeniden senkronizasyon döngülerinin önüne geçildi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
