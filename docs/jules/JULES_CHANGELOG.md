@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## 2026-08-22
+- Yapılandırılmış `Logger` nesnesi eklendi ve `console.log`/`console.error` çağrıları `Logger` kullanacak şekilde değiştirildi.
+- Eklenti çökmelerini önlemek için `extension/content.js` dosyasında yer alan `PlayerAdapter.play()` içindeki API kancalarına `try-catch` blokları (Promise kontrolleri) eklendi.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
