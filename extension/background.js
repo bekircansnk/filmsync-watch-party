@@ -3,6 +3,13 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('FilmSync Watch Party eklentisi başarıyla kuruldu.');
 });
 
+// Güvenlik: Firebase key doğrulama (Path Traversal önlemi)
+function isValidFirebaseKey(key) {
+  if (!key || typeof key !== 'string') return false;
+  // Sadece alfanumerik ve bazı güvenli karakterlere izin ver. '/' veya '.' gibi özel karakterleri engelle.
+  return /^[a-zA-Z0-9_-]+$/.test(key);
+}
+
 // Sekme Yönlendirme ve Bilgi Dinleyicisi
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'redirect-tab' && message.url) {
@@ -21,6 +28,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId } = message;
     if (roomId && username) {
+      if (!isValidFirebaseKey(roomId)) {
+        console.error('[FilmSync Security] Geçersiz roomId tespit edildi, işlem iptal edildi.');
+        sendResponse({ status: 'error', error: 'Invalid roomId' });
+        return true;
+      }
+
+      const safeUserId = userId && isValidFirebaseKey(userId) ? userId : 'unloaded_user';
+
       // 1. lastState nesnesini duraklatıldı olarak güncelle
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
         method: 'PATCH',
@@ -28,7 +43,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         body: JSON.stringify({
           isPlaying: false,
           lastUpdated: Date.now(),
-          senderId: userId || 'unloaded_user'
+          senderId: safeUserId
         })
       }).catch(err => console.error('[FilmSync Unload Patch Hatası]', err));
 
@@ -53,12 +68,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const { roomId, hostId, username, avatar, hostOnly, url } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
 
+    if (!isValidFirebaseKey(cleanRoomId)) {
+       sendResponse({ status: 'error', error: 'Invalid roomId' });
+       return true;
+    }
+
+    if (hostId && !isValidFirebaseKey(hostId)) {
+       sendResponse({ status: 'error', error: 'Invalid hostId' });
+       return true;
+    }
+
+    const safeHostId = hostId || 'host_' + Date.now();
     const roomData = {
       password: '',
-      hostId: hostId,
+      hostId: safeHostId,
       hostOnly: hostOnly || false,
       users: {
-        [hostId]: {
+        [safeHostId]: {
           username: username || 'Anonim',
           avatar: avatar || '🍿',
           lastActive: Date.now()
@@ -85,6 +111,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'join-room') {
     const { roomId, userId, username, avatar } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
+
+    if (!isValidFirebaseKey(cleanRoomId)) {
+        sendResponse({ status: 'error', error: 'Invalid roomId' });
+        return true;
+    }
+
+    if (userId && !isValidFirebaseKey(userId)) {
+        sendResponse({ status: 'error', error: 'Invalid userId' });
+        return true;
+    }
 
     // Önce tüm odaları çekip büyük/küçük harf bağımsız sorgula
     fetch('https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json')
