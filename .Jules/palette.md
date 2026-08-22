@@ -1,0 +1,3 @@
+## 2026-08-22 - Interactive Emojis & Inputs Accessibility
+**Learning:** Icon-only and emoji-only clickable elements (like `#userAvatarDisplay`) and visually unlabelled text inputs are often overlooked for accessibility. They require explicit `role="button"`, `tabindex="0"`, `aria-label`, visible focus states (`:focus-visible`), and proper keyboard event listeners (Enter/Space) to be navigable and usable via screen readers and keyboards.
+**Action:** Applied comprehensive a11y attributes to emoji buttons, added missing `aria-label`s to placeholder-only inputs, and ensured both focus visibility and keydown handlers are present for full accessibility without relying solely on click events.
