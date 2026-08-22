@@ -1,0 +1,3 @@
+## 2026-08-22 - Debounce MutationObserver with subtree: true
+**Learning:** In SPAs like Netflix with frequent DOM updates, running a `MutationObserver` on `document.body` with `subtree: true` without debouncing causes severe main-thread blocking and performance bottlenecks, dropping framerates. Synchronous DOM queries within the observer callback compound this problem.
+**Action:** Always wrap `MutationObserver` callbacks that watch the entire body or large subtrees in a debounce function (e.g. using `setTimeout`) to batch updates and prevent blocking the main thread during high-frequency mutation events.
