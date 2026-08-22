@@ -53,26 +53,41 @@ const PlayerAdapter = {
   isDisney: () => window.location.host.includes('disneyplus.com'),
 
   play: () => {
-    if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-    } else if (videoElement) {
-      videoElement.play();
+    try {
+      if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
+        window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
+      } else if (videoElement) {
+        const p = videoElement.play();
+        if (p && p.catch) {
+          p.catch(err => console.error('[FilmSync] Play promise rejected:', err));
+        }
+      }
+    } catch (e) {
+      console.error('[FilmSync] Oynatma hatası:', e);
     }
   },
 
   pause: () => {
-    if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-    } else if (videoElement) {
-      videoElement.pause();
+    try {
+      if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
+        window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
+      } else if (videoElement) {
+        videoElement.pause();
+      }
+    } catch (e) {
+      console.error('[FilmSync] Duraklatma hatası:', e);
     }
   },
 
   seek: (seconds) => {
-    if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-    } else if (videoElement) {
-      videoElement.currentTime = seconds;
+    try {
+      if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
+        window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
+      } else if (videoElement) {
+        videoElement.currentTime = seconds;
+      }
+    } catch (e) {
+      console.error('[FilmSync] İleri/Geri sarma hatası:', e);
     }
   }
 };
@@ -464,10 +479,18 @@ function applyRemoteState(state) {
     }
   }
 
+  isSyncing = true; // Senkronizasyon sürecini hemen kilitle
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+    if (!isReady || !videoElement) {
+      isSyncing = false;
+      if (pendingState) {
+        const nextState = pendingState;
+        pendingState = null;
+        applyRemoteState(nextState);
+      }
+      return;
+    }
 
-    isSyncing = true;
     try {
       const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
       const targetTime = state.currentTime + timeDiff;
@@ -517,13 +540,19 @@ function forceSync() {
       return;
     }
 
+    isSyncing = true; // Senkronizasyon sürecini hemen kilitle
     ensureVideoReady((isReady) => {
       if (!isReady || !videoElement) {
+        isSyncing = false;
         isFirstSync = false;
+        if (pendingState) {
+          const nextState = pendingState;
+          pendingState = null;
+          applyRemoteState(nextState);
+        }
         return;
       }
 
-      isSyncing = true;
       try {
         const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
         const targetTime = state.currentTime + timeDiff;
@@ -543,6 +572,12 @@ function forceSync() {
         isSyncing = false; 
         isFirstSync = false; // İlk senkronizasyon kilidini kaldır
         console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
+
+        if (pendingState) {
+          const nextState = pendingState;
+          pendingState = null;
+          applyRemoteState(nextState);
+        }
       }, 2000);
     });
   });
