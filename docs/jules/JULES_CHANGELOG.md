@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [23.08.2026] - Firebase Bellek Sızıntısı ve Dinleyici İyileştirmeleri
+- **Performans İyileştirmeleri:**
+  - Uzun süren video sekmelerinde hafıza sızıntılarını önlemek için `cleanupFirebase()` içindeki dinleyici temizlik işlemleri güncellendi.
+  - `hostId` ve `hostOnly` için eksik abonelik iptalleri eklendi.
+  - `messages` ve `reactions` için `.off()` çağrıları, kayıt esnasındaki sorgu nesneleriyle (örn. `limitToLast(50)`) birebir aynı olacak şekilde güncellendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
