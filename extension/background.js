@@ -5,6 +5,20 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Sekme Yönlendirme ve Bilgi Dinleyicisi
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Security: Prevent Path Traversal by validating dynamic path parameters
+  const idRegex = /^[a-zA-Z0-9_-]+$/;
+  if (message.roomId) message.roomId = message.roomId.toString().trim();
+  if (message.userId) message.userId = message.userId.toString().trim();
+  if (message.hostId) message.hostId = message.hostId.toString().trim();
+
+  if ((message.roomId && !idRegex.test(message.roomId)) ||
+      (message.userId && !idRegex.test(message.userId)) ||
+      (message.hostId && !idRegex.test(message.hostId))) {
+    console.error('[Security] Invalid ID format preventing Path Traversal');
+    sendResponse({ status: 'error', error: 'Security: Invalid ID format' });
+    return false;
+  }
+
   if (message.type === 'redirect-tab' && message.url) {
     const tabId = sender.tab ? sender.tab.id : null;
     if (tabId) {
@@ -187,6 +201,7 @@ function syncCurrentTabMovieUrl(tabId, url) {
 
   chrome.storage.local.get(['roomId'], (res) => {
     if (res.roomId) {
+      if (!/^[a-zA-Z0-9_-]+$/.test(res.roomId)) return; // Security Validation
       console.log(`[FilmSync Background] Canlı film adresi Firebase'e yazılıyor: ${url}`);
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/lastState.json`, {
         method: 'PATCH',
