@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [23.08.2026] - Güvenlik İyileştirmesi: Path Traversal Zafiyeti
+- **Hata Düzeltmeleri:**
+  - Firebase REST API üzerinden yapılan isteklerde `roomId`, `userId` gibi parametrelerin düzenli ifadeler ile (Regex) kontrol edilmesi sağlandı (`/^[a-zA-Z0-9_-]+$/`).
+  - `extension/background.js` ve `extension/popup.js` içinde yer alan `fetch` fonksiyonlarında olası path traversal (dizin geçişi) saldırılarını engellemek adına güvenlik önlemleri eklendi.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
