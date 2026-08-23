@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [23.08.2026] - Loglama İyileştirmesi ve Play API Güvenliği
+- **Hata Düzeltmeleri ve İyileştirmeler:**
+  - `console.log`, `console.error` ve `console.warn` çağrıları, `content.js`, `popup.js` ve `inject.js` içerisinde oluşturulan yapılandırılmış `Logger` nesnesi ile değiştirilerek konsol çıktıları temizlendi.
+  - Netflix, Disney+ ve YouTube API kancalarında (`inject.js`) ve ana oynatıcı kontrolünde (`content.js`) kullanılan `play()` ve `playVideo()` fonksiyonlarına Promise doğrulama mekanizması eklendi (`if (p && p.catch) p.catch(...)`). Bu sayede ele alınmayan Promise hatalarının eklentiyi çökertmesi engellendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
