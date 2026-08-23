@@ -1,0 +1,3 @@
+## 2026-08-23 - Throttling MutationObserver in SPAs
+**Learning:** In highly dynamic Single Page Applications like Netflix, attaching a `MutationObserver` to `document.body` with `subtree: true` without throttling causes the callback to run synchronously on every single DOM node addition or removal. This can lead to severe main-thread blocking, causing FPS drops, sluggish UI response, and potentially crashing the browser tab if DOM manipulations are heavy.
+**Action:** When utilizing `MutationObserver` on large subtrees (like `document.body`) to detect element presence in SPAs, always wrap the callback logic in a debounce mechanism (e.g., using `setTimeout`) to batch the processing and reduce main-thread execution frequency.
