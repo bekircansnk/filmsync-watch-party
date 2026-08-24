@@ -4,6 +4,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [24.08.2026] - ⚡ Bolt Performans İyileştirmeleri
+- **Performans:** Netflix sayfasında MutationObserver kullanırken oluşan main-thread bloklanmasını önlemek için callback fonksiyonuna debounce eklendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
