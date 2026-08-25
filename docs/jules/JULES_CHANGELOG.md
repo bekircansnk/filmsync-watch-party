@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [25.08.2026] - Firebase Bellek Sızıntısı Optimizasyonu
+- **Hata Düzeltmeleri & Performans:**
+  - `cleanupFirebase()` içindeki Firebase abonelik iptal işlemleri düzeltildi. `.on()` kayıtlarında kullanılan `limitToLast(50)` ve `limitToLast(5)` sorgu nesneleri tam olarak eşleşecek şekilde `.off()` çağrılarına eklendi.
+  - Odadan ayrılma (teardown) sırasında `hostId` ve `hostOnly` dinleyicilerinin abonelik iptal (cleanup) işlemleri eklendi.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
