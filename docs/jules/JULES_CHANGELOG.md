@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [25.08.2026] - Console Temizliği ve Oynatıcı Güvenliği
+- **Hata Düzeltmeleri & İyileştirmeler:**
+  - `extension/content.js`, `extension/popup.js` ve `extension/inject.js` içerisindeki tüm `console.log`, `console.error`, `console.warn` çağrıları yapılandırılmış `Logger` objesi ile değiştirildi.
+  - Netflix, Disney+ ve YouTube API hook'larına (`inject.js`) ve ana oynatıcı adaptörüne (`content.js`) video başlatma işlemleri için güvenli Promise `.catch` kontrolleri eklendi; böylece tarayıcı çökmelerinin önüne geçildi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
