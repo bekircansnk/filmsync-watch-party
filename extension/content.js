@@ -56,7 +56,8 @@ const PlayerAdapter = {
     if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
     } else if (videoElement) {
-      videoElement.play();
+      const p = videoElement.play();
+      if (p && p.catch) p.catch(e => console.error('[FilmSync] Oynatma hatası:', e));
     }
   },
 
@@ -464,10 +465,18 @@ function applyRemoteState(state) {
     }
   }
 
+  isSyncing = true;
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+    if (!isReady || !videoElement) {
+      isSyncing = false;
+      if (pendingState) {
+        const nextState = pendingState;
+        pendingState = null;
+        applyRemoteState(nextState);
+      }
+      return;
+    }
 
-    isSyncing = true;
     try {
       const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
       const targetTime = state.currentTime + timeDiff;
@@ -488,7 +497,7 @@ function applyRemoteState(state) {
       console.error('[FilmSync] Medya eşileme hatası:', e);
     }
     
-    // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
+    // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 0.5 saniye kilit)
     setTimeout(() => {
       setupVideoListeners();
       isSyncing = false;
@@ -500,7 +509,7 @@ function applyRemoteState(state) {
         pendingState = null;
         applyRemoteState(nextState);
       }
-    }, 1000);
+    }, 500);
   });
 }
 
@@ -517,13 +526,14 @@ function forceSync() {
       return;
     }
 
+    isSyncing = true;
     ensureVideoReady((isReady) => {
       if (!isReady || !videoElement) {
+        isSyncing = false;
         isFirstSync = false;
         return;
       }
 
-      isSyncing = true;
       try {
         const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
         const targetTime = state.currentTime + timeDiff;
@@ -543,7 +553,7 @@ function forceSync() {
         isSyncing = false; 
         isFirstSync = false; // İlk senkronizasyon kilidini kaldır
         console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
-      }, 2000);
+      }, 1000);
     });
   });
 }
