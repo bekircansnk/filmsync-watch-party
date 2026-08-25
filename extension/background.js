@@ -3,6 +3,11 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('FilmSync Watch Party eklentisi başarıyla kuruldu.');
 });
 
+// Regex tabanlı girdi doğrulama fonksiyonu
+function isValidId(id) {
+  return /^[a-zA-Z0-9_-]+$/.test(id);
+}
+
 // Sekme Yönlendirme ve Bilgi Dinleyicisi
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'redirect-tab' && message.url) {
@@ -22,6 +27,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const { roomId, username, userId } = message;
     if (roomId && username) {
       // 1. lastState nesnesini duraklatıldı olarak güncelle
+      if (!isValidId(roomId)) return;
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -33,6 +39,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }).catch(err => console.error('[FilmSync Unload Patch Hatası]', err));
 
       // 2. Sistem mesajı gönder
+      if (!isValidId(roomId)) return;
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/messages.json`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,6 +79,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     };
 
+    if (!isValidId(cleanRoomId)) return;
     fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${cleanRoomId}.json`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -112,6 +120,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
 
         // Kullanıcıyı odaya ekle
+        if (!isValidId(matchedRoomId) || !isValidId(userId)) return;
         fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${matchedRoomId}/users/${userId}.json`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -158,6 +167,7 @@ function cleanupExpiredRoomsREST() {
 
         if (isExpired24h || (activeUserCount === 0 && isInactive3h)) {
           console.log(`[FilmSync Background İmha] Oda ${rId} siliniyor.`);
+          if (!isValidId(rId)) return;
           fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${rId}.json`, {
             method: 'DELETE'
           }).catch(err => console.error(`[FilmSync Delete Hatası ${rId}]`, err));
@@ -188,6 +198,7 @@ function syncCurrentTabMovieUrl(tabId, url) {
   chrome.storage.local.get(['roomId'], (res) => {
     if (res.roomId) {
       console.log(`[FilmSync Background] Canlı film adresi Firebase'e yazılıyor: ${url}`);
+      if (!isValidId(res.roomId)) return;
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/lastState.json`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
