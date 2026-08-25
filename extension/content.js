@@ -663,7 +663,11 @@ function startDriftCorrection() {
     }
 
     // 2. BEN GUEST (KATILAN KİŞİ) İSEM: Host durumunu oku ve sapma varsa otomatik düzelt
+    const requestTime = Date.now();
     db.ref(`rooms/${roomId}/lastState`).once('value').then((snapshot) => {
+      const responseTime = Date.now();
+      const networkLatency = (responseTime - requestTime) / 1000; // Saniye cinsinden gecikme
+
       const state = snapshot.val();
       if (!state || state.senderId === userId || isSyncing) return;
 
@@ -671,11 +675,13 @@ function startDriftCorrection() {
       const expectedTime = state.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
 
-      if (playStateMismatch || drift > 2.5) {
-        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
+      // Ağ gecikmesine ve durum uyuşmazlığına göre dinamik eşik
+      const dynamicThreshold = playStateMismatch ? 0.5 : (2.5 + networkLatency);
+
+      if (playStateMismatch || drift > dynamicThreshold) {
+        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn, Eşik: ${dynamicThreshold.toFixed(2)}sn`);
         isSyncing = true;
         
         removeVideoListeners(); // Dinleyicileri kaldır
