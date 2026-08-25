@@ -4,6 +4,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [2026-08-25] - Sidebar DOM Reflow Optimizasyonu (Performans İyileştirmesi)
+- **Performans İyileştirmeleri:**
+  - Sidebar açılıp kapanırken video kare hızının (framerate) düşmesini önlemek için `body.filmsync-sidebar-open` sınıfından `width` animasyon geçişi (transition) kaldırıldı. Sürekli DOM reflow'larına (yeniden düzenleme) neden olan layout tetiklemeleri engellenerek Netflix, Disney+ ve YouTube'da kesintisiz video deneyimi sağlandı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
