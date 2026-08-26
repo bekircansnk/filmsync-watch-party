@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [26.08.2026] - Dinamik Senkronizasyon İyileştirmesi
+- **Geliştirmeler:**
+  - `startDriftCorrection` fonksiyonundaki sabit 2.5 saniyelik sapma eşiği, ağ gecikmesi ve oynatma durumu uyuşmazlığına göre uyarlanan dinamik bir eşik (`dynamicThreshold`) ile değiştirildi.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
