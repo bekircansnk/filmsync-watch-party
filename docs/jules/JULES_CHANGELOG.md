@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [26.08.2026] - Firebase Event Listener Sızıntılarının Giderilmesi
+- **Hata Düzeltmeleri:**
+  - Firebase `on()` çağrılarının kaldırılmasındaki memory leak (bellek sızıntısı) sorunları düzeltildi.
+  - `messages` ve `reactions` için olan listener'lar `.limitToLast()` içerecek şekilde temizlendi, aksi halde query mismatch nedeniyle dinleyiciler iptal edilmiyordu.
+  - Unutulan `hostId` ve `hostOnly` listener'larının iptal işlemleri `cleanupFirebase()` fonksiyonuna eklendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
