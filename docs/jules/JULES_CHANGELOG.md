@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [26.08.2026] - Konsol Loglarının Temizlenmesi ve Güvenli Medya Kontrolleri
+- **İyileştirmeler:**
+  - `extension/content.js`, `extension/popup.js` ve `extension/inject.js` dosyalarındaki standart `console` çıktıları yapılandırılmış `Logger` nesnesiyle değiştirildi.
+  - Kapsamlı tarayıcı çökmelerini önlemek için, medya başlatma (Netflix, Disney+, YouTube) işlemlerinde oluşabilecek Promise retleri `catch` bloğu ile güvenli hale getirildi.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
