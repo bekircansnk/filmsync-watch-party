@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -1970,9 +1970,13 @@ function startButtonObserver() {
   // İlk yüklemede çalıştır
   setTimeout(injectNetflixStartButton, 1000);
 
-  // Değişimleri izle
+  // Değişimleri izle (Debounce uygulandı)
+  let debounceTimer;
   const observer = new MutationObserver((mutations) => {
-    injectNetflixStartButton();
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      injectNetflixStartButton();
+    }, 100);
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
