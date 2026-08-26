@@ -21,6 +21,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId } = message;
     if (roomId && username) {
+      if (!/^[a-zA-Z0-9_-]+$/.test(roomId)) {
+        console.error('[FilmSync Unload Hatası] Geçersiz roomId formatı');
+        sendResponse({ status: 'error' });
+        return true;
+      }
       // 1. lastState nesnesini duraklatıldı olarak güncelle
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
         method: 'PATCH',
@@ -52,6 +57,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'create-room') {
     const { roomId, hostId, username, avatar, hostOnly, url } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
+    if (!/^[A-Z0-9_-]+$/.test(cleanRoomId)) {
+      sendResponse({ status: 'error', error: 'Invalid room ID format' });
+      return true;
+    }
 
     const roomData = {
       password: '',
@@ -85,6 +94,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'join-room') {
     const { roomId, userId, username, avatar } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
+    if (!/^[A-Z0-9_-]+$/.test(cleanRoomId)) {
+      sendResponse({ status: 'error', error: 'Invalid room ID format' });
+      return true;
+    }
 
     // Önce tüm odaları çekip büyük/küçük harf bağımsız sorgula
     fetch('https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json')
@@ -158,6 +171,7 @@ function cleanupExpiredRoomsREST() {
 
         if (isExpired24h || (activeUserCount === 0 && isInactive3h)) {
           console.log(`[FilmSync Background İmha] Oda ${rId} siliniyor.`);
+          if (!/^[a-zA-Z0-9_-]+$/.test(rId)) return;
           fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${rId}.json`, {
             method: 'DELETE'
           }).catch(err => console.error(`[FilmSync Delete Hatası ${rId}]`, err));
@@ -188,6 +202,7 @@ function syncCurrentTabMovieUrl(tabId, url) {
   chrome.storage.local.get(['roomId'], (res) => {
     if (res.roomId) {
       console.log(`[FilmSync Background] Canlı film adresi Firebase'e yazılıyor: ${url}`);
+      if (!/^[a-zA-Z0-9_-]+$/.test(res.roomId)) return;
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/lastState.json`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
