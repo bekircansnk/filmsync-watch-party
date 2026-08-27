@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [27.08.2026] - Güvenlik Düzeltmeleri (XSS Önlemleri)
+- **Güvenlik (XSS):**
+  - `extension/content.js` dosyasındaki `showAutoJoinOverlay` ve `showNamePromptModal` fonksiyonlarında kullanıcı girdilerinin (oda isimleri) doğrudan `innerHTML` ile enjekte edilmesi engellendi. Metinler güvenli olan `textContent` kullanılarak DOM'a eklendi.
+  - `extension/popup.js` dosyasında herkese açık odaların listelendiği alanda, oda verilerinin (isim, platform ve kullanıcı listesi) güvenli olmayan şekilde render edilmesi engellendi ve `textContent` ile `setAttribute` yapılarına geçildi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
