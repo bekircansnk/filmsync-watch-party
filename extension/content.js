@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -674,8 +674,11 @@ function startDriftCorrection() {
       // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
 
-      if (playStateMismatch || drift > 2.5) {
-        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
+      const latency = Math.max(0, (Date.now() - state.lastUpdated) / 1000);
+      const dynamicThreshold = playStateMismatch ? 1.0 : Math.max(1.5, Math.min(3.5, latency * 1.5 + 1.0));
+
+      if (playStateMismatch || drift > dynamicThreshold) {
+        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn, Eşik: ${dynamicThreshold.toFixed(1)}sn`);
         isSyncing = true;
         
         removeVideoListeners(); // Dinleyicileri kaldır

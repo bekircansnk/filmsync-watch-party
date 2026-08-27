@@ -4,6 +4,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [27.08.2026] - Drift Correction Dinamik Eşik Güncellemesi
+- **İyileştirmeler:**
+  - `startDriftCorrection` içindeki sabit 2.5 saniyelik eşik değeri, ağ gecikmesi ve oynatma durumu uyumsuzluklarına göre dinamik olarak ayarlanacak şekilde geliştirildi. Böylece daha kusursuz bir senkronizasyon sağlandı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
