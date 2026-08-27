@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [27.08.2026] - Güvenlik Analizi
+- **Güvenlik İyileştirmeleri:**
+  - Uzantı yapılandırma dosyaları (manifest.json, content.js, popup.js, background.js) incelendi.
+  - Kod tabanında hiçbir yönetici kimlik bilgisi (admin credentials) veya hassas veritabanı yazma yetkisi açığa çıkmadığı doğrulandı.
+  - Firebase API anahtarlarının ve izinlerinin istemci tarafı standartlarına uygun olduğu onaylandı.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
