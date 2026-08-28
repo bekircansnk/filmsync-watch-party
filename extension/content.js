@@ -21,6 +21,7 @@ let pendingState = null;
 let isFirstSync = true;
 let messagesQueue = [];
 let isInputFocused = false;
+let syncLockTimer = null;
 
 // Firebase Canlı Yapılandırması
 const firebaseConfig = {
@@ -489,7 +490,8 @@ function applyRemoteState(state) {
     }
     
     // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
-    setTimeout(() => {
+    clearTimeout(syncLockTimer);
+    syncLockTimer = setTimeout(() => {
       setupVideoListeners();
       isSyncing = false;
       isFirstSync = false; // İlk senkronizasyon kilidini kaldır
@@ -538,11 +540,17 @@ function forceSync() {
       } catch (e) {
         console.error(e);
       }
-      setTimeout(() => { 
+      clearTimeout(syncLockTimer);
+      syncLockTimer = setTimeout(() => {
         setupVideoListeners(); // Dinleyicileri geri tak
         isSyncing = false; 
         isFirstSync = false; // İlk senkronizasyon kilidini kaldır
         console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
+        if (pendingState) {
+          const nextState = pendingState;
+          pendingState = null;
+          applyRemoteState(nextState);
+        }
       }, 2000);
     });
   });
@@ -686,9 +694,15 @@ function startDriftCorrection() {
           PlayerAdapter.pause();
         }
         
-        setTimeout(() => {
+        clearTimeout(syncLockTimer);
+        syncLockTimer = setTimeout(() => {
           setupVideoListeners(); // Dinleyicileri geri tak
           isSyncing = false;
+          if (pendingState) {
+            const nextState = pendingState;
+            pendingState = null;
+            applyRemoteState(nextState);
+          }
         }, 1500);
       }
     });
