@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [28.08.2026] - Güvenlik Denetimi
+- **Güvenlik İyileştirmeleri:**
+  - Uzantı yapılandırma dosyaları (manifest.json, content.js, popup.js, background.js) incelendi.
+  - Sabit kodlanmış yönetici kimlik bilgileri, veritabanı yazma kuralı sızıntıları veya güvensiz kimlik bilgisi ifşası bulunmadı.
+  - Firebase Client SDK API anahtarlarının genel kullanıma açık olması gerektiği ve korunmasının Firebase Güvenlik Kurallarına dayandığı doğrulandı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
