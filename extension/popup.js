@@ -14,6 +14,14 @@ let db = null;
 let currentRoomId = null;
 let selectedAvatar = '🍿'; // Varsayılan avatar
 
+
+const _c = console;
+const Logger = {
+  info: (...args) => _c.log('[FilmSync]', ...args),
+  warn: (...args) => _c.warn('[FilmSync]', ...args),
+  error: (...args) => _c.error('[FilmSync]', ...args)
+};
+
 // 50+ Zengin Sinema, Animasyon ve Karakter Emojisi Havuzu
 const MOVIE_AVATARS = [
   '🍿', '🎬', '🚀', '🎭', '🦁', '🦊', '🤖', '👑', '⚡', '🐲', 
@@ -55,9 +63,9 @@ function copyToClipboard(text) {
     document.body.removeChild(dummy);
     return true;
   } catch (err) {
-    console.error("[FilmSync] execCommand kopyalama hatası, API denenecek:", err);
+    Logger.error("execCommand kopyalama hatası, API denenecek:", err);
     navigator.clipboard.writeText(text).catch(e => {
-      console.error("[FilmSync] Kopyalama tamamen başarısız oldu:", e);
+      Logger.error("Kopyalama tamamen başarısız oldu:", e);
     });
     return false;
   }
@@ -269,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Film Sayfasına Yönlendirme Kontrolü
                 if (roomMovieUrl && currentUrl !== roomMovieUrl && !currentUrl.includes(roomMovieUrl)) {
-                  console.log(`[FilmSync Yönlendirme] Film sayfasına gidiliyor: ${roomMovieUrl}`);
+                  Logger.info(`Film sayfasına gidiliyor: ${roomMovieUrl}`);
                   if (activeTabId) {
                     chrome.tabs.update(activeTabId, { url: roomMovieUrl });
                   } else {
@@ -282,13 +290,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
               });
             }).catch(err => {
-              console.error('[FilmSync Katılım Hatası]', err);
+              Logger.error('[FilmSync Katılım Hatası]', err);
               showGlobalToast('Odaya katılırken hata oluştu!');
               resetStatus();
             });
           })
           .catch(err => {
-            console.error('[FilmSync REST Oda Arama Hatası]', err);
+            Logger.error('[FilmSync REST Oda Arama Hatası]', err);
             showGlobalToast('Oda doğrulanırken bağlantı hatası oluştu!');
             resetStatus();
           });
@@ -368,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       })
       .catch(err => {
-        console.error('[FilmSync REST Url Hatası]', err);
+        Logger.error('[FilmSync REST Url Hatası]', err);
         showGlobalToast('Film adresi alınamadı!');
       });
   });
@@ -551,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
     } catch (e) {
-      console.error(e);
+      Logger.error(e);
     }
   }
 
@@ -648,7 +656,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const isInactive3h = (now - latestUserActivity > THREE_HOURS_MS);
 
           if (isExpired24h || isInactive3h) {
-            console.log(`[FilmSync İmha Motoru] Oda ${roomId} 3 saattir inaktif veya 24h dolduğu için siliniyor.`);
+            Logger.info(`Oda ${roomId} 3 saattir inaktif veya 24h dolduğu için siliniyor.`);
             fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' }).catch(e => {});
             return;
           }
@@ -717,7 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   loadPublicRooms();
                 })
                 .catch(err => {
-                  console.error('[FilmSync Oda Silme Hatası]', err);
+                  Logger.error('[FilmSync Oda Silme Hatası]', err);
                   showGlobalToast('Oda silinirken hata oluştu!');
                 });
             });
@@ -727,7 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       })
       .catch(err => {
-        console.error('[FilmSync Public Rooms REST Hatası]', err);
+        Logger.error('[FilmSync Public Rooms REST Hatası]', err);
         publicRoomCountBadge.textContent = '0 Aktif';
         publicRoomList.innerHTML = '<div style="font-size: 0.72rem; color: #888; text-align: center; padding: 6px 0;">Açık oda verisi alınamadı.</div>';
       });
