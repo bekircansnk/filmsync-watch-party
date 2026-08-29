@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [29.08.2026] - Logger Entegrasyonu ve API Hook Hata Yönetimi
+- **Geliştirmeler:**
+  - `extension/content.js` ve `extension/popup.js` içindeki `console.log` çıktıları, daha düzenli ve yapılandırılmış olan `Logger` objesi ile değiştirildi.
+  - Olası eklenti çökmelerini engellemek amacıyla Netflix, Disney+ ve YouTube API hook'larına (PlayerAdapter) `try-catch` blokları eklendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
