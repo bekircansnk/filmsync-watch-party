@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [29.08.2026] - Performans İyileştirmeleri (DOM Reflow)
+- **Performans:**
+  - `extension/content.js` dosyasındaki sidebar (yan panel) açılışında `width` özelliği için kullanılan `transition` animasyonu kaldırılarak DOM reflow maliyeti düşürüldü.
+  - Netflix, Disney+ ve YouTube gibi platformlarda izleme partileri sırasında yüksek kare hızında (FPS) ve takılmadan video oynatımı sağlandı.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
