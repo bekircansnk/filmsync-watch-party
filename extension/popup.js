@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Kullanıcı adı değiştiğinde veya tıklanıldığında dinamik avatar ata
   if (userAvatarDisplay) {
-    userAvatarDisplay.addEventListener('click', () => {
+    const changeAvatar = () => {
       selectedAvatar = MOVIE_AVATARS[Math.floor(Math.random() * MOVIE_AVATARS.length)];
       userAvatarDisplay.textContent = selectedAvatar;
       chrome.storage.local.set({ selectedAvatar });
@@ -125,6 +125,14 @@ document.addEventListener('DOMContentLoaded', () => {
           db.ref(`rooms/${res.roomId}/users/${res.userId}/avatar`).set(selectedAvatar);
         }
       });
+    };
+
+    userAvatarDisplay.addEventListener('click', changeAvatar);
+    userAvatarDisplay.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        changeAvatar();
+      }
     });
   }
 
