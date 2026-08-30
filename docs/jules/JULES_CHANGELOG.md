@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [30.08.2026] - Performans İyileştirmesi
+- **UI/UX ve Performans:**
+  - Video oynatıcılar (Netflix, Disney+, YouTube) ve kenar çubuğu çevresindeki sayfa düzeni değişimlerinde kullanılan width transition animasyonları DOM reflow yükünü azaltmak ve yüksek kare hızında (high-frame-rate) video oynatımını sağlamak amacıyla kaldırıldı.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
