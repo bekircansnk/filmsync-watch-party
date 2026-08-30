@@ -10,6 +10,7 @@ let db = null;
 
 let videoElement = null;
 let isSyncing = false;
+let syncLockTimer = null;
 let chatPanel = null;
 let messageInput = null;
 let messageList = null;
@@ -429,6 +430,26 @@ function setupFirebaseListeners() {
   });
 }
 
+// Kilitleri güvenli bir şekilde açmak ve asenkron yarış durumlarını (race conditions) önlemek için merkezi kilit yöneticisi
+function releaseSyncLock(delay = 1000) {
+  if (syncLockTimer) {
+    clearTimeout(syncLockTimer);
+    syncLockTimer = null;
+  }
+  syncLockTimer = setTimeout(() => {
+    setupVideoListeners();
+    isSyncing = false;
+    isFirstSync = false;
+    syncLockTimer = null;
+
+    if (pendingState) {
+      const nextState = pendingState;
+      pendingState = null;
+      applyRemoteState(nextState);
+    }
+  }, delay);
+}
+
 // Video elementinin hazır olup olmadığını sorgulayan ve bekleyen mekanizma
 function ensureVideoReady(callback, retriesLeft = 10) {
   const activeVideo = document.querySelector('video');
@@ -453,8 +474,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -464,10 +485,14 @@ function applyRemoteState(state) {
     }
   }
 
-  ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+  isSyncing = true; // Asenkron bekleme süresince yarış durumlarını önlemek için kilidi hemen aktif et
 
-    isSyncing = true;
+  ensureVideoReady((isReady) => {
+    if (!isReady || !videoElement) {
+      releaseSyncLock(100); // Video hazır değilse kilidi hızlıca aç
+      return;
+    }
+
     try {
       const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
       const targetTime = state.currentTime + timeDiff;
@@ -489,18 +514,7 @@ function applyRemoteState(state) {
     }
     
     // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
-    setTimeout(() => {
-      setupVideoListeners();
-      isSyncing = false;
-      isFirstSync = false; // İlk senkronizasyon kilidini kaldır
-      
-      // Kilit açıldığında sıradaki bekleyen durum varsa onu uygula
-      if (pendingState) {
-        const nextState = pendingState;
-        pendingState = null;
-        applyRemoteState(nextState);
-      }
-    }, 1000);
+    releaseSyncLock(1000);
   });
 }
 
@@ -517,13 +531,15 @@ function forceSync() {
       return;
     }
 
+    isSyncing = true; // Asenkron bekleme süresince kilidi hemen aktif et
+
     ensureVideoReady((isReady) => {
       if (!isReady || !videoElement) {
         isFirstSync = false;
+        releaseSyncLock(100);
         return;
       }
 
-      isSyncing = true;
       try {
         const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
         const targetTime = state.currentTime + timeDiff;
@@ -538,12 +554,8 @@ function forceSync() {
       } catch (e) {
         console.error(e);
       }
-      setTimeout(() => { 
-        setupVideoListeners(); // Dinleyicileri geri tak
-        isSyncing = false; 
-        isFirstSync = false; // İlk senkronizasyon kilidini kaldır
-        console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
-      }, 2000);
+      console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırılıyor.');
+      releaseSyncLock(2000);
     });
   });
 }
@@ -686,10 +698,7 @@ function startDriftCorrection() {
           PlayerAdapter.pause();
         }
         
-        setTimeout(() => {
-          setupVideoListeners(); // Dinleyicileri geri tak
-          isSyncing = false;
-        }, 1500);
+        releaseSyncLock(1500);
       }
     });
   }, 4000);
