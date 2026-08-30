@@ -1971,8 +1971,16 @@ function startButtonObserver() {
   setTimeout(injectNetflixStartButton, 1000);
 
   // Değişimleri izle
+  // ⚡ Bolt Optimization: Debounce MutationObserver to prevent main-thread blocking
+  // What: Batches multiple rapid DOM mutations into a single callback execution.
+  // Why: Synchronous execution on every mutation in highly dynamic SPAs (like Netflix) causes severe UI lag.
+  // Expected Impact: Reduces DOM query frequency, decreasing UI thread blocking time.
+  let debounceTimer;
   const observer = new MutationObserver((mutations) => {
-    injectNetflixStartButton();
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      injectNetflixStartButton();
+    }, 100);
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
