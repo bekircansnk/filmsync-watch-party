@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [30.08.2026] - Logger İyileştirmesi ve Hata Yönetimi
+- **İyileştirmeler:**
+  - Düz `console.log` çıktıları özel ve yapılandırılmış `Logger` objesi (Logger.info, Logger.warn, Logger.error) ile değiştirildi.
+- **Hata Yönetimi:**
+  - Tarayıcı eklentisi çökmelerini önlemek amacıyla Netflix, Disney+ ve YouTube API kancalarına `try-catch` blokları eklendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
