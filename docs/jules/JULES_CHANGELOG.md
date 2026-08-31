@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+
+## [31.08.2026] - Console Log Cleanup and Stability Improvements
+- **İyileştirmeler:**
+  - `console.log` ve `console.error` çağrıları özel `Logger` yapısı ile değiştirilerek konsol çıktıları düzenlendi.
+  - Netflix, Disney+ ve YouTube API kancalarında olası çökmeleri önlemek amacıyla sağlam `try-catch` blokları eklendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
