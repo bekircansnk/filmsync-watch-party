@@ -674,7 +674,10 @@ function startDriftCorrection() {
       // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
 
-      if (playStateMismatch || drift > 2.5) {
+      // Dinamik eşitleme eşiği: Ağ gecikmesine (timeDiff) bağlı olarak 1.5s ile 3.0s arası dinamik tolerans.
+      const dynamicThreshold = Math.max(1.5, Math.min(3.0, 1.5 + (timeDiff * 0.5)));
+
+      if (playStateMismatch || drift > dynamicThreshold) {
         console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
         isSyncing = true;
         
