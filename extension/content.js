@@ -1971,8 +1971,13 @@ function startButtonObserver() {
   setTimeout(injectNetflixStartButton, 1000);
 
   // Değişimleri izle
+  let debounceTimer;
   const observer = new MutationObserver((mutations) => {
-    injectNetflixStartButton();
+    // ⚡ Bolt: Debounce MutationObserver to prevent main-thread blocking during frequent DOM updates on Netflix
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      injectNetflixStartButton();
+    }, 250);
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
