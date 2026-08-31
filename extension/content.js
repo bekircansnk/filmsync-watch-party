@@ -447,6 +447,20 @@ function ensureVideoReady(callback, retriesLeft = 10) {
   }
 }
 
+function releaseSyncLock(delay) {
+  setTimeout(() => {
+    setupVideoListeners();
+    isSyncing = false;
+    isFirstSync = false;
+
+    if (pendingState) {
+      const nextState = pendingState;
+      pendingState = null;
+      applyRemoteState(nextState);
+    }
+  }, delay);
+}
+
 // Uzak Durumu Videoya Uygula
 function applyRemoteState(state) {
   if (!state) return;
@@ -464,10 +478,13 @@ function applyRemoteState(state) {
     }
   }
 
+  isSyncing = true;
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+    if (!isReady || !videoElement) {
+      releaseSyncLock(0);
+      return;
+    }
 
-    isSyncing = true;
     try {
       const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
       const targetTime = state.currentTime + timeDiff;
@@ -489,18 +506,7 @@ function applyRemoteState(state) {
     }
     
     // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
-    setTimeout(() => {
-      setupVideoListeners();
-      isSyncing = false;
-      isFirstSync = false; // İlk senkronizasyon kilidini kaldır
-      
-      // Kilit açıldığında sıradaki bekleyen durum varsa onu uygula
-      if (pendingState) {
-        const nextState = pendingState;
-        pendingState = null;
-        applyRemoteState(nextState);
-      }
-    }, 1000);
+    releaseSyncLock(1000);
   });
 }
 
@@ -517,13 +523,13 @@ function forceSync() {
       return;
     }
 
+    isSyncing = true;
     ensureVideoReady((isReady) => {
       if (!isReady || !videoElement) {
-        isFirstSync = false;
+        releaseSyncLock(0);
         return;
       }
 
-      isSyncing = true;
       try {
         const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
         const targetTime = state.currentTime + timeDiff;
@@ -538,12 +544,8 @@ function forceSync() {
       } catch (e) {
         console.error(e);
       }
-      setTimeout(() => { 
-        setupVideoListeners(); // Dinleyicileri geri tak
-        isSyncing = false; 
-        isFirstSync = false; // İlk senkronizasyon kilidini kaldır
-        console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
-      }, 2000);
+      console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırılacak.');
+      releaseSyncLock(2000);
     });
   });
 }
@@ -686,10 +688,7 @@ function startDriftCorrection() {
           PlayerAdapter.pause();
         }
         
-        setTimeout(() => {
-          setupVideoListeners(); // Dinleyicileri geri tak
-          isSyncing = false;
-        }, 1500);
+        releaseSyncLock(1500);
       }
     });
   }, 4000);
