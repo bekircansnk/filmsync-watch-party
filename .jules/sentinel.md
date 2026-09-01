@@ -1,0 +1,4 @@
+## 2026-09-01 - [Açık Veritabanı ve XSS Riski]
+ **Vulnerability:** Projenin Firebase Realtime Database'i açık sunucu tarafı güvenlik kuralları nedeniyle (özellikle REST API üzerinden) herkese açık bir şekilde yazılabilir durumdadır. Bu durum, kötü niyetli kullanıcıların veritabanını değiştirmesine olanak tanır.
+ **Learning:** Firebase veritabanı kuralları sunucu tarafında yapılandırılmalıdır. İstemci tarafında yalnızca public yapılandırmalar değiştirilerek bu güvenlik açığı giderilemez. Ek olarak, XSS güvenlik açığını önlemek için HTML özniteliklerine veri atarken iç içe template string interpolation kullanmak yerine `.setAttribute()` kullanılmalıdır.
+ **Prevention:** Firebase kurallarını projenin yönetim panelinden yapılandırın (istemci üzerinden tam çözüm sağlanamaz). İstemci tarafında `data-code` ve `data-room` gibi özniteliklere kullanıcı tarafından sağlanan verileri atarken doğrudan DOM elementine `.setAttribute()` metodunu kullanın.

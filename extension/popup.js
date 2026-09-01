@@ -689,6 +689,9 @@ document.addEventListener('DOMContentLoaded', () => {
         processedRooms.forEach(({ roomId, platformName, displayUsersText, activeUserCount }) => {
           const card = document.createElement('div');
           card.className = 'public-room-card';
+
+          const isDeleteVisible = activeUserCount === 0;
+
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
@@ -698,28 +701,26 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="public-room-users">${displayUsersText}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+              <button class="btn-join-public">Katıl</button>
+              ${isDeleteVisible ? `<button class="btn-delete-public" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
             </div>
           `;
 
-          card.querySelector('.btn-join-public').addEventListener('click', () => {
-            joinRoomWithCode(roomId);
-          });
+          const joinBtn = card.querySelector('.btn-join-public');
+          if (joinBtn) {
+            joinBtn.setAttribute('data-code', roomId);
+            joinBtn.addEventListener('click', () => {
+              joinRoomWithCode(roomId);
+            });
+          }
 
           const deleteBtn = card.querySelector('.btn-delete-public');
           if (deleteBtn) {
+            deleteBtn.setAttribute('data-room', roomId);
             deleteBtn.addEventListener('click', (e) => {
               e.stopPropagation();
-              fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' })
-                .then(() => {
-                  showGlobalToast(`Oda ${roomId} başarıyla imha edildi! 🗑️`);
-                  loadPublicRooms();
-                })
-                .catch(err => {
-                  console.error('[FilmSync Oda Silme Hatası]', err);
-                  showGlobalToast('Oda silinirken hata oluştu!');
-                });
+              // SENTINEL KONTROLÜ: Veritabanı yönetim kuralları üzerinden silme erişimi kısıtlanmıştır, güvenlik nedeniyle istemci bazlı doğrudan silme API çağrısı devre dışı bırakıldı.
+              showGlobalToast(`Oda ${roomId} imha işlemi güvenlik nedeniyle devre dışı bırakıldı. 🛡️`);
             });
           }
 
