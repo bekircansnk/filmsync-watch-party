@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [01.09.2026] - Performans İyileştirmesi (DOM Reflow)
+- **Hata Düzeltmeleri:**
+  - Netflix, Disney+ ve YouTube üzerinde sidebar açıldığında 'transition: width' kullanımından kaynaklanan DOM reflow gecikmeleri ve kare atlama sorunları düzeltildi. Sayfa daraltma işlemi anında uygulanarak video oynatma performansı artırıldı.
+
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
