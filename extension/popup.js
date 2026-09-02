@@ -692,23 +692,32 @@ document.addEventListener('DOMContentLoaded', () => {
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
+                <span class="room-id-placeholder">🔑 </span>
               </div>
-              <div class="public-room-platform">${platformName}</div>
-              <div class="public-room-users">${displayUsersText}</div>
+              <div class="public-room-platform platform-placeholder"></div>
+              <div class="public-room-users users-placeholder"></div>
             </div>
             <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+              <button class="btn-join-public">Katıl</button>
+              ${activeUserCount === 0 ? `<button class="btn-delete-public" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
             </div>
           `;
 
-          card.querySelector('.btn-join-public').addEventListener('click', () => {
+          const roomIdSpan = card.querySelector('.room-id-placeholder');
+          roomIdSpan.textContent = `🔑 ${roomId}`;
+
+          card.querySelector('.platform-placeholder').textContent = platformName;
+          card.querySelector('.users-placeholder').textContent = displayUsersText;
+
+          const joinBtn = card.querySelector('.btn-join-public');
+          joinBtn.setAttribute('data-code', roomId);
+          joinBtn.addEventListener('click', () => {
             joinRoomWithCode(roomId);
           });
 
           const deleteBtn = card.querySelector('.btn-delete-public');
           if (deleteBtn) {
+            deleteBtn.setAttribute('data-room', roomId);
             deleteBtn.addEventListener('click', (e) => {
               e.stopPropagation();
               fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' })
