@@ -692,24 +692,38 @@ document.addEventListener('DOMContentLoaded', () => {
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
+                <span class="room-id-span"></span>
               </div>
-              <div class="public-room-platform">${platformName}</div>
-              <div class="public-room-users">${displayUsersText}</div>
+              <div class="public-room-platform"></div>
+              <div class="public-room-users"></div>
             </div>
             <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+              <button class="btn-join-public">Katıl</button>
+              ${activeUserCount === 0 ? `<button class="btn-delete-public" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
             </div>
           `;
 
-          card.querySelector('.btn-join-public').addEventListener('click', () => {
-            joinRoomWithCode(roomId);
-          });
+          const roomIdSpan = card.querySelector('.room-id-span');
+          if (roomIdSpan) roomIdSpan.textContent = `🔑 ${roomId}`;
 
-          const deleteBtn = card.querySelector('.btn-delete-public');
-          if (deleteBtn) {
-            deleteBtn.addEventListener('click', (e) => {
+          const platformDiv = card.querySelector('.public-room-platform');
+          if (platformDiv) platformDiv.textContent = platformName;
+
+          const usersDiv = card.querySelector('.public-room-users');
+          if (usersDiv) usersDiv.textContent = displayUsersText;
+
+          const joinBtn = card.querySelector('.btn-join-public');
+          if (joinBtn) {
+            joinBtn.setAttribute('data-code', roomId);
+            joinBtn.addEventListener('click', () => {
+              joinRoomWithCode(roomId);
+            });
+          }
+
+          const deleteBtnRaw = card.querySelector('.btn-delete-public');
+          if (deleteBtnRaw) {
+            deleteBtnRaw.setAttribute('data-room', roomId);
+            deleteBtnRaw.addEventListener('click', (e) => {
               e.stopPropagation();
               fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' })
                 .then(() => {
