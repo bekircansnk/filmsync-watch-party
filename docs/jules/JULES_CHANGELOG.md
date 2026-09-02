@@ -11,3 +11,7 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [02.09.2026] - Otonom Hata Düzeltme & İyileştirme
+- **Senkronizasyon İyileştirmeleri:**
+  - `startDriftCorrection` içerisinde kullanılan 2.5 saniyelik sabit sapma eşiği (drift threshold), ağ gecikmesine (`timeDiff`) ve kullanıcı oynatma durumu uyuşmazlığına (`playStateMismatch`) göre dinamik olarak hesaplanacak şekilde güncellendi.
