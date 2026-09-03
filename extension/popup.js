@@ -686,22 +686,27 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
+        const escapeHTML = (str) => String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+
         processedRooms.forEach(({ roomId, platformName, displayUsersText, activeUserCount }) => {
           const card = document.createElement('div');
           card.className = 'public-room-card';
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
+                <span>🔑 ${escapeHTML(roomId)}</span>
               </div>
-              <div class="public-room-platform">${platformName}</div>
-              <div class="public-room-users">${displayUsersText}</div>
+              <div class="public-room-platform">${escapeHTML(platformName)}</div>
+              <div class="public-room-users">${escapeHTML(displayUsersText)}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+              <button class="btn-join-public">Katıl</button>
+              ${activeUserCount === 0 ? `<button class="btn-delete-public" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
             </div>
           `;
+          card.querySelector('.btn-join-public').setAttribute('data-code', roomId);
+          const delBtn = card.querySelector('.btn-delete-public');
+          if (delBtn) delBtn.setAttribute('data-room', roomId);
 
           card.querySelector('.btn-join-public').addEventListener('click', () => {
             joinRoomWithCode(roomId);
