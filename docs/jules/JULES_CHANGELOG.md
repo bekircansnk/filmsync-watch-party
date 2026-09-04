@@ -1,3 +1,8 @@
+## [04.09.2026] - Dinamik Sapma Düzeltmesi (Drift Correction)
+- **Hata Düzeltmeleri/İyileştirmeler:**
+  - `extension/content.js` içindeki `startDriftCorrection` mantığı güncellendi.
+  - Sabit 2.5 saniyelik eşik değeri yerine ağ gecikmesine (latency) ve oynatma durumu uyuşmazlığına bağlı dinamik bir eşik değeri (dynamic threshold) kullanıldı. Bu sayede senkronizasyon daha sorunsuz hale getirildi.
+
 # 📝 Jules Otonom Görev Değişiklik Günlüğü (JULES_CHANGELOG.md)
 
 Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm otonom bakım, iyileştirme ve hata giderme seanslarının kaydını tutar.
