@@ -1,0 +1,4 @@
+## 2026-09-04 - DOM-based XSS Vulnerability Fix in public rooms list
+**Vulnerability:** The popup.js used `innerHTML` to render public room cards, dynamically inserting `platformName` and `displayUsersText` which contain data sourced from Firebase, posing an XSS risk (Stored XSS).
+**Learning:** Even though the source of data is Firebase, directly rendering data without proper sanitization into `innerHTML` invites DOM-based XSS risks. Any untrusted data should be considered a potential source of XSS. Using textContent creates a safe representation of the untrusted data, effectively sanitizing it for rendering.
+**Prevention:** Avoid the use of `innerHTML` when rendering dynamic data (especially those originating from an external/shared source). Utilize safe DOM manipulation functions such as `document.createElement` alongside `textContent` or `innerText` to dynamically generate nodes.
