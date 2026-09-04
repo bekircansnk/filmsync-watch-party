@@ -11,3 +11,6 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## 04.09.2024 - XSS Security Fixes (Sentinel)
+- **Güvenlik İyileştirmesi:** Firebase Realtime Database herkese açık yapılandırmasından kaynaklanabilecek XSS açıklarına karşı `popup.js` ve `content.js` içindeki `innerHTML` kullanımları daha güvenli DOM manipülasyon (createElement/textContent) teknikleriyle değiştirildi.
