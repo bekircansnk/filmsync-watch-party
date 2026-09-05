@@ -4,6 +4,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [05.09.2026] - Performans İyileştirmesi: DOM Reflow Optimizasyonu
+- **Performans:**
+  - `extension/content.js` dosyasında `body.filmsync-sidebar-open` sınıfındaki `transition: width` kuralı kaldırılarak, Netflix, Disney+ ve YouTube'da yan panel açıldığında oluşan ağır DOM reflow (yeniden hesaplama) yükü ve video kasmaları (frame düşüşleri) engellendi.
+  - Kod genelindeki Regex syntax hatası düzeltildi.
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
