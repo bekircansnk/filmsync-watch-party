@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Kullanıcı adı değiştiğinde veya tıklanıldığında dinamik avatar ata
   if (userAvatarDisplay) {
-    userAvatarDisplay.addEventListener('click', () => {
+    const handleAvatarChange = () => {
       selectedAvatar = MOVIE_AVATARS[Math.floor(Math.random() * MOVIE_AVATARS.length)];
       userAvatarDisplay.textContent = selectedAvatar;
       chrome.storage.local.set({ selectedAvatar });
@@ -125,9 +125,17 @@ document.addEventListener('DOMContentLoaded', () => {
           db.ref(`rooms/${res.roomId}/users/${res.userId}/avatar`).set(selectedAvatar);
         }
       });
+    };
+    userAvatarDisplay.addEventListener('click', handleAvatarChange);
+    userAvatarDisplay.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleAvatarChange();
+      }
     });
   }
 
+  // A11y keyboard support added
   if (usernameInput) {
     usernameInput.addEventListener('input', () => {
       const val = usernameInput.value.trim();
