@@ -671,10 +671,13 @@ function startDriftCorrection() {
       const expectedTime = state.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
+      // Oynatma durumu uyuşmuyorsa veya süre sapması dinamik eşikten büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
 
-      if (playStateMismatch || drift > 2.5) {
+      // Ağ gecikmesine (timeDiff) ve oynatma durumu uyuşmazlığına dayalı dinamik tolerans
+      const dynamicThreshold = playStateMismatch ? 0.5 : Math.max(1.5, Math.min(3.0, timeDiff * 2));
+
+      if (playStateMismatch || drift > dynamicThreshold) {
         console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
         isSyncing = true;
         
