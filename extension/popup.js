@@ -519,7 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // 1. Canlı Kullanıcıları ve Avatarları Dinle (Map isim çakışma hatası giderildi!)
       db.ref(`rooms/${roomId}/users`).on('value', (snapshot) => {
         const usersData = snapshot.val();
-        activeUsersList.innerHTML = '';
+        activeUsersList.textContent = '';
         
         let count = 0;
         if (usersData) {
@@ -608,11 +608,17 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch('https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json')
       .then(res => res.json())
       .then(rooms => {
-        publicRoomList.innerHTML = '';
+        publicRoomList.textContent = '';
 
         if (!rooms) {
           publicRoomCountBadge.textContent = '0 Aktif Oda';
-          publicRoomList.innerHTML = '<div style="font-size: 0.72rem; color: #888; text-align: center; padding: 6px 0;">Şu anda açık oda bulunmuyor. Hemen yukarıdan parti başlatın! 🍿</div>';
+          const emptyDiv = document.createElement('div');
+          emptyDiv.style.fontSize = '0.72rem';
+          emptyDiv.style.color = '#888';
+          emptyDiv.style.textAlign = 'center';
+          emptyDiv.style.padding = '6px 0';
+          emptyDiv.textContent = 'Şu anda açık oda bulunmuyor. Hemen yukarıdan parti başlatın! 🍿';
+          publicRoomList.appendChild(emptyDiv);
           return;
         }
 
@@ -682,26 +688,61 @@ document.addEventListener('DOMContentLoaded', () => {
         publicRoomCountBadge.textContent = `${processedRooms.length} Aktif Oda`;
 
         if (processedRooms.length === 0) {
-          publicRoomList.innerHTML = '<div style="font-size: 0.72rem; color: #888; text-align: center; padding: 6px 0;">Şu anda açık oda bulunmuyor. Hemen yukarıdan parti başlatın! 🍿</div>';
+          const emptyDiv = document.createElement('div');
+          emptyDiv.style.fontSize = '0.72rem';
+          emptyDiv.style.color = '#888';
+          emptyDiv.style.textAlign = 'center';
+          emptyDiv.style.padding = '6px 0';
+          emptyDiv.textContent = 'Şu anda açık oda bulunmuyor. Hemen yukarıdan parti başlatın! 🍿';
+          publicRoomList.appendChild(emptyDiv);
           return;
         }
 
         processedRooms.forEach(({ roomId, platformName, displayUsersText, activeUserCount }) => {
           const card = document.createElement('div');
           card.className = 'public-room-card';
-          card.innerHTML = `
-            <div class="public-room-info">
-              <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
-              </div>
-              <div class="public-room-platform">${platformName}</div>
-              <div class="public-room-users">${displayUsersText}</div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
-            </div>
-          `;
+
+          const infoDiv = document.createElement('div');
+          infoDiv.className = 'public-room-info';
+
+          const badgeDiv = document.createElement('div');
+          badgeDiv.className = 'public-room-code-badge';
+          const badgeSpan = document.createElement('span');
+          badgeSpan.textContent = '🔑 ' + roomId;
+          badgeDiv.appendChild(badgeSpan);
+
+          const platformDiv = document.createElement('div');
+          platformDiv.className = 'public-room-platform';
+          platformDiv.textContent = platformName;
+
+          const usersDiv = document.createElement('div');
+          usersDiv.className = 'public-room-users';
+          usersDiv.textContent = displayUsersText;
+
+          infoDiv.appendChild(badgeDiv);
+          infoDiv.appendChild(platformDiv);
+          infoDiv.appendChild(usersDiv);
+
+          const btnGroupDiv = document.createElement('div');
+          btnGroupDiv.setAttribute('style', 'display: flex; align-items: center; gap: 4px;');
+
+          const joinBtn = document.createElement('button');
+          joinBtn.className = 'btn-join-public';
+          joinBtn.setAttribute('data-code', roomId);
+          joinBtn.textContent = 'Katıl';
+          btnGroupDiv.appendChild(joinBtn);
+
+          if (activeUserCount === 0) {
+            const deleteBtnEl = document.createElement('button');
+            deleteBtnEl.className = 'btn-delete-public';
+            deleteBtnEl.setAttribute('data-room', roomId);
+            deleteBtnEl.title = 'Boş Odayı Sil (İmha Et)';
+            deleteBtnEl.textContent = '🗑️';
+            btnGroupDiv.appendChild(deleteBtnEl);
+          }
+
+          card.appendChild(infoDiv);
+          card.appendChild(btnGroupDiv);
 
           card.querySelector('.btn-join-public').addEventListener('click', () => {
             joinRoomWithCode(roomId);
