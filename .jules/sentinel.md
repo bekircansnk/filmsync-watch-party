@@ -1,0 +1,4 @@
+## 2024-05-24 - Cross-Site Scripting (XSS) in DOM Injection
+**Vulnerability:** Several places in extension/content.js and extension/popup.js use `.innerHTML = ` with untrusted data (like usernames, room IDs, and avatars) to construct DOM elements. This allows an attacker to inject arbitrary HTML and execute malicious JavaScript in the context of the user's browser or the extension popup.
+**Learning:** Using `.innerHTML` with unsanitized data is a classic and critical XSS vulnerability. Even if data seems safe, it must be properly escaped or, better yet, inserted using safe DOM methods like `document.createElement` and `.textContent`.
+**Prevention:** Avoid `.innerHTML` when rendering dynamic data. Always construct elements using `document.createElement` and set their text using `.textContent` or `.innerText`.
