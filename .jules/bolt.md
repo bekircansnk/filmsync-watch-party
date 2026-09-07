@@ -1,0 +1,3 @@
+## 2026-09-07 - Minimize DOM Reflow in Sidebar Injection
+**Learning:** Animating layout properties like `width` on large container elements such as `body` forces continuous layout recalculations (DOM reflow) and repaints on every frame of the animation. This causes significant layout thrashing, severely degrading video playback frame rates.
+**Action:** Removed the CSS `transition` property for `width` on `.filmsync-sidebar-open` in `extension/content.js`. The sidebar injection now snaps instantly, working in tandem with the synchronous `window.dispatchEvent(new Event('resize'))` call to adapt video players without ongoing layout thrashing.
