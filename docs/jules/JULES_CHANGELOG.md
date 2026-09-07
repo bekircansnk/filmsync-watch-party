@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [07.09.2026] - PlayerAdapter ve Senkronizasyon Yarış Durumu İyileştirmeleri
+- **Hata Düzeltmeleri:**
+  - `extension/content.js` içinde `applyRemoteState`, `forceSync` ve `startDriftCorrection` senkronizasyon fonksiyonlarındaki yarış koşulları (race conditions) ve kilit mekanizmaları (`isApplyingState`, `syncLockTimer` kullanılarak) düzeltildi, bu sayede senkronizasyon döngüleri ve video kekeleme sorunları engellendi.
+  - Geçersiz regex bayrakları düzeltildi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
