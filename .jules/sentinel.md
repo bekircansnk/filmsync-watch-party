@@ -1,0 +1,4 @@
+## 2026-09-07 - Firebase Public Write Vulnerability Assessment
+**Vulnerability:** The project relies on a Firebase Realtime Database. The extension uses client-side REST API calls (e.g., PATCH) which indicates public read/write access is likely enabled.
+**Learning:** Client-side obfuscation of Firebase API keys is ineffective. The database security relies entirely on server-side Firebase Security Rules. Since the extension legitimately issues PATCH requests directly from the client without any authentication token, the database rules must be inherently open. Standard Firebase web API keys exposed in client-side code are expected to be public and are not administrative credentials.
+**Prevention:** Proper Firebase Authentication must be implemented, and Firebase Security Rules must be configured to only allow users to modify data they own. This issue cannot be mitigated on the client side without backend/rules access.
