@@ -11,3 +11,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## 03.09.2026 - Firebase Dinleyici Sızıntıları Düzeltildi
+**Değişiklikler:**
+- `extension/content.js` içindeki `cleanupFirebase()` fonksiyonu güncellendi.
+- `hostId` ve `hostOnly` dinleyicileri için eksik `.off()` çağrıları eklendi.
+- `.limitToLast(50)` ve `.limitToLast(5)` gibi türetilmiş sorgulara eklenen dinleyicilerin iptali için doğrudan ilgili sorgu nesneleri üzerinden `.off()` çağrılması sağlandı, böylece uzun süreli kullanımlarda oluşan bellek sızıntıları (memory leaks) engellendi.
