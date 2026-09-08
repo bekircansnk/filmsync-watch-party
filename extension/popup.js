@@ -649,7 +649,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (isExpired24h || isInactive3h) {
             console.log(`[FilmSync İmha Motoru] Oda ${roomId} 3 saattir inaktif veya 24h dolduğu için siliniyor.`);
-            fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' }).catch(e => {});
+            console.log(`[FilmSync İmha Motoru] Oda ${roomId} silme işlemi devre dışı (Güvenlik).`);
             return;
           }
 
@@ -699,7 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div style="display: flex; align-items: center; gap: 4px;">
               <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+
             </div>
           `;
 
@@ -707,21 +707,7 @@ document.addEventListener('DOMContentLoaded', () => {
             joinRoomWithCode(roomId);
           });
 
-          const deleteBtn = card.querySelector('.btn-delete-public');
-          if (deleteBtn) {
-            deleteBtn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' })
-                .then(() => {
-                  showGlobalToast(`Oda ${roomId} başarıyla imha edildi! 🗑️`);
-                  loadPublicRooms();
-                })
-                .catch(err => {
-                  console.error('[FilmSync Oda Silme Hatası]', err);
-                  showGlobalToast('Oda silinirken hata oluştu!');
-                });
-            });
-          }
+
 
           publicRoomList.appendChild(card);
         });

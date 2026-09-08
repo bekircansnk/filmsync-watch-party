@@ -158,9 +158,7 @@ function cleanupExpiredRoomsREST() {
 
         if (isExpired24h || (activeUserCount === 0 && isInactive3h)) {
           console.log(`[FilmSync Background İmha] Oda ${rId} siliniyor.`);
-          fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${rId}.json`, {
-            method: 'DELETE'
-          }).catch(err => console.error(`[FilmSync Delete Hatası ${rId}]`, err));
+          console.log(`[FilmSync Background İmha] Oda ${rId} silme işlemi devre dışı bırakıldı (Güvenlik nedeniyle).`);
         }
       });
     })

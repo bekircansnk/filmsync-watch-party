@@ -1,0 +1,4 @@
+## 2026-07-19 - Firebase Database Arbitrary Deletion Vulnerability
+**Vulnerability:** Anyone with the database URL could delete all rooms at once via an unauthenticated `DELETE` request to `/rooms.json` because of overly permissive rules (or lack thereof) inferred from the fact that it succeeded in testing. Note: The rules themselves are managed server-side, but the client code performs the dangerous `DELETE` operations assuming they work.
+**Learning:** Hardcoded API keys in client-side code are not the primary issue here (Firebase API keys are safe to expose); the issue is that the application design performs administrative actions directly from the client without authentication, implying the database rules are completely open to arbitrary deletions.
+**Prevention:** In this specific scenario, as we cannot change server-side Firebase Security Rules directly, we will remove the `DELETE` requests from the client-side code and document the vulnerability.
