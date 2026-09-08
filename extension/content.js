@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -1183,9 +1183,10 @@ function createChatUI() {
     }
 
     /* Sayfa Daraltma & Kaydırma Kuralları */
+    /* Optimizasyon: Genişlik (width) animasyonu video oynatıcılarında aşırı DOM reflow (yeniden hesaplama) yüküne sebep olur.
+       Yüksek kare hızlı video oynatımı (high-frame-rate) için transition kaldırıldı. */
     body.filmsync-sidebar-open {
       width: calc(100% - 270px) !important;
-      transition: width 0.3s ease;
     }
     /* Netflix, YouTube, Disney+ Player İzolasyonları */
     body.filmsync-sidebar-open .watch-video,
