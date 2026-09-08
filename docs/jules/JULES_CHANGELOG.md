@@ -11,3 +11,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [08.09.2026] - Akıllı Eşitleme ve Gecikme Telafisi
+- **Geliştirmeler:**
+  - `startDriftCorrection` içindeki sapma toleransı dinamik hale getirildi (durum uyuşmazlığında daha agresif).
+  - Firebase `.info/serverTimeOffset` kullanılarak ağ gecikmesi (`latency`) hesaba katıldı ve eşitleme doğruluğu artırıldı.
+  - `content.js` içindeki `SyntaxError: Invalid regular expression flags` hatası giderildi.

@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -667,14 +667,22 @@ function startDriftCorrection() {
       const state = snapshot.val();
       if (!state || state.senderId === userId || isSyncing) return;
 
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
-      const expectedTime = state.currentTime + timeDiff;
-      const drift = Math.abs(videoElement.currentTime - expectedTime);
+      db.ref('.info/serverTimeOffset').once('value').then((offsetSnapshot) => {
+        const serverTimeOffset = offsetSnapshot.val() || 0;
+        const currentServerTime = Date.now() + serverTimeOffset;
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
-      const playStateMismatch = state.isPlaying !== !videoElement.paused;
+        const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
+        const expectedTime = state.currentTime + timeDiff;
+        const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      if (playStateMismatch || drift > 2.5) {
+        // Oynatma durumu uyuşmuyorsa veya süre sapması dinamik eşik değerinden büyükse otomatik eşitle
+        const playStateMismatch = state.isPlaying !== !videoElement.paused;
+
+        // Dinamik eşik belirle: Eğer oynatma durumu uyuşmazlığı varsa daha agresif eşitle (1.0sn),
+        // sadece süre sapması varsa daha toleranslı davran (2.5sn)
+        const driftThreshold = playStateMismatch ? 1.0 : 2.5;
+
+        if (playStateMismatch || drift > driftThreshold) {
         console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
         isSyncing = true;
         
@@ -691,6 +699,7 @@ function startDriftCorrection() {
           isSyncing = false;
         }, 1500);
       }
+      });
     });
   }, 4000);
 }
