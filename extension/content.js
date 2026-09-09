@@ -10,6 +10,9 @@ let db = null;
 
 let videoElement = null;
 let isSyncing = false;
+let isApplyingState = false;
+let syncLockTimer = null;
+let serverTimeOffset = 0;
 let chatPanel = null;
 let messageInput = null;
 let messageList = null;
@@ -450,11 +453,21 @@ function ensureVideoReady(callback, retriesLeft = 10) {
 // Uzak Durumu Videoya Uygula
 function applyRemoteState(state) {
   if (!state) return;
+  if (isApplyingState) {
+    pendingState = state;
+    return;
+  }
+  isApplyingState = true;
+
+  if (syncLockTimer) {
+    clearTimeout(syncLockTimer);
+    syncLockTimer = null;
+  }
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -465,12 +478,18 @@ function applyRemoteState(state) {
   }
 
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+    if (!isReady || !videoElement) {
+      isApplyingState = false;
+      return;
+    }
 
     isSyncing = true;
     try {
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
-      const targetTime = state.currentTime + timeDiff;
+      db.ref('/.info/serverTimeOffset').once('value').then((offsetSnap) => {
+        serverTimeOffset = offsetSnap.val() || 0;
+        const currentServerTime = Date.now() + serverTimeOffset;
+        const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
+        const targetTime = state.currentTime + timeDiff;
 
       // Programatik eylem öncesi yerel dinleyicileri kaldır
       removeVideoListeners();
@@ -484,23 +503,27 @@ function applyRemoteState(state) {
       } else if (Math.abs(videoElement.currentTime - targetTime) > 1.5) {
         PlayerAdapter.seek(targetTime);
       }
+
+      // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
+      syncLockTimer = setTimeout(() => {
+        setupVideoListeners();
+        isSyncing = false;
+        isFirstSync = false; // İlk senkronizasyon kilidini kaldır
+        isApplyingState = false;
+
+        // Kilit açıldığında sıradaki bekleyen durum varsa onu uygula
+        if (pendingState) {
+          const nextState = pendingState;
+          pendingState = null;
+          applyRemoteState(nextState);
+        }
+      }, 1000);
+      });
     } catch (e) {
       console.error('[FilmSync] Medya eşileme hatası:', e);
-    }
-    
-    // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
-    setTimeout(() => {
-      setupVideoListeners();
+      isApplyingState = false;
       isSyncing = false;
-      isFirstSync = false; // İlk senkronizasyon kilidini kaldır
-      
-      // Kilit açıldığında sıradaki bekleyen durum varsa onu uygula
-      if (pendingState) {
-        const nextState = pendingState;
-        pendingState = null;
-        applyRemoteState(nextState);
-      }
-    }, 1000);
+    }
   });
 }
 
@@ -517,16 +540,28 @@ function forceSync() {
       return;
     }
 
+    if (isApplyingState) return;
+    isApplyingState = true;
+
+    if (syncLockTimer) {
+      clearTimeout(syncLockTimer);
+      syncLockTimer = null;
+    }
+
     ensureVideoReady((isReady) => {
       if (!isReady || !videoElement) {
         isFirstSync = false;
+        isApplyingState = false;
         return;
       }
 
       isSyncing = true;
       try {
-        const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
-        const targetTime = state.currentTime + timeDiff;
+        db.ref('/.info/serverTimeOffset').once('value').then((offsetSnap) => {
+          serverTimeOffset = offsetSnap.val() || 0;
+          const currentServerTime = Date.now() + serverTimeOffset;
+          const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
+          const targetTime = state.currentTime + timeDiff;
 
         removeVideoListeners(); // Dinleyicileri kaldır
         PlayerAdapter.seek(targetTime);
@@ -535,15 +570,26 @@ function forceSync() {
         } else {
           PlayerAdapter.pause();
         }
+
+        syncLockTimer = setTimeout(() => {
+          setupVideoListeners(); // Dinleyicileri geri tak
+          isSyncing = false;
+          isFirstSync = false; // İlk senkronizasyon kilidini kaldır
+          isApplyingState = false;
+
+          if (pendingState) {
+            const nextState = pendingState;
+            pendingState = null;
+            applyRemoteState(nextState);
+          }
+          console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
+        }, 2000);
+        });
       } catch (e) {
         console.error(e);
+        isApplyingState = false;
+        isSyncing = false;
       }
-      setTimeout(() => { 
-        setupVideoListeners(); // Dinleyicileri geri tak
-        isSyncing = false; 
-        isFirstSync = false; // İlk senkronizasyon kilidini kaldır
-        console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
-      }, 2000);
     });
   });
 }
@@ -663,22 +709,43 @@ function startDriftCorrection() {
     }
 
     // 2. BEN GUEST (KATILAN KİŞİ) İSEM: Host durumunu oku ve sapma varsa otomatik düzelt
+    if (isApplyingState) return;
+    const requestStart = Date.now();
     db.ref(`rooms/${roomId}/lastState`).once('value').then((snapshot) => {
       const state = snapshot.val();
-      if (!state || state.senderId === userId || isSyncing) return;
+      if (!state || state.senderId === userId || isSyncing || isApplyingState) return;
 
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
-      const expectedTime = state.currentTime + timeDiff;
-      const drift = Math.abs(videoElement.currentTime - expectedTime);
+      db.ref('/.info/serverTimeOffset').once('value').then((offsetSnap) => {
+        isApplyingState = true;
+        if (syncLockTimer) {
+          clearTimeout(syncLockTimer);
+          syncLockTimer = null;
+        }
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
-      const playStateMismatch = state.isPlaying !== !videoElement.paused;
+        serverTimeOffset = offsetSnap.val() || 0;
+        const currentServerTime = Date.now() + serverTimeOffset;
 
-      if (playStateMismatch || drift > 2.5) {
-        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
-        isSyncing = true;
+        const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
+        const expectedTime = state.currentTime + timeDiff;
+        const drift = Math.abs(videoElement.currentTime - expectedTime);
+
+        // Calculate dynamic threshold based on network latency or mismatches
+        const requestDuration = (Date.now() - requestStart) / 1000;
+        const playStateMismatch = state.isPlaying !== !videoElement.paused;
         
-        removeVideoListeners(); // Dinleyicileri kaldır
+        let dynamicThreshold = 2.5; // Default
+        if (playStateMismatch) {
+            dynamicThreshold = 0.5; // Stricter if states don't match
+        } else {
+            // Adjust threshold based on network latency, min 1.0s, max 4.0s
+            dynamicThreshold = Math.min(Math.max(requestDuration * 2, 1.0), 4.0);
+        }
+
+        if (playStateMismatch || drift > dynamicThreshold) {
+          console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn, Eşik: ${dynamicThreshold.toFixed(1)}sn`);
+          isSyncing = true;
+
+          removeVideoListeners(); // Dinleyicileri kaldır
         PlayerAdapter.seek(expectedTime);
         if (state.isPlaying && videoElement.paused) {
           PlayerAdapter.play();
@@ -686,11 +753,21 @@ function startDriftCorrection() {
           PlayerAdapter.pause();
         }
         
-        setTimeout(() => {
+        syncLockTimer = setTimeout(() => {
           setupVideoListeners(); // Dinleyicileri geri tak
           isSyncing = false;
+          isApplyingState = false;
+
+          if (pendingState) {
+            const nextState = pendingState;
+            pendingState = null;
+            applyRemoteState(nextState);
+          }
         }, 1500);
+      } else {
+        isApplyingState = false;
       }
+      });
     });
   }, 4000);
 }
