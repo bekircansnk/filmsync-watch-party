@@ -1,0 +1,3 @@
+## 2024-09-09 - Main-Thread Blocking from Subtree MutationObserver
+**Learning:** Using a `MutationObserver` on `document.body` with `subtree: true` fires synchronously on every DOM change. In dynamic React/SPA applications like Netflix, this can trigger hundreds of callbacks per second. If the callback performs heavy DOM queries (like `querySelectorAll`), it blocks the main thread, causing severe lag and frame drops during page navigation or UI updates.
+**Action:** Always debounce callbacks attached to broad, high-frequency `MutationObserver` instances to batch DOM queries and prevent main-thread bottlenecks.

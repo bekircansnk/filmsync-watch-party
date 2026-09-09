@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -1971,8 +1971,13 @@ function startButtonObserver() {
   setTimeout(injectNetflixStartButton, 1000);
 
   // Değişimleri izle
+  // ⚡ Bolt: Debounce MutationObserver to prevent main-thread blocking on frequent DOM mutations
+  let netflixBtnTimeout = null;
   const observer = new MutationObserver((mutations) => {
-    injectNetflixStartButton();
+    if (netflixBtnTimeout) clearTimeout(netflixBtnTimeout);
+    netflixBtnTimeout = setTimeout(() => {
+      injectNetflixStartButton();
+    }, 250);
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
