@@ -699,7 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div style="display: flex; align-items: center; gap: 4px;">
               <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)" aria-label="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
             </div>
           `;
 

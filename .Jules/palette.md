@@ -1,0 +1,3 @@
+## 2024-03-24 - Accessibility improvements for inputs and dynamic icon buttons
+**Learning:** Form inputs and dynamically generated icon-only buttons (like delete buttons) in Chrome extension popups often lack appropriate `aria-label` attributes, which are crucial for screen reader users to understand their purpose, especially when visual labels are missing or only represented by icons (e.g., the trash can emoji). The `title` attribute alone is often insufficient for robust accessibility.
+**Action:** Ensure all inputs (`username`, `room code`, `checkboxes`) have descriptive `aria-label`s. Dynamically injected HTML strings containing buttons must also explicitly include `aria-label`s alongside `title` attributes.
