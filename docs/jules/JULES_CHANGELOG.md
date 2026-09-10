@@ -11,3 +11,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [2024-05-24] - Otonom Bakım ve İyileştirme
+- **Hata Düzeltmeleri:**
+  - Eşzamanlama (senkronizasyon) sırasındaki yarış koşulları (race conditions) giderildi. `isApplyingState` kilidi ve `syncLockTimer` ile manuel eylemler ile asenkron işlemler birbirinden izole edildi.
+  - Zaman kayması (drift correction) algoritmasında sunucu saat sapması dikkate alınacak şekilde `Date.now()` yerine `.info/serverTimeOffset` değeri kullanılmaya başlandı.
+  - `applyRemoteState` içerisindeki regex sentaks hatası düzeltildi.
