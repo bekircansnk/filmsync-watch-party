@@ -689,26 +689,50 @@ document.addEventListener('DOMContentLoaded', () => {
         processedRooms.forEach(({ roomId, platformName, displayUsersText, activeUserCount }) => {
           const card = document.createElement('div');
           card.className = 'public-room-card';
+
+          // Add comments explaining the security concern
+          // Sanitize user inputs to prevent Stored XSS vulnerabilities in the extension popup
+          const escapeHTML = (str) => String(str).replace(/[&<>'"]/g, tag => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+          }[tag]));
+          const safeRoomId = escapeHTML(roomId);
+          const safePlatform = escapeHTML(platformName);
+          const safeUsers = escapeHTML(displayUsersText);
+
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
+                <span>🔑 ${safeRoomId}</span>
               </div>
-              <div class="public-room-platform">${platformName}</div>
-              <div class="public-room-users">${displayUsersText}</div>
+              <div class="public-room-platform">${safePlatform}</div>
+              <div class="public-room-users">${safeUsers}</div>
             </div>
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+            <div style="display: flex; align-items: center; gap: 4px;" class="public-room-actions">
             </div>
           `;
 
-          card.querySelector('.btn-join-public').addEventListener('click', () => {
+          const actionsDiv = card.querySelector('.public-room-actions');
+
+          const joinBtn = document.createElement('button');
+          joinBtn.className = 'btn-join-public';
+          // Safely assign user-controlled data to attributes via dataset
+          joinBtn.dataset.code = roomId;
+          joinBtn.textContent = 'Katıl';
+          actionsDiv.appendChild(joinBtn);
+
+          joinBtn.addEventListener('click', () => {
             joinRoomWithCode(roomId);
           });
 
-          const deleteBtn = card.querySelector('.btn-delete-public');
-          if (deleteBtn) {
+          if (activeUserCount === 0) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn-delete-public';
+            // Safely assign user-controlled data to attributes via dataset
+            deleteBtn.dataset.room = roomId;
+            deleteBtn.title = 'Boş Odayı Sil (İmha Et)';
+            deleteBtn.textContent = '🗑️';
+            actionsDiv.appendChild(deleteBtn);
+
             deleteBtn.addEventListener('click', (e) => {
               e.stopPropagation();
               fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' })
