@@ -3,6 +3,10 @@
 Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm otonom bakım, iyileştirme ve hata giderme seanslarının kaydını tutar.
 
 ---
+## [10.09.2026] - Performans İyileştirmesi: DOM Reflow Optimizasyonu
+- **Hata Düzeltmeleri & İyileştirmeler:**
+  - `extension/content.js` içerisindeki `.filmsync-sidebar-open` sınıfından `transition: width 0.3s ease;` kuralı kaldırılarak, Netflix, Disney+ ve YouTube gibi platformlarda izleme partileri sırasında DOM reflow yükü azaltıldı ve yüksek kare hızlı (high-frame-rate) video oynatımı sağlandı.
+
 
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
