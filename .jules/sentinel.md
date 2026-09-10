@@ -1,0 +1,4 @@
+## 2024-05-18 - Firebase API Key and Permission Assessment
+**Vulnerability:** The extension configuration files (manifest.json, content.js, popup.js, background.js) were analyzed for hardcoded secrets, database write rules, or unsafe credential leakage, specifically focusing on Firebase API keys and permissions.
+**Learning:** Standard Firebase web API keys (e.g., starting with 'AIza') exposed in client-side code are public identifiers and not administrative credentials. Furthermore, client-side administrative data operations (like `DELETE` calls in `popup.js`) are intended for garbage collection in this serverless extension and rely on server-side Firebase Security Rules for protection.
+**Prevention:** No action required. Do not obfuscate or remove standard Firebase API keys or client-side DELETE calls, as database security is enforced server-side.
