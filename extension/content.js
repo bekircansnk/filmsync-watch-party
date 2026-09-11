@@ -10,6 +10,9 @@ let db = null;
 
 let videoElement = null;
 let isSyncing = false;
+let isApplyingState = false;
+let syncLockTimer = null;
+let serverTimeOffset = 0;
 let chatPanel = null;
 let messageInput = null;
 let messageList = null;
@@ -343,6 +346,11 @@ function initializeFirebase(config) {
 function setupFirebaseListeners() {
   if (!db) return;
 
+  // Sunucu zaman farkını dinle
+  db.ref('.info/serverTimeOffset').on('value', (snap) => {
+    serverTimeOffset = snap.val() || 0;
+  });
+
   // Host Bilgilerini Dinle
   db.ref(`rooms/${roomId}/hostId`).on('value', (snap) => {
     hostId = snap.val();
@@ -357,7 +365,7 @@ function setupFirebaseListeners() {
     if (!state) return;
     if (state.senderId === userId) return;
 
-    if (isSyncing) {
+    if (isSyncing || isApplyingState) {
       // Kilit aktifken gelen son durumu sıraya al (yutulmasını önle)
       pendingState = state;
       return;
@@ -453,8 +461,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -464,12 +472,19 @@ function applyRemoteState(state) {
     }
   }
 
-  ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+  isApplyingState = true;
+  isSyncing = true;
 
-    isSyncing = true;
+  ensureVideoReady((isReady) => {
+    if (!isReady || !videoElement) {
+      isApplyingState = false;
+      isSyncing = false;
+      return;
+    }
+
     try {
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
+      const currentServerTime = Date.now() + serverTimeOffset;
+      const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
       const targetTime = state.currentTime + timeDiff;
 
       // Programatik eylem öncesi yerel dinleyicileri kaldır
@@ -489,9 +504,11 @@ function applyRemoteState(state) {
     }
     
     // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
-    setTimeout(() => {
+    if (syncLockTimer) clearTimeout(syncLockTimer);
+    syncLockTimer = setTimeout(() => {
       setupVideoListeners();
       isSyncing = false;
+      isApplyingState = false;
       isFirstSync = false; // İlk senkronizasyon kilidini kaldır
       
       // Kilit açıldığında sıradaki bekleyen durum varsa onu uygula
@@ -517,32 +534,46 @@ function forceSync() {
       return;
     }
 
+    isApplyingState = true;
+    isSyncing = true;
+
     ensureVideoReady((isReady) => {
       if (!isReady || !videoElement) {
         isFirstSync = false;
+        isApplyingState = false;
+        isSyncing = false;
         return;
       }
 
-      isSyncing = true;
       try {
-        const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
+        const currentServerTime = Date.now() + serverTimeOffset;
+        const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
         const targetTime = state.currentTime + timeDiff;
 
         removeVideoListeners(); // Dinleyicileri kaldır
         PlayerAdapter.seek(targetTime);
-        if (state.isPlaying) {
+        if (state.isPlaying && videoElement.paused) {
           PlayerAdapter.play();
-        } else {
+        } else if (!state.isPlaying && !videoElement.paused) {
           PlayerAdapter.pause();
         }
       } catch (e) {
         console.error(e);
       }
-      setTimeout(() => { 
+
+      if (syncLockTimer) clearTimeout(syncLockTimer);
+      syncLockTimer = setTimeout(() => {
         setupVideoListeners(); // Dinleyicileri geri tak
         isSyncing = false; 
+        isApplyingState = false;
         isFirstSync = false; // İlk senkronizasyon kilidini kaldır
         console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
+
+        if (pendingState) {
+          const nextState = pendingState;
+          pendingState = null;
+          applyRemoteState(nextState);
+        }
       }, 2000);
     });
   });
@@ -665,9 +696,10 @@ function startDriftCorrection() {
     // 2. BEN GUEST (KATILAN KİŞİ) İSEM: Host durumunu oku ve sapma varsa otomatik düzelt
     db.ref(`rooms/${roomId}/lastState`).once('value').then((snapshot) => {
       const state = snapshot.val();
-      if (!state || state.senderId === userId || isSyncing) return;
+      if (!state || state.senderId === userId || isSyncing || isApplyingState) return;
 
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
+      const currentServerTime = Date.now() + serverTimeOffset;
+      const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
       const expectedTime = state.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
@@ -677,6 +709,7 @@ function startDriftCorrection() {
       if (playStateMismatch || drift > 2.5) {
         console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
         isSyncing = true;
+        isApplyingState = true;
         
         removeVideoListeners(); // Dinleyicileri kaldır
         PlayerAdapter.seek(expectedTime);
@@ -686,9 +719,17 @@ function startDriftCorrection() {
           PlayerAdapter.pause();
         }
         
-        setTimeout(() => {
+        if (syncLockTimer) clearTimeout(syncLockTimer);
+        syncLockTimer = setTimeout(() => {
           setupVideoListeners(); // Dinleyicileri geri tak
           isSyncing = false;
+          isApplyingState = false;
+
+          if (pendingState) {
+            const nextState = pendingState;
+            pendingState = null;
+            applyRemoteState(nextState);
+          }
         }, 1500);
       }
     });
