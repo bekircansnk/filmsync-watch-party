@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -663,34 +663,42 @@ function startDriftCorrection() {
     }
 
     // 2. BEN GUEST (KATILAN KİŞİ) İSEM: Host durumunu oku ve sapma varsa otomatik düzelt
-    db.ref(`rooms/${roomId}/lastState`).once('value').then((snapshot) => {
-      const state = snapshot.val();
-      if (!state || state.senderId === userId || isSyncing) return;
+    db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
+      const offset = offsetSnap.val() || 0;
+      const currentServerTime = Date.now() + offset;
 
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
-      const expectedTime = state.currentTime + timeDiff;
-      const drift = Math.abs(videoElement.currentTime - expectedTime);
+      db.ref(`rooms/${roomId}/lastState`).once('value').then((snapshot) => {
+        const state = snapshot.val();
+        if (!state || state.senderId === userId || isSyncing) return;
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
-      const playStateMismatch = state.isPlaying !== !videoElement.paused;
+        const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
+        const expectedTime = state.currentTime + timeDiff;
+        const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      if (playStateMismatch || drift > 2.5) {
-        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
-        isSyncing = true;
-        
-        removeVideoListeners(); // Dinleyicileri kaldır
-        PlayerAdapter.seek(expectedTime);
-        if (state.isPlaying && videoElement.paused) {
-          PlayerAdapter.play();
-        } else if (!state.isPlaying && !videoElement.paused) {
-          PlayerAdapter.pause();
+        // Oynatma durumu uyuşmuyorsa veya süre sapması dinamik eşikten (gecikmeye bağlı) büyükse otomatik eşitle
+        const playStateMismatch = state.isPlaying !== !videoElement.paused;
+        // Gecikme ne kadar fazlaysa eşiği o kadar esnek tut (min 2.0s, max 4.0s)
+        const networkLatencyAdjustment = Math.min(Math.max(Math.abs(offset) / 1000, 0), 2.0);
+        const dynamicThreshold = playStateMismatch ? 0.5 : (2.0 + networkLatencyAdjustment);
+
+        if (playStateMismatch || drift > dynamicThreshold) {
+          console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn, Eşik: ${dynamicThreshold}sn`);
+          isSyncing = true;
+
+          removeVideoListeners(); // Dinleyicileri kaldır
+          PlayerAdapter.seek(expectedTime);
+          if (state.isPlaying && videoElement.paused) {
+            PlayerAdapter.play();
+          } else if (!state.isPlaying && !videoElement.paused) {
+            PlayerAdapter.pause();
+          }
+
+          setTimeout(() => {
+            setupVideoListeners(); // Dinleyicileri geri tak
+            isSyncing = false;
+          }, 1500);
         }
-        
-        setTimeout(() => {
-          setupVideoListeners(); // Dinleyicileri geri tak
-          isSyncing = false;
-        }, 1500);
-      }
+      });
     });
   }, 4000);
 }
