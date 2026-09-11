@@ -661,8 +661,18 @@ document.addEventListener('DOMContentLoaded', () => {
           else if (movieUrl.includes('youtube.com')) platformName = '📺 YouTube';
           else if (movieUrl.includes('disneyplus.com')) platformName = '✨ Disney+';
 
-          // Kullanıcı isimleri özeti
-          const userNames = validUserEntries.map(([_, u]) => u.username || 'Üye').join(', ');
+          function escapeHTML(str) {
+            if (!str) return '';
+            return String(str)
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#39;');
+          }
+
+          // Kullanıcı isimleri özeti (XSS Koruması Eklendi)
+          const userNames = validUserEntries.map(([_, u]) => escapeHTML(u.username || 'Üye')).join(', ');
           const displayUsersText = activeUserCount > 0 ? `${activeUserCount} Üye (${userNames})` : 'Boş Oda (Katılabilirsiniz)';
 
           processedRooms.push({
