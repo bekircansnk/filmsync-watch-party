@@ -4,6 +4,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [20.07.2026] - Drift Correction & Server Time Offset İyileştirmeleri
+- **İyileştirmeler:**
+  - İstemci ve sunucu saat farkını hesaba katan `.info/serverTimeOffset` entegrasyonu sağlandı.
+  - `startDriftCorrection` içerisinde, ağ gecikmesine göre dinamik esnek eşikleme (`driftThreshold`) uygulandı, sabit 2.5 saniyelik limit ağ durumuna göre dinamik hale getirildi.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
