@@ -11,3 +11,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [19.07.2026] - Sentinel Güvenlik Düzeltmesi (XSS)
+- **Güvenlik İyileştirmeleri:**
+  - Odaya katılma ekranlarında (auto-join ve isim sorma modalları) `roomName` değişkeninin doğrudan `innerHTML` içerisine enjekte edilmesi sonucu oluşabilecek Cross-Site Scripting (XSS) zafiyeti giderildi.
+  - Oda isimleri artık güvenli bir şekilde `textContent` kullanılarak DOM'a aktarılıyor.
+  - Firebase API anahtarları (`manifest.json`, `content.js`, `popup.js`, `background.js`) incelendi. İstemci tarafı Firebase (Client SDK) kullanımı gereği `apiKey` açık bulunsa da, herhangi bir yetkili (Admin) erişim anahtarı veya servis hesabı bilgisi sızdırılmadığı doğrulandı.
+  - İstemci tarafındaki veritabanı yazma izinleri (`DELETE` işlemleri) sunucusuz yapılandırmada çöpleri temizlemek amacıyla tasarlandığından güvenli kabul edildi; asıl güvenlik Firebase Security Rules ile sunucu tarafında sağlanmaktadır.
