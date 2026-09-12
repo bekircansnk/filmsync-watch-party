@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -1225,7 +1225,7 @@ function createChatUI() {
   root.innerHTML = `
     <!-- Dikey Araç Çubuğu (Mini-Toolbar) -->
     <div id="filmsync-mini-toolbar" class="panel-active">
-      <button class="filmsync-tool-btn tp-logo" data-tooltip="Evo & Beko Partisi">
+      <button class="filmsync-tool-btn tp-logo" aria-label="Evo ve Beko Partisi" data-tooltip="Evo & Beko Partisi">
         <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
       </button>
     </div>
@@ -1236,7 +1236,7 @@ function createChatUI() {
         <div class="filmsync-header-top">
           <div class="filmsync-header-title">Evo & Beko<span>.</span>🍿</div>
           <div class="filmsync-premium-badge">PREMIUM</div>
-          <button class="filmsync-close-btn" id="filmsyncCloseBtn">×</button>
+          <button class="filmsync-close-btn" id="filmsyncCloseBtn" aria-label="Sohbeti Kapat" title="Sohbeti Kapat">×</button>
         </div>
         <div class="filmsync-users" id="filmsyncUserList">
           <span class="filmsync-users-dot"></span>
@@ -1254,18 +1254,18 @@ function createChatUI() {
 
       <!-- Emoji Reaksiyon Barı -->
       <div class="filmsync-reaction-bar">
-        <button class="filmsync-react-btn" data-emoji="👍">👍</button>
-        <button class="filmsync-react-btn" data-emoji="😮">😮</button>
-        <button class="filmsync-react-btn" data-emoji="😢">😢</button>
-        <button class="filmsync-react-btn" data-emoji="😂">😂</button>
-        <button class="filmsync-react-btn" data-emoji="🤯">🤯</button>
-        <button class="filmsync-react-btn" data-emoji="🔥">🔥</button>
+        <button class="filmsync-react-btn" data-emoji="👍" aria-label="Beğen" title="Beğen">👍</button>
+        <button class="filmsync-react-btn" data-emoji="😮" aria-label="Şaşırdım" title="Şaşırdım">😮</button>
+        <button class="filmsync-react-btn" data-emoji="😢" aria-label="Üzüldüm" title="Üzüldüm">😢</button>
+        <button class="filmsync-react-btn" data-emoji="😂" aria-label="Kahkaha" title="Kahkaha">😂</button>
+        <button class="filmsync-react-btn" data-emoji="🤯" aria-label="Yok Artık" title="Yok Artık">🤯</button>
+        <button class="filmsync-react-btn" data-emoji="🔥" aria-label="Harika" title="Harika">🔥</button>
       </div>
       
       <!-- Mesaj Girişi -->
       <div class="filmsync-input-area">
-        <input type="text" id="filmsyncMsgInput" placeholder="Mesaj yazın..." autocomplete="off">
-        <button class="filmsync-send-btn" id="filmsyncSendBtn">
+        <input type="text" id="filmsyncMsgInput" placeholder="Mesaj yazın..." aria-label="Mesaj yazın" autocomplete="off">
+        <button class="filmsync-send-btn" id="filmsyncSendBtn" aria-label="Mesaj Gönder" title="Mesaj Gönder">
           <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
       </div>
@@ -1806,7 +1806,7 @@ function showNamePromptModal(roomName, callback) {
       
       <div style="text-align: left; margin-bottom: 15px;">
         <label style="font-size: 0.75rem; text-transform: uppercase; color: #45f3ff; font-weight: 600; display: block; margin-bottom: 5px;">Adınız</label>
-        <input type="text" id="promptNameInput" placeholder="Kullanıcı adınızı yazın" style="width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 0.85rem; outline: none; transition: border 0.3s;" />
+        <input type="text" id="promptNameInput" aria-label="Kullanıcı adınızı yazın" placeholder="Kullanıcı adınızı yazın" style="width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 0.85rem; outline: none; transition: border 0.3s;" />
       </div>
       
       <button id="promptJoinBtn" style="width: 100%; padding: 11px; border: none; border-radius: 8px; background: linear-gradient(135deg, #45f3ff, #66fcf1); color: #0b0c10; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: transform 0.2s;">Odaya Katıl</button>
