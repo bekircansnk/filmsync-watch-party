@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -1185,7 +1185,6 @@ function createChatUI() {
     /* Sayfa Daraltma & Kaydırma Kuralları */
     body.filmsync-sidebar-open {
       width: calc(100% - 270px) !important;
-      transition: width 0.3s ease;
     }
     /* Netflix, YouTube, Disney+ Player İzolasyonları */
     body.filmsync-sidebar-open .watch-video,
@@ -1280,6 +1279,7 @@ function createChatUI() {
 
   // Arayüz açıkken sayfa yerleşimini daralt
   document.body.classList.add('filmsync-sidebar-open');
+  window.dispatchEvent(new Event('resize'));
 
   chatPanel = document.getElementById('filmsync-chat-panel');
   messageInput = document.getElementById('filmsyncMsgInput');
@@ -1424,6 +1424,7 @@ function removeChatUI() {
   const root = document.getElementById('filmsync-root');
   if (root) root.remove();
   document.body.classList.remove('filmsync-sidebar-open');
+  window.dispatchEvent(new Event('resize'));
   document.removeEventListener('keydown', handleGlobalEnterKey, true);
 }
 
@@ -1438,6 +1439,7 @@ function toggleChatPanel() {
 
   if (isOpened) {
     document.body.classList.add('filmsync-sidebar-open');
+    window.dispatchEvent(new Event('resize'));
     if (miniToolbar) miniToolbar.classList.add('panel-active');
     messageInput?.focus();
     if (messageList) messageList.scrollTop = messageList.scrollHeight;
@@ -1447,6 +1449,7 @@ function toggleChatPanel() {
     }
   } else {
     document.body.classList.remove('filmsync-sidebar-open');
+    window.dispatchEvent(new Event('resize'));
     if (miniToolbar) miniToolbar.classList.remove('panel-active');
     if (chatToggleBtn) {
       chatToggleBtn.setAttribute('data-tooltip', 'Sohbeti Göster');
