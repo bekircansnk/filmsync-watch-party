@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [13.09.2026] - isSyncing Kilit Mekanizması ve Regex Düzeltmeleri
+- **Hata Düzeltmeleri:**
+  - `isSyncing` durumu için paylaşımlı bir global `syncTimeout` değişkeni eklendi.
+  - applyRemoteState, forceSync ve startDriftCorrection içindeki race condition ve mükerrer timeout durumları engellendi.
+  - Geçersiz regex (`/\/$/`) dizimi (`/\/$/`) olarak düzeltilip syntax validasyon hatası giderildi.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
