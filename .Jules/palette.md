@@ -1,0 +1,3 @@
+## 2024-05-18 - Improve accessibility for icon-only buttons and form inputs
+**Learning:** Icon-only buttons (like emoji reaction buttons, send button, panel toggle, close button) in dynamically injected DOM elements (such as `extension/content.js`) and unlabelled inputs in popup panels (`extension/popup.html`) often lack screen reader support out-of-the-box, making them invisible or confusing to visually impaired users.
+**Action:** Add explicit `aria-label` attributes (and `title` attributes where visual tooltips are helpful) to all icon-only buttons and form inputs lacking visual labels. Ensure actionable elements (like avatars acting as buttons) receive correct `role="button"` and `tabindex="0"` for keyboard navigation.
