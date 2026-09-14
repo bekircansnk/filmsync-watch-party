@@ -689,21 +689,51 @@ document.addEventListener('DOMContentLoaded', () => {
         processedRooms.forEach(({ roomId, platformName, displayUsersText, activeUserCount }) => {
           const card = document.createElement('div');
           card.className = 'public-room-card';
-          card.innerHTML = `
-            <div class="public-room-info">
-              <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
-              </div>
-              <div class="public-room-platform">${platformName}</div>
-              <div class="public-room-users">${displayUsersText}</div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
-            </div>
-          `;
 
-          card.querySelector('.btn-join-public').addEventListener('click', () => {
+          // XSS Prevention: Safe element creation
+          const infoDiv = document.createElement('div');
+          infoDiv.className = 'public-room-info';
+
+          const codeBadgeDiv = document.createElement('div');
+          codeBadgeDiv.className = 'public-room-code-badge';
+          const codeSpan = document.createElement('span');
+          codeSpan.textContent = `🔑 ${roomId}`;
+          codeBadgeDiv.appendChild(codeSpan);
+          infoDiv.appendChild(codeBadgeDiv);
+
+          const platformDiv = document.createElement('div');
+          platformDiv.className = 'public-room-platform';
+          platformDiv.textContent = platformName;
+          infoDiv.appendChild(platformDiv);
+
+          const usersDiv = document.createElement('div');
+          usersDiv.className = 'public-room-users';
+          usersDiv.textContent = displayUsersText;
+          infoDiv.appendChild(usersDiv);
+
+          card.appendChild(infoDiv);
+
+          const actionsDiv = document.createElement('div');
+          actionsDiv.setAttribute('style', 'display: flex; align-items: center; gap: 4px;');
+
+          const joinBtn = document.createElement('button');
+          joinBtn.className = 'btn-join-public';
+          joinBtn.dataset.code = roomId;
+          joinBtn.textContent = 'Katıl';
+          actionsDiv.appendChild(joinBtn);
+
+          if (activeUserCount === 0) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn-delete-public';
+            deleteBtn.dataset.room = roomId;
+            deleteBtn.title = 'Boş Odayı Sil (İmha Et)';
+            deleteBtn.textContent = '🗑️';
+            actionsDiv.appendChild(deleteBtn);
+          }
+
+          card.appendChild(actionsDiv);
+
+          joinBtn.addEventListener('click', () => {
             joinRoomWithCode(roomId);
           });
 
