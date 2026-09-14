@@ -1,4 +1,9 @@
 // Evo ve Beko Film Partisi Popup JS 🍿
+const Logger = {
+  info: (msg, ...args) => console.log(`[FilmSync INFO] ${msg}`, ...args),
+  warn: (msg, ...args) => console.warn(`[FilmSync WARN] ${msg}`, ...args),
+  error: (msg, ...args) => console.error(`[FilmSync ERROR] ${msg}`, ...args)
+};
 const firebaseConfig = {
   apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
   authDomain: "movieparty-af87f.firebaseapp.com",
@@ -269,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Film Sayfasına Yönlendirme Kontrolü
                 if (roomMovieUrl && currentUrl !== roomMovieUrl && !currentUrl.includes(roomMovieUrl)) {
-                  console.log(`[FilmSync Yönlendirme] Film sayfasına gidiliyor: ${roomMovieUrl}`);
+                  Logger.info(`[FilmSync Yönlendirme] Film sayfasına gidiliyor: ${roomMovieUrl}`);
                   if (activeTabId) {
                     chrome.tabs.update(activeTabId, { url: roomMovieUrl });
                   } else {
@@ -648,7 +653,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const isInactive3h = (now - latestUserActivity > THREE_HOURS_MS);
 
           if (isExpired24h || isInactive3h) {
-            console.log(`[FilmSync İmha Motoru] Oda ${roomId} 3 saattir inaktif veya 24h dolduğu için siliniyor.`);
+            Logger.info(`[FilmSync İmha Motoru] Oda ${roomId} 3 saattir inaktif veya 24h dolduğu için siliniyor.`);
             fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' }).catch(e => {});
             return;
           }
