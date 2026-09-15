@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -568,6 +568,8 @@ function cleanupFirebase() {
     db.ref(`rooms/${roomId}/messages`).off();
     db.ref(`rooms/${roomId}/users`).off();
     db.ref(`rooms/${roomId}/reactions`).off();
+    db.ref(`rooms/${roomId}/hostId`).off();
+    db.ref(`rooms/${roomId}/hostOnly`).off();
     
     renderedMessageKeys.clear();
   }
