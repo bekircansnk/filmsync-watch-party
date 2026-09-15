@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [15.09.2026] - Drift Correction (Sapma Düzeltme) İyileştirmesi
+- **İyileştirmeler:**
+  - Ağ gecikmesini (network latency) kompanse etmek için `startDriftCorrection` fonksiyonuna eşzamanlı (`Promise.all`) `.info/serverTimeOffset` sorgusu eklendi.
+  - Sabit 2.5 saniyelik senkronizasyon sapma eşiği, ağ gecikmesine göre (latencySeconds) dinamik olarak ayarlanacak şekilde (dinamik eşik: `Math.max(0.5, 2.5 - latencySeconds)`) iyileştirildi. Bu sayede kesintisiz (seamless) senkronizasyon sağlandı.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
