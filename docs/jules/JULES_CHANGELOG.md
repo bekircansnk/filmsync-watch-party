@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+
+## [15.09.2026] - Loglama ve Hata Yakalama Geliştirmeleri
+- **Loglama:**
+  - `extension/content.js`, `extension/popup.js` ve `extension/inject.js` içerisindeki düz `console.log`, `console.warn` ve `console.error` çağrıları, yapılandırılmış `Logger` objesi ile değiştirildi.
+- **Hata Yönetimi (Crash Prevention):**
+  - Eklenti çökmesini engellemek amacıyla, `extension/content.js` içerisindeki Netflix, Disney+ ve YouTube API kancalarını çağıran `PlayerAdapter.play`, `PlayerAdapter.pause` ve `PlayerAdapter.seek` metodlarına `try-catch` blokları eklendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
