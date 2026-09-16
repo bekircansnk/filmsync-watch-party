@@ -1,0 +1,4 @@
+## 2024-09-16 - DOM-based Stored XSS in Public Room List
+**Vulnerability:** The public room list in the extension popup assigns user-controlled strings (`displayUsersText`, `platformName`) directly to `element.innerHTML` via template literals. Since `displayUsersText` contains user-provided names from the Firebase Realtime Database, a malicious user could set their name to an XSS payload (e.g., `<img src=x onerror=alert(1)>`), leading to arbitrary script execution in the context of the extension popup for anyone viewing the public room list.
+**Learning:** Even internal UI components relying on centralized remote state (like Firebase) can be vectors for Stored XSS if raw template literals are injected into `innerHTML`.
+**Prevention:** Avoid injecting dynamic data directly into HTML attributes or `innerHTML`. Always use safe DOM construction APIs like `document.createElement`, `textContent`, and `element.setAttribute`.

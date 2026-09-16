@@ -692,16 +692,32 @@ document.addEventListener('DOMContentLoaded', () => {
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
+                <span>🔑 <span class="safe-room-id"></span></span>
               </div>
-              <div class="public-room-platform">${platformName}</div>
-              <div class="public-room-users">${displayUsersText}</div>
+              <div class="public-room-platform"><span class="safe-platform"></span></div>
+              <div class="public-room-users"><span class="safe-users"></span></div>
             </div>
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+            <div class="public-room-actions" style="display: flex; align-items: center; gap: 4px;">
+              <button class="btn-join-public">Katıl</button>
             </div>
           `;
+
+          card.querySelector('.safe-room-id').textContent = roomId;
+          card.querySelector('.safe-platform').textContent = platformName;
+          card.querySelector('.safe-users').textContent = displayUsersText;
+
+          const joinBtn = card.querySelector('.btn-join-public');
+          joinBtn.setAttribute('data-code', roomId);
+
+          if (activeUserCount === 0) {
+            const actionsDiv = card.querySelector('.public-room-actions');
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn-delete-public';
+            deleteBtn.setAttribute('data-room', roomId);
+            deleteBtn.title = 'Boş Odayı Sil (İmha Et)';
+            deleteBtn.textContent = '🗑️';
+            actionsDiv.appendChild(deleteBtn);
+          }
 
           card.querySelector('.btn-join-public').addEventListener('click', () => {
             joinRoomWithCode(roomId);
