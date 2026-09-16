@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [16.09.2026] - Konsol Logları ve API Hata Yönetimi İyileştirmesi
+- `extension/content.js`, `extension/popup.js`, `extension/inject.js` ve `extension/background.js` dosyalarındaki dağınık `console.log`, `console.error` ve `console.warn` mesajları standartlaştırıldı.
+- Özel bir `Logger` nesnesi eklenerek tüm konsol çıktıları `[Logger INFO]`, `[Logger WARN]`, `[Logger ERROR]` formatıyla yapılandırıldı.
+- `extension/content.js` içerisindeki Netflix, Disney+ ve YouTube API kancalarına (`window.postMessage`) sağlam `try-catch` blokları eklenerek eklentinin çökmesi engellendi.
+
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
