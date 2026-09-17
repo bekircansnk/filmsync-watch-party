@@ -11,3 +11,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [$(date +%d.%m.%Y)] - Kenar Çubuğu Performans Optimizasyonu
+- **Performans İyileştirmeleri:**
+  - `body.filmsync-sidebar-open` stilindeki `transition: width 0.3s ease;` kuralı kaldırılarak izleme partileri sırasında kenar çubuğu açılıp kapandığında oluşan DOM yeniden hesaplama (reflow) yükü azaltıldı. Bu sayede Netflix, YouTube ve Disney+ gibi platformlarda yüksek kare hızlı video oynatımı sırasında oluşabilecek kasmalar önlendi.
+- **Hata Düzeltmeleri:**
+  - `extension/content.js` içerisindeki geçersiz düzenli ifade bayrakları (Invalid regular expression flags) hatası giderildi. `replace(/\\/$/, '')` kullanımı `replace(/\/$/, '')` olarak güncellendi.
