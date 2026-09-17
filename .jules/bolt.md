@@ -1,0 +1,3 @@
+## 2024-05-24 - Debouncing Global Mutation Observers
+**Learning:** Attaching an un-debounced MutationObserver on `document.body` in a highly dynamic SPA like Netflix causes severe main-thread blocking due to rapid DOM updates triggering the observer callback continuously. Additionally, calling the observer initialization function multiple times without tracking state causes duplicate listeners, exacerbating the performance issue.
+**Action:** Always debounce global MutationObserver callbacks (e.g., using `setTimeout`) and use a state flag (e.g., `isObserverRunning`) to prevent duplicate initialization.
