@@ -4,6 +4,14 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [${date}] - Güvenlik Güncellemeleri ve XSS Düzeltmeleri
+- **Güvenlik İyileştirmeleri:**
+  - `extension/content.js` içerisindeki `showAutoJoinOverlay` ve `showNamePromptModal` fonksiyonlarındaki `innerHTML` kullanımları güvenli DOM manipülasyonu (`textContent`) ile değiştirilerek XSS zafiyetleri giderildi.
+  - `extension/popup.js` içerisindeki `loadPublicRooms` fonksiyonundaki açık oda kartı render işleminde `innerHTML` içerisine dış veri enjeksiyonu önlendi ve güvenli API'ler ( `textContent`, `dataset` ) ile yenilendi.
+  - `extension/content.js` içerisindeki hatalı regex (SyntaxError: Invalid regular expression flags) düzeltildi.
+
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
