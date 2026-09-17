@@ -1,0 +1,4 @@
+## 2024-05-18 - Cross-Site Scripting (XSS) in popup.js via innerHTML
+**Vulnerability:** In `extension/popup.js`, dynamic content like `roomId`, `platformName`, and `displayUsersText` fetched from a public Firebase REST endpoint were injected into the DOM directly using template strings assigned to `card.innerHTML`. This allowed XSS if a user created a room with malicious data in these fields.
+**Learning:** Even internal extensions are vulnerable to DOM-based XSS when fetching unauthenticated or third-party controlled data from backend services. Using `innerHTML` for complex UI components without sanitization is risky.
+**Prevention:** Construct UI components using safe DOM APIs like `document.createElement()`, `element.textContent`, and `element.appendChild()` when handling any data that could be user-controlled or retrieved from a database.
