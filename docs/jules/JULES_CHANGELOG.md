@@ -4,6 +4,14 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [18.09.2026] - Akıllı Senkronizasyon (Auto-Sync) İyileştirmesi
+- **Performans/Kararlılık:**
+  - `startDriftCorrection` içindeki sabit 2.5 saniyelik sapma toleransı dinamik hale getirildi.
+  - Firebase `/.info/serverTimeOffset` kullanılarak sunucu saatine göre sapmalar (drift) düzeltildi.
+  - Ağ gecikmesi hesaplanarak (`latency`) duraklatma ve oynatma durumlarına göre daha hassas bir tolerans sınırı (`dynamicThreshold`) sağlandı.
+
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
