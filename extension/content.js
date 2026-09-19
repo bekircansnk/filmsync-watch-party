@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -1964,15 +1964,27 @@ function injectNetflixStartButton() {
   });
 }
 
+let isStartButtonObserverInitialized = false;
+let startButtonObserverTimeout = null;
+
 function startButtonObserver() {
   if (!window.location.host.includes('netflix.com')) return;
+  if (isStartButtonObserverInitialized) return;
+  isStartButtonObserverInitialized = true;
   
   // İlk yüklemede çalıştır
   setTimeout(injectNetflixStartButton, 1000);
 
   // Değişimleri izle
+  // [Bolt] Optimize: Performans için MutationObserver'ı debounce et (250ms gecikme)
+  // Netflix gibi SPA'larda her DOM değişikliğinde ana iş parçacığını bloke etmesini önler
   const observer = new MutationObserver((mutations) => {
-    injectNetflixStartButton();
+    if (startButtonObserverTimeout) {
+      clearTimeout(startButtonObserverTimeout);
+    }
+    startButtonObserverTimeout = setTimeout(() => {
+      injectNetflixStartButton();
+    }, 250);
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
