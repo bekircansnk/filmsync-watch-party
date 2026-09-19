@@ -11,3 +11,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [19.09.2026] - Dinamik Sapma Düzeltme İyileştirmesi
+- **Ağ Gecikmesi Tabanlı Senkronizasyon:**
+  - `startDriftCorrection` içindeki sabit 2.5s sapma eşiği, ağ gecikmesini (network latency) ve sunucu saat farkını (`.info/serverTimeOffset`) hesaba katan dinamik bir eşik değeri ile değiştirildi.
+  - Oynatma durumu uyuşmazlıklarında eşik daha agresif (0.5s) hale getirilerek anında tepki verilmesi sağlandı.
