@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -663,19 +663,29 @@ function startDriftCorrection() {
     }
 
     // 2. BEN GUEST (KATILAN KİŞİ) İSEM: Host durumunu oku ve sapma varsa otomatik düzelt
-    db.ref(`rooms/${roomId}/lastState`).once('value').then((snapshot) => {
-      const state = snapshot.val();
+    const fetchStartTime = Date.now();
+    Promise.all([
+      db.ref(`rooms/${roomId}/lastState`).once('value'),
+      db.ref('.info/serverTimeOffset').once('value')
+    ]).then(([stateSnapshot, offsetSnapshot]) => {
+      const state = stateSnapshot.val();
+      const offset = offsetSnapshot.val() || 0;
       if (!state || state.senderId === userId || isSyncing) return;
 
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
+      const networkLatency = (Date.now() - fetchStartTime) / 1000;
+      const currentServerTime = Date.now() + offset;
+
+      const timeDiff = state.isPlaying ? Math.max(0, (currentServerTime - state.lastUpdated) / 1000) : 0;
       const expectedTime = state.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
+      // Oynatma durumu uyuşmuyorsa veya süre sapması dinamik eşikten büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
 
-      if (playStateMismatch || drift > 2.5) {
-        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
+      const dynamicThreshold = playStateMismatch ? 1.0 : Math.max(2.5, Math.min(5.0, 2.5 + networkLatency));
+
+      if (playStateMismatch || drift > dynamicThreshold) {
+        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn, Ağ Gecikmesi: ${networkLatency.toFixed(3)}sn, Eşik: ${dynamicThreshold.toFixed(1)}sn`);
         isSyncing = true;
         
         removeVideoListeners(); // Dinleyicileri kaldır

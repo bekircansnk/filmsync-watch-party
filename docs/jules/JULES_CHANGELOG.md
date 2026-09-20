@@ -11,3 +11,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [20.09.2026] - Dinamik Senkronizasyon (Drift Correction) İyileştirmesi
+- **Performans ve Senkronizasyon İyileştirmeleri:**
+  - `extension/content.js` içerisindeki `startDriftCorrection` fonksiyonunda kullanılan sabit 2.5 saniyelik sapma eşiği dinamik hale getirildi.
+  - Ağ gecikmesi (latency) ölçülerek ve Firebase `.info/serverTimeOffset` kullanılarak zaman hesaplamaları sunucu zamanı ile eşzamanlı hale getirildi.
+  - Video oynatma durumunda uyumsuzluk (playStateMismatch) tespit edildiğinde eşik daha agresif (1.0s) bir değere çekilerek senkronizasyon pürüzsüz hale getirildi.
