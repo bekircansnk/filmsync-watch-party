@@ -686,7 +686,20 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
+        const escapeHTML = (str) => {
+          if (str == null) return '';
+          return String(str).replace(/[&<>'"]/g, tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+          }[tag]));
+        };
         processedRooms.forEach(({ roomId, platformName, displayUsersText, activeUserCount }) => {
+          roomId = escapeHTML(roomId);
+          platformName = escapeHTML(platformName);
+          displayUsersText = escapeHTML(displayUsersText);
           const card = document.createElement('div');
           card.className = 'public-room-card';
           card.innerHTML = `
