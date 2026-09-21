@@ -11,3 +11,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [21.09.2026] - Otomatik Eşitleme ve Hata Giderme
+- **Geliştirmeler:**
+  - `startDriftCorrection` fonksiyonunda senkronizasyon eşiği dinamik hale getirildi.
+  - Gecikme hesaplamaları için `Promise.all` kullanılarak Firebase `.info/serverTimeOffset` değeri ile birleştirilip doğru zaman sapması bulundu.
+  - Ağ gecikmesi ve durum uyumsuzluklarına göre esnek tepki gösteren bir eşik (dynamic threshold) yapısı eklendi, böylece senkronizasyon daha pürüzsüz hale getirildi.
