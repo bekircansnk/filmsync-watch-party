@@ -1,0 +1,3 @@
+## 2026-07-20 - Unsubscribe Firebase listeners correctly
+**Learning:** When unsubscribing from Firebase Realtime Database query listeners in the V8 SDK (e.g., `.limitToLast(n).on(...)`), calling `.off()` on the base reference is insufficient. You must append the exact query parameters to the `.off()` call to properly detach the listener and prevent memory leaks. Also, all `.on()` listeners must be tracked and unregistered.
+**Action:** Added exact query parameters for `.limitToLast(50).off()` and `.limitToLast(5).off()` and unsubscribed missing `hostId` and `hostOnly` listeners in `cleanupFirebase()`.
