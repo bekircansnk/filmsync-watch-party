@@ -1,0 +1,3 @@
+## 2026-09-21 - Prevent Netflix start button observer memory leak and reflows
+**Learning:** Attaching `MutationObserver` on `document.body` for highly dynamic SPAs like Netflix without initialization checks or debouncing can lead to multiple observers being created and significant main-thread blocking due to DOM reflow overhead on every single mutation.
+**Action:** Always wrap global DOM mutation observers in a setup flag (`isInitialized = true`) and debounce their callbacks (e.g., `setTimeout(fn, 300)`) to throttle expensive query selection and DOM insertion operations when observing `document.body`.
