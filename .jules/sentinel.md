@@ -1,0 +1,4 @@
+## 2024-05-23 - DOM-based XSS via URL Parameters and Realtime Database
+**Vulnerability:** Untrusted user input originating from URL parameters (e.g., `joinRoom` extracted from `window.location.search`) and Firebase Realtime Database was being directly interpolated into `.innerHTML` template literals without sanitization.
+**Learning:** Even though the input comes from the client's own URL string or Firebase, it still constitutes an untrusted source that can be manipulated by an attacker to execute arbitrary malicious scripts within the context of the extension or host page.
+**Prevention:** Treat all user-provided data, regardless of origin (URL, DB, forms), as strictly untrusted. Always sanitize dynamic data using a dedicated helper (like `escapeHTML`) before interpolating it into `.innerHTML`, or assign it safely using `.textContent`.
