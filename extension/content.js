@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -1964,15 +1964,23 @@ function injectNetflixStartButton() {
   });
 }
 
+let startBtnObserverInitialized = false;
+let startBtnDebounceTimeout = null;
+
 function startButtonObserver() {
   if (!window.location.host.includes('netflix.com')) return;
+  if (startBtnObserverInitialized) return;
+  startBtnObserverInitialized = true;
   
   // İlk yüklemede çalıştır
   setTimeout(injectNetflixStartButton, 1000);
 
-  // Değişimleri izle
-  const observer = new MutationObserver((mutations) => {
-    injectNetflixStartButton();
+  // Değişimleri izle (Debounce ile)
+  const observer = new MutationObserver(() => {
+    if (startBtnDebounceTimeout) clearTimeout(startBtnDebounceTimeout);
+    startBtnDebounceTimeout = setTimeout(() => {
+      injectNetflixStartButton();
+    }, 200);
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
