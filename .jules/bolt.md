@@ -1,0 +1,3 @@
+## 2024-05-09 - Fix Firebase Event Listener Memory Leaks
+**Learning:** In the Firebase V8 SDK, when unsubscribing from a query listener (e.g., `.limitToLast(n).on(...)`), calling `.off()` on the base reference is insufficient. You must append the exact query parameters (e.g., `.limitToLast(n).off()`) to properly detach the listener and prevent memory leaks. Furthermore, all active listeners must be meticulously tracked and unsubscribed in the teardown phase.
+**Action:** Updated `cleanupFirebase()` in `extension/content.js` to correctly unsubscribe from query-specific references (`messages.limitToLast(50).off()`, `reactions.limitToLast(5).off()`) and added missing unsubscribes for `hostId` and `hostOnly`.
