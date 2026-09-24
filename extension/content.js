@@ -1964,15 +1964,20 @@ function injectNetflixStartButton() {
   });
 }
 
+let isStartButtonObserverRunning = false;
+let startButtonDebounceTimeout = null;
+
 function startButtonObserver() {
-  if (!window.location.host.includes('netflix.com')) return;
+  if (!window.location.host.includes('netflix.com') || isStartButtonObserverRunning) return;
+  isStartButtonObserverRunning = true;
   
   // İlk yüklemede çalıştır
   setTimeout(injectNetflixStartButton, 1000);
 
   // Değişimleri izle
   const observer = new MutationObserver((mutations) => {
-    injectNetflixStartButton();
+    if (startButtonDebounceTimeout) clearTimeout(startButtonDebounceTimeout);
+    startButtonDebounceTimeout = setTimeout(injectNetflixStartButton, 300);
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
