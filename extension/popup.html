@@ -124,6 +124,12 @@
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 4px 10px;
+      transition: all 0.2s ease;
+    }
+
+    .user-input-wrapper:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 8px rgba(229, 9, 20, 0.3);
     }
 
     .user-avatar-badge {
@@ -398,8 +404,8 @@
 
     <!-- Kullanıcı Girişi & Otomatik Emoji Rozeti -->
     <div id="commonUserConfig" class="user-input-wrapper">
-      <span id="userAvatarDisplay" class="user-avatar-badge" title="Profil Simgesini Değiştir">🍿</span>
-      <input type="text" id="usernameInput" class="username-input" placeholder="Kullanıcı Adınız...">
+      <span id="userAvatarDisplay" class="user-avatar-badge" title="Profil Simgesini Değiştir" role="button" tabindex="0" aria-label="Profil Simgesini Değiştir">🍿</span>
+      <input type="text" id="usernameInput" class="username-input" placeholder="Kullanıcı Adınız..." aria-label="Kullanıcı Adınız">
     </div>
 
     <!-- AÇIK ODALAR REHBERİ -->
@@ -419,7 +425,7 @@
         <span class="section-title">Oda Koduyla Katıl</span>
       </div>
       <div class="join-code-row">
-        <input type="text" id="joinRoomCodeInput" class="join-code-input" placeholder="ABCD" maxlength="4">
+        <input type="text" id="joinRoomCodeInput" class="join-code-input" placeholder="ABCD" maxlength="4" aria-label="Oda Kodu">
         <button id="btnJoinWithCode" class="btn-join-code">Katıl</button>
       </div>
     </div>
@@ -447,7 +453,7 @@
       <div class="switch-group">
         <span class="switch-text">Sadece Bende Kontrol Olsun</span>
         <label class="switch">
-          <input type="checkbox" id="hostOnlySwitch">
+          <input type="checkbox" id="hostOnlySwitch" aria-label="Sadece Bende Kontrol Olsun">
           <span class="slider"></span>
         </label>
       </div>
