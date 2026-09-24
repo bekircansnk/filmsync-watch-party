@@ -35,6 +35,20 @@ function getRandomMovieAvatar(nameStr) {
 }
 
 // 4 Harfli Büyük Harflerden Oluşan Oda Kodu Üretici
+// Güvenli HTML escape helper (XSS Koruması için Sentinel 🛡️)
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>'"]/g,
+    tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag] || tag)
+  );
+}
+
 function generate4LetterCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let result = '';
@@ -692,14 +706,14 @@ document.addEventListener('DOMContentLoaded', () => {
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
+                <span>🔑 ${escapeHTML(roomId)}</span>
               </div>
-              <div class="public-room-platform">${platformName}</div>
-              <div class="public-room-users">${displayUsersText}</div>
+              <div class="public-room-platform">${escapeHTML(platformName)}</div>
+              <div class="public-room-users">${escapeHTML(displayUsersText)}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+              <button class="btn-join-public" data-code="${escapeHTML(roomId)}">Katıl</button>
+              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${escapeHTML(roomId)}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
             </div>
           `;
 
