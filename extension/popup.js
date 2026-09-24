@@ -662,7 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
           else if (movieUrl.includes('disneyplus.com')) platformName = '✨ Disney+';
 
           // Kullanıcı isimleri özeti
-          const userNames = validUserEntries.map(([_, u]) => u.username || 'Üye').join(', ');
+          const userNames = validUserEntries.map(([_, u]) => escapeHTML(u.username || 'Üye')).join(', ');
           const displayUsersText = activeUserCount > 0 ? `${activeUserCount} Üye (${userNames})` : 'Boş Oda (Katılabilirsiniz)';
 
           processedRooms.push({
@@ -692,14 +692,14 @@ document.addEventListener('DOMContentLoaded', () => {
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
+                <span>🔑 ${escapeHTML(roomId)}</span>
               </div>
               <div class="public-room-platform">${platformName}</div>
               <div class="public-room-users">${displayUsersText}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+              <button class="btn-join-public" data-code="${escapeHTML(roomId)}">Katıl</button>
+              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${escapeHTML(roomId)}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
             </div>
           `;
 
@@ -733,3 +733,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 });
+
+
+function escapeHTML(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/[&<>'"]/g,
+    tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag] || tag)
+  );
+}
