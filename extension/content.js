@@ -21,6 +21,7 @@ let pendingState = null;
 let isFirstSync = true;
 let messagesQueue = [];
 let isInputFocused = false;
+let syncTimeout = null;
 
 // Firebase Canlı Yapılandırması
 const firebaseConfig = {
@@ -453,8 +454,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -464,10 +465,14 @@ function applyRemoteState(state) {
     }
   }
 
-  ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+  isSyncing = true;
+  clearTimeout(syncTimeout);
 
-    isSyncing = true;
+  ensureVideoReady((isReady) => {
+    if (!isReady || !videoElement) {
+      isSyncing = false;
+      return;
+    }
     try {
       const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
       const targetTime = state.currentTime + timeDiff;
@@ -489,7 +494,7 @@ function applyRemoteState(state) {
     }
     
     // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
-    setTimeout(() => {
+    syncTimeout = setTimeout(() => {
       setupVideoListeners();
       isSyncing = false;
       isFirstSync = false; // İlk senkronizasyon kilidini kaldır
@@ -517,13 +522,15 @@ function forceSync() {
       return;
     }
 
+    isSyncing = true;
+    clearTimeout(syncTimeout);
+
     ensureVideoReady((isReady) => {
       if (!isReady || !videoElement) {
         isFirstSync = false;
+        isSyncing = false;
         return;
       }
-
-      isSyncing = true;
       try {
         const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
         const targetTime = state.currentTime + timeDiff;
@@ -538,7 +545,7 @@ function forceSync() {
       } catch (e) {
         console.error(e);
       }
-      setTimeout(() => { 
+      syncTimeout = setTimeout(() => {
         setupVideoListeners(); // Dinleyicileri geri tak
         isSyncing = false; 
         isFirstSync = false; // İlk senkronizasyon kilidini kaldır
@@ -676,6 +683,7 @@ function startDriftCorrection() {
 
       if (playStateMismatch || drift > 2.5) {
         console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
+        clearTimeout(syncTimeout);
         isSyncing = true;
         
         removeVideoListeners(); // Dinleyicileri kaldır
@@ -686,7 +694,7 @@ function startDriftCorrection() {
           PlayerAdapter.pause();
         }
         
-        setTimeout(() => {
+        syncTimeout = setTimeout(() => {
           setupVideoListeners(); // Dinleyicileri geri tak
           isSyncing = false;
         }, 1500);
