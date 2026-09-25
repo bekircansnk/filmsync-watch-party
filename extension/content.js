@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -663,19 +663,27 @@ function startDriftCorrection() {
     }
 
     // 2. BEN GUEST (KATILAN KİŞİ) İSEM: Host durumunu oku ve sapma varsa otomatik düzelt
-    db.ref(`rooms/${roomId}/lastState`).once('value').then((snapshot) => {
-      const state = snapshot.val();
+    Promise.all([
+      db.ref(`rooms/${roomId}/lastState`).once('value'),
+      db.ref('.info/serverTimeOffset').once('value')
+    ]).then(([stateSnapshot, offsetSnapshot]) => {
+      const state = stateSnapshot.val();
+      const offset = offsetSnapshot.val() || 0;
       if (!state || state.senderId === userId || isSyncing) return;
 
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
+      const estimatedServerTimeMs = Date.now() + offset;
+      const timeSinceUpdate = Math.max(0, (estimatedServerTimeMs - state.lastUpdated) / 1000);
+      const timeDiff = state.isPlaying ? timeSinceUpdate : 0;
       const expectedTime = state.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
+      // Host sends heartbeat every 4s. Limit threshold to 2.5s maximum to avoid expanding drift limits.
+      // Eşik değerini, geçen süreye göre dinamik olarak hesapla fakat makul bir üst limit ile sınırla (Örn: 2.5s - 3.5s).
+      const dynamicThreshold = playStateMismatch ? 0.5 : Math.min(3.5, Math.max(1.5, (timeSinceUpdate * 0.1) + 1.5));
 
-      if (playStateMismatch || drift > 2.5) {
-        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
+      if (playStateMismatch || drift > dynamicThreshold) {
+        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn, Tolerans: ${dynamicThreshold.toFixed(1)}sn`);
         isSyncing = true;
         
         removeVideoListeners(); // Dinleyicileri kaldır
