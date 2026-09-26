@@ -101,11 +101,12 @@
 
   // Content script'ten gelen postMessage olaylarını dinleme
   window.addEventListener('message', function(event) {
-    if (event.source !== window || !event.data || event.data.source !== 'filmsync-content') {
-      return;
-    }
+    try {
+      if (event.source !== window || !event.data || event.data.source !== 'filmsync-content') {
+        return;
+      }
 
-    const { action, value } = event.data;
+      const { action, value } = event.data;
 
     // Netflix Kontrolleri
     if (isNetflix) {
@@ -164,6 +165,9 @@
       } else {
         console.warn('[Evo ve Beko Inject] YouTube player objesi bulunamadı.');
       }
+    }
+    } catch (err) {
+      console.error('[Evo ve Beko Inject] Message listener hatası:', err);
     }
   });
 })();
