@@ -1,0 +1,4 @@
+## 2026-09-26 - UI Render İşlemlerinde DOM XSS'i Önleme
+**Vulnerability:** URL parametrelerinden (ör. `roomName`) ve Firebase Realtime Database'den (ör. `roomId`, `userNames`) gelen kullanıcı girdileri, doğrudan `.innerHTML` aracılığıyla DOM'a enjekte edilerek Reflected ve Stored XSS güvenlik açıklarına neden oldu.
+**Learning:** Eklentide UI bileşenlerini render ederken, dış kaynaklardan gelen veriler her zaman güvenilmez olarak değerlendirilmelidir. `.innerHTML` kullanmaktan kaçınarak `.textContent` kullanmak veya bir `escapeHTML` yardımcı fonksiyonu ile girdileri açıkça sanitize etmek, DOM tabanlı XSS açıklarını önlemek için kritik öneme sahiptir.
+**Prevention:** Güvenilmeyen verileri `.innerHTML` içinde kullanmadan önce daima sanitize edin veya `.textContent` gibi daha güvenli alternatifler ve açık DOM elementi oluşturma yöntemlerini tercih edin.
