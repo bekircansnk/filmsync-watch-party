@@ -11,3 +11,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [26.09.2026] - XSS Zafiyet Gidermesi
+- **Güvenlik İyileştirmeleri:**
+  - `extension/content.js` ve `extension/popup.js` dosyalarında kullanıcı girdilerini DOM'a enjekte etmeden önce temizlemek için `escapeHTML` yardımcı fonksiyonu eklendi.
+  - DOM tabanlı XSS zafiyetlerini (Cross-Site Scripting) önlemek için `innerHTML` atamalarındaki kullanıcı tanımlı değişkenler (örn. `roomName`, `roomId`, `displayUsersText`, `platformName`) sanitize edildi.
