@@ -453,8 +453,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -1982,11 +1982,16 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let mouseThrottle = false;
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
-    showPanelAndToolbar();
-    resetIdleTimer(isInputFocused ? 5000 : 3000);
+    if (!mouseThrottle) {
+      showPanelAndToolbar();
+      resetIdleTimer(isInputFocused ? 5000 : 3000);
+      mouseThrottle = true;
+      setTimeout(() => mouseThrottle = false, 100); // 100ms throttle
+    }
   };
 
   document.addEventListener('mousemove', handleMouseMove);
