@@ -11,3 +11,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## 2026-09-27 - Drift Senkronizasyonu İyileştirmeleri
+
+**Geliştirme:** `startDriftCorrection` mantığına dinamik eşik değerleri (threshold) ve ağ gecikmesi (`serverTimeOffset`) desteği eklendi. Ayrıca geçersiz regex hatası düzeltildi.
+**Etki:** Gecikmeli bağlantılarda veya durum uyumsuzluklarında senkronizasyon hataları büyük ölçüde azaltıldı.
