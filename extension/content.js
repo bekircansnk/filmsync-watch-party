@@ -21,6 +21,7 @@ let pendingState = null;
 let isFirstSync = true;
 let messagesQueue = [];
 let isInputFocused = false;
+let syncTimeout = null;
 
 // Firebase Canlı Yapılandırması
 const firebaseConfig = {
@@ -453,8 +454,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -464,10 +465,13 @@ function applyRemoteState(state) {
     }
   }
 
-  ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+  isSyncing = true;
 
-    isSyncing = true;
+  ensureVideoReady((isReady) => {
+    if (!isReady || !videoElement) {
+      isSyncing = false;
+      return;
+    }
     try {
       const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
       const targetTime = state.currentTime + timeDiff;
@@ -489,7 +493,11 @@ function applyRemoteState(state) {
     }
     
     // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
-    setTimeout(() => {
+    if (syncTimeout) {
+      clearTimeout(syncTimeout);
+    }
+
+    syncTimeout = setTimeout(() => {
       setupVideoListeners();
       isSyncing = false;
       isFirstSync = false; // İlk senkronizasyon kilidini kaldır
