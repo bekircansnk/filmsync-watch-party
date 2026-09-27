@@ -1982,11 +1982,17 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let isThrottled = false;
+
   const handleMouseMove = () => {
-    if (!isFullscreen) return;
+    if (!isFullscreen || isThrottled) return;
     
-    showPanelAndToolbar();
-    resetIdleTimer(isInputFocused ? 5000 : 3000);
+    isThrottled = true;
+    setTimeout(() => {
+      showPanelAndToolbar();
+      resetIdleTimer(isInputFocused ? 5000 : 3000);
+      isThrottled = false;
+    }, 150);
   };
 
   document.addEventListener('mousemove', handleMouseMove);
