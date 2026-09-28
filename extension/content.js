@@ -16,6 +16,7 @@ let messageList = null;
 let userListDisplay = null;
 
 let isFirebaseInitialized = false;
+let serverTimeOffset = 0;
 let renderedMessageKeys = new Set();
 let pendingState = null;
 let isFirstSync = true;
@@ -258,6 +259,11 @@ function initializeFirebase(config) {
     }
     db = firebase.database();
     
+    // Ağ gecikmesi (latency) ve zaman farkını hesaplamak için serverTimeOffset'i dinle
+    db.ref('.info/serverTimeOffset').on('value', (snap) => {
+      serverTimeOffset = snap.val() || 0;
+    });
+
     const roomRef = db.ref(`rooms/${roomId}`);
     
     roomRef.once('value').then((snapshot) => {
@@ -453,8 +459,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -667,14 +673,18 @@ function startDriftCorrection() {
       const state = snapshot.val();
       if (!state || state.senderId === userId || isSyncing) return;
 
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
-      const expectedTime = state.currentTime + timeDiff;
+      // Tahmini sunucu zamanını hesapla ve güncellemeden bu yana geçen süreyi bul
+      const timeSinceUpdate = state.isPlaying ? Math.max(0, (Date.now() + serverTimeOffset - state.lastUpdated) / 1000) : 0;
+      const expectedTime = state.currentTime + timeSinceUpdate;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
 
-      if (playStateMismatch || drift > 2.5) {
+      // Dinamik sapma eşiği (Dynamic Threshold)
+      // Durum uyuşmazlığında daha hassas (0.5s), normal oynatmada güncelleme süresine bağlı esnek eşik (1.5s - 3.0s)
+      const dynamicThreshold = playStateMismatch ? 0.5 : Math.max(1.5, Math.min(3.0, timeSinceUpdate * 0.5));
+
+      if (playStateMismatch || drift > dynamicThreshold) {
         console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
         isSyncing = true;
         
