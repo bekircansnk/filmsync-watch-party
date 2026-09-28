@@ -14,6 +14,19 @@ let db = null;
 let currentRoomId = null;
 let selectedAvatar = '🍿'; // Varsayılan avatar
 
+// HTML kaçış fonksiyonu
+function escapeHTML(str) {
+  return String(str).replace(/[&<>'"]/g,
+    tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag])
+  );
+}
+
 // 50+ Zengin Sinema, Animasyon ve Karakter Emojisi Havuzu
 const MOVIE_AVATARS = [
   '🍿', '🎬', '🚀', '🎭', '🦁', '🦊', '🤖', '👑', '⚡', '🐲', 
@@ -662,7 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
           else if (movieUrl.includes('disneyplus.com')) platformName = '✨ Disney+';
 
           // Kullanıcı isimleri özeti
-          const userNames = validUserEntries.map(([_, u]) => u.username || 'Üye').join(', ');
+          const userNames = validUserEntries.map(([_, u]) => escapeHTML(u.username || 'Üye')).join(', ');
           const displayUsersText = activeUserCount > 0 ? `${activeUserCount} Üye (${userNames})` : 'Boş Oda (Katılabilirsiniz)';
 
           processedRooms.push({
