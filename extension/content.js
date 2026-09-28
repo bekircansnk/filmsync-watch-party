@@ -1982,11 +1982,21 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let throttleTimer = null;
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    // Throttle: Sık tetiklenen mousemove olaylarını sınırla (Performans Optimizasyonu)
+    if (throttleTimer) return;
+
+    // Anında tepki ver
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
+
+    // 150ms boyunca diğer olayları yoksay
+    throttleTimer = setTimeout(() => {
+      throttleTimer = null;
+    }, 150);
   };
 
   document.addEventListener('mousemove', handleMouseMove);

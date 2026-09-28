@@ -1,0 +1,3 @@
+## 2024-05-18 - Missing Debouncing on Frequent DOM Events
+**Learning:** `extension/content.js` attaches global `mousemove` and `keydown` event listeners to `document` in `setupFullscreenIdleDetector` without any throttling or debouncing. These events trigger state checks and reset idle timers constantly, which can cause excessive DOM queries and main-thread jank, especially on heavy streaming sites.
+**Action:** Always wrap high-fire-rate events like `mousemove` and `keydown` with a throttle or debounce mechanism (e.g., using `setTimeout` or `requestAnimationFrame`) to limit the execution frequency.
