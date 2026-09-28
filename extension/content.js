@@ -10,6 +10,7 @@ let db = null;
 
 let videoElement = null;
 let isSyncing = false;
+let syncTimeout = null;
 let chatPanel = null;
 let messageInput = null;
 let messageList = null;
@@ -453,8 +454,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -464,10 +465,13 @@ function applyRemoteState(state) {
     }
   }
 
+  isSyncing = true;
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+    if (!isReady || !videoElement) {
+      isSyncing = false;
+      return;
+    }
 
-    isSyncing = true;
     try {
       const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
       const targetTime = state.currentTime + timeDiff;
@@ -489,7 +493,8 @@ function applyRemoteState(state) {
     }
     
     // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
-    setTimeout(() => {
+    clearTimeout(syncTimeout);
+    syncTimeout = setTimeout(() => {
       setupVideoListeners();
       isSyncing = false;
       isFirstSync = false; // İlk senkronizasyon kilidini kaldır
@@ -517,13 +522,14 @@ function forceSync() {
       return;
     }
 
+    isSyncing = true;
     ensureVideoReady((isReady) => {
       if (!isReady || !videoElement) {
         isFirstSync = false;
+        isSyncing = false;
         return;
       }
 
-      isSyncing = true;
       try {
         const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
         const targetTime = state.currentTime + timeDiff;
@@ -538,7 +544,8 @@ function forceSync() {
       } catch (e) {
         console.error(e);
       }
-      setTimeout(() => { 
+      clearTimeout(syncTimeout);
+      syncTimeout = setTimeout(() => {
         setupVideoListeners(); // Dinleyicileri geri tak
         isSyncing = false; 
         isFirstSync = false; // İlk senkronizasyon kilidini kaldır
@@ -686,7 +693,8 @@ function startDriftCorrection() {
           PlayerAdapter.pause();
         }
         
-        setTimeout(() => {
+        clearTimeout(syncTimeout);
+        syncTimeout = setTimeout(() => {
           setupVideoListeners(); // Dinleyicileri geri tak
           isSyncing = false;
         }, 1500);
