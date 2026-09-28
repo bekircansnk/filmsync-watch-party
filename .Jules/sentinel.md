@@ -1,0 +1,5 @@
+
+## 2026-09-28 - Firebase Security Audit
+**Vulnerability:** User requested an audit of extension configuration files (manifest.json, content.js, popup.js, background.js) for hardcoded secrets and database write rules, specifically focusing on Firebase API keys and permissions.
+**Learning:** The Firebase API keys present in the extension files (e.g., `apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U"`) act as public client-side identifiers for the Firebase project, not administrative credentials. This is an intended architectural pattern for Firebase Web SDKs and REST APIs, and they do not need to be obfuscated or removed. Additionally, there are no local `firebase.json` or `database.rules.json` files; database write rules are managed externally in the Firebase Console. No sensitive administrative secrets or unsafe local credential leaks were identified.
+**Prevention:** Maintain awareness that client-side Firebase API keys are public and ensure that robust security rules are enforced on the Firebase Realtime Database backend to authorize data access and modifications.
