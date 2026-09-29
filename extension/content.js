@@ -1981,10 +1981,15 @@ function startButtonObserver() {
 let idleTimer = null;
 let isFullscreen = false;
 
+let lastMoveTime = 0;
 function setupFullscreenIdleDetector() {
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    const now = Date.now();
+    if (now - lastMoveTime < 150) return; // Throttle to 150ms
+    lastMoveTime = now;
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
   };
