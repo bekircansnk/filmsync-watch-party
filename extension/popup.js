@@ -1,3 +1,14 @@
+// HTML Escape Helper
+function escapeHTML(str) {
+  return String(str).replace(/[&<>'"]/g, tag => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[tag]));
+}
+
 // Evo ve Beko Film Partisi Popup JS 🍿
 const firebaseConfig = {
   apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
@@ -662,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
           else if (movieUrl.includes('disneyplus.com')) platformName = '✨ Disney+';
 
           // Kullanıcı isimleri özeti
-          const userNames = validUserEntries.map(([_, u]) => u.username || 'Üye').join(', ');
+          const userNames = validUserEntries.map(([_, u]) => escapeHTML(u.username || 'Üye')).join(', ');
           const displayUsersText = activeUserCount > 0 ? `${activeUserCount} Üye (${userNames})` : 'Boş Oda (Katılabilirsiniz)';
 
           processedRooms.push({
