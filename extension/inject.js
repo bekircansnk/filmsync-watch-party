@@ -1,6 +1,12 @@
 // Evo ve Beko Film Partisi Page Injected Hook Script (Runs in page context)
 (function() {
-  console.log('[Evo ve Beko Inject] Platform hook scripti yüklendi.');
+const Logger = {
+  info: (...args) => console.log(...args),
+  warn: (...args) => console.warn(...args),
+  error: (...args) => console.error(...args)
+};
+
+  Logger.info('[Evo ve Beko Inject] Platform hook scripti yüklendi.');
 
   const isNetflix = window.location.host.includes('netflix.com');
   const isDisney = window.location.host.includes('disneyplus.com');
@@ -22,7 +28,7 @@
       const watchSessionId = sessionIds.find(id => id.indexOf('watch-') === 0) || sessionIds[0];
       return videoPlayer.getVideoPlayerBySessionId(watchSessionId);
     } catch (e) {
-      console.error('[Evo ve Beko Inject] Netflix player eldesi başarısız:', e);
+      Logger.error('[Evo ve Beko Inject] Netflix player eldesi başarısız:', e);
       return null;
     }
   }
@@ -33,7 +39,7 @@
       const host = document.querySelector("disney-web-player");
       return host ? host.mediaPlayer : null;
     } catch (e) {
-      console.error('[Evo ve Beko Inject] Disney+ player eldesi başarısız:', e);
+      Logger.error('[Evo ve Beko Inject] Disney+ player eldesi başarısız:', e);
       return null;
     }
   }
@@ -78,7 +84,7 @@
         }
       }
     } catch (err) {
-      console.error('[Evo ve Beko Inject] Disney+ DOM Fallback hatası:', err);
+      Logger.error('[Evo ve Beko Inject] Disney+ DOM Fallback hatası:', err);
     }
   }
 
@@ -94,7 +100,7 @@
       }
       return null;
     } catch (e) {
-      console.error('[Evo ve Beko Inject] YouTube player eldesi başarısız:', e);
+      Logger.error('[Evo ve Beko Inject] YouTube player eldesi başarısız:', e);
       return null;
     }
   }
@@ -104,6 +110,7 @@
     if (event.source !== window || !event.data || event.data.source !== 'filmsync-content') {
       return;
     }
+    try {
 
     const { action, value } = event.data;
 
@@ -120,10 +127,10 @@
             player.seek(value * 1000); // Netflix API milisaniye cinsinden seek alır
           }
         } catch (err) {
-          console.error('[Evo ve Beko Inject] Netflix player komut hatası:', err);
+          Logger.error('[Evo ve Beko Inject] Netflix player komut hatası:', err);
         }
       } else {
-        console.warn('[Evo ve Beko Inject] Netflix player objesi bulunamadı.');
+        Logger.warn('[Evo ve Beko Inject] Netflix player objesi bulunamadı.');
       }
     }
     // Disney+ Kontrolleri
@@ -139,7 +146,7 @@
             player.seek(value * 1000); // Disney+ API milisaniye cinsinden seek alır
           }
         } catch (err) {
-          console.error('[Evo ve Beko Inject] Disney+ player komut hatası:', err);
+          Logger.error('[Evo ve Beko Inject] Disney+ player komut hatası:', err);
           handleDisneyDOMFallback(action, value);
         }
       } else {
@@ -159,11 +166,14 @@
             player.seekTo(value, true); // YouTube API saniye cinsinden seek alır
           }
         } catch (err) {
-          console.error('[Evo ve Beko Inject] YouTube player komut hatası:', err);
+          Logger.error('[Evo ve Beko Inject] YouTube player komut hatası:', err);
         }
       } else {
-        console.warn('[Evo ve Beko Inject] YouTube player objesi bulunamadı.');
+        Logger.warn('[Evo ve Beko Inject] YouTube player objesi bulunamadı.');
       }
+    }
+    } catch (globalErr) {
+      Logger.error('[Evo ve Beko Inject] Global message event handler error:', globalErr);
     }
   });
 })();
