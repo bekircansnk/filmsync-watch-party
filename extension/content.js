@@ -1982,8 +1982,17 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  // ⚡ Bolt Optimization: Throttle high-frequency global mousemove events
+  // Prevents excessive main-thread jank by limiting DOM queries and timer resets
+  // Impact: Reduces redundant executions from ~60/sec to ~6/sec during continuous movement
+  let isThrottled = false;
   const handleMouseMove = () => {
-    if (!isFullscreen) return;
+    if (!isFullscreen || isThrottled) return;
+
+    isThrottled = true;
+    setTimeout(() => {
+      isThrottled = false;
+    }, 150);
     
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
