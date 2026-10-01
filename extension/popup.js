@@ -1,4 +1,13 @@
 // Evo ve Beko Film Partisi Popup JS 🍿
+
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 const firebaseConfig = {
   apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
   authDomain: "movieparty-af87f.firebaseapp.com",
@@ -692,10 +701,10 @@ document.addEventListener('DOMContentLoaded', () => {
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
+                <span>🔑 ${escapeHTML(roomId)}</span>
               </div>
               <div class="public-room-platform">${platformName}</div>
-              <div class="public-room-users">${displayUsersText}</div>
+              <div class="public-room-users">${escapeHTML(displayUsersText)}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 4px;">
               <button class="btn-join-public" data-code="${roomId}">Katıl</button>
