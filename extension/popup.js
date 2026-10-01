@@ -14,6 +14,16 @@ let db = null;
 let currentRoomId = null;
 let selectedAvatar = '🍿'; // Varsayılan avatar
 
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+
 // 50+ Zengin Sinema, Animasyon ve Karakter Emojisi Havuzu
 const MOVIE_AVATARS = [
   '🍿', '🎬', '🚀', '🎭', '🦁', '🦊', '🤖', '👑', '⚡', '🐲', 
@@ -692,14 +702,14 @@ document.addEventListener('DOMContentLoaded', () => {
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
+                <span>🔑 ${escapeHTML(roomId)}</span>
               </div>
-              <div class="public-room-platform">${platformName}</div>
-              <div class="public-room-users">${displayUsersText}</div>
+              <div class="public-room-platform">${escapeHTML(platformName)}</div>
+              <div class="public-room-users">${escapeHTML(displayUsersText)}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+              <button class="btn-join-public" data-code="${escapeHTML(roomId)}">Katıl</button>
+              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${escapeHTML(roomId)}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
             </div>
           `;
 
