@@ -1982,11 +1982,19 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let throttleTimer = null;
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
-    showPanelAndToolbar();
-    resetIdleTimer(isInputFocused ? 5000 : 3000);
+    // Throttle high-frequency global event listeners (mousemove/keydown)
+    // to once every 150ms to minimize main-thread jank and preserve playback performance.
+    if (throttleTimer) return;
+
+    throttleTimer = setTimeout(() => {
+      throttleTimer = null;
+      showPanelAndToolbar();
+      resetIdleTimer(isInputFocused ? 5000 : 3000);
+    }, 150);
   };
 
   document.addEventListener('mousemove', handleMouseMove);
