@@ -11,3 +11,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [01.10.2026] - Senkronizasyon İyileştirmeleri ve Hata Giderme
+- **Hata Düzeltmeleri:**
+  - `extension/content.js` içindeki düzenli ifade (regex) sözdizimi hatası giderildi.
+- **İyileştirmeler:**
+  - Olası eşitleme yarış durumlarını (race conditions) önlemek için `ensureVideoReady` asenkron kontrolünden önce `isSyncing` kilidi aktif hale getirildi.
+  - `syncTimeout` global değişkeni tanımlanarak üst üste gelen eşitleme talepleri (debounce) başarıyla yönetildi ve video kekemeliği (stuttering) önlendi.
+  - Anlambilimsel doğruluğu artırmak için `timeDiff` değişkeninin adı `timeSinceUpdate` olarak güncellendi.
