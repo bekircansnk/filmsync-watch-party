@@ -1971,8 +1971,15 @@ function startButtonObserver() {
   setTimeout(injectNetflixStartButton, 1000);
 
   // Değişimleri izle
+  // ⚡ Bolt Performance Optimization:
+  // Debounce the MutationObserver callback on document.body for highly dynamic SPAs (like Netflix).
+  // This prevents main-thread blocking from rapid DOM updates triggering repetitive injections.
+  let debounceTimer = null;
   const observer = new MutationObserver((mutations) => {
-    injectNetflixStartButton();
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      injectNetflixStartButton();
+    }, 200);
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
@@ -1982,9 +1989,18 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let throttleTimeout = null;
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    // ⚡ Bolt Performance Optimization:
+    // Throttle high-frequency events (like mousemove/keydown) to ~150ms intervals.
+    // This prevents excessive DOM manipulation and timer resets, reducing main-thread jank.
+    if (throttleTimeout) return;
+    throttleTimeout = setTimeout(() => {
+      throttleTimeout = null;
+    }, 150);
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
   };
