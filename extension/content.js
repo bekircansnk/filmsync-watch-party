@@ -16,6 +16,7 @@ let messageList = null;
 let userListDisplay = null;
 
 let isFirebaseInitialized = false;
+let serverTimeOffset = 0;
 let renderedMessageKeys = new Set();
 let pendingState = null;
 let isFirstSync = true;
@@ -257,6 +258,9 @@ function initializeFirebase(config) {
       firebase.initializeApp(config);
     }
     db = firebase.database();
+    db.ref(".info/serverTimeOffset").on("value", (snapshot) => {
+      serverTimeOffset = snapshot.val() || 0;
+    });
     
     const roomRef = db.ref(`rooms/${roomId}`);
     
@@ -568,6 +572,7 @@ function cleanupFirebase() {
     db.ref(`rooms/${roomId}/messages`).off();
     db.ref(`rooms/${roomId}/users`).off();
     db.ref(`rooms/${roomId}/reactions`).off();
+    db.ref(".info/serverTimeOffset").off();
     
     renderedMessageKeys.clear();
   }
@@ -667,14 +672,21 @@ function startDriftCorrection() {
       const state = snapshot.val();
       if (!state || state.senderId === userId || isSyncing) return;
 
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
+      const currentServerTime = Date.now() + serverTimeOffset;
+      const timeSinceUpdate = Math.max(0, (currentServerTime - state.lastUpdated) / 1000);
+      const timeDiff = state.isPlaying ? timeSinceUpdate : 0;
       const expectedTime = state.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
 
-      if (playStateMismatch || drift > 2.5) {
+      // Dinamik eşik hesaplama (Ağ gecikmesi ve potansiyel dalgalanmalar hesaba katılarak)
+      // Temel eşik 1.5s. timeSinceUpdate ağ gecikmesi değil, son güncellemeden geçen süredir.
+      // Bu yüzden eşiğin sonsuza kadar büyümesini engellemek için bir üst sınır (cap) koyuyoruz (örn: 3 saniye).
+      const dynamicThreshold = Math.min(3.0, Math.max(1.5, 1.0 + (timeSinceUpdate * 0.1)));
+
+      // Oynatma durumu uyuşmuyorsa veya süre sapması dinamik eşikten büyükse otomatik eşitle
+      if (playStateMismatch || drift > dynamicThreshold) {
         console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
         isSyncing = true;
         
