@@ -1982,9 +1982,19 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let throttleTimer = null;
+
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    // ⚡ Bolt: Throttle high-frequency events to prevent main-thread jank
+    // Only process mouse/keyboard events every 150ms to reduce DOM overhead
+    if (throttleTimer) return;
+
+    throttleTimer = setTimeout(() => {
+      throttleTimer = null;
+    }, 150);
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
   };
