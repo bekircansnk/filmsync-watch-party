@@ -1,0 +1,3 @@
+## 2026-10-04 - [Throttling High-Frequency Events]
+**Learning:** Unthrottled `mousemove` and `keydown` event listeners attached globally to the `document` (like in `setupFullscreenIdleDetector`) cause excessive DOM queries and timer resets. In this codebase's architecture, which heavily integrates with external media players (Netflix, Disney+, YouTube) within the same DOM or via iframes, this leads to main-thread jank and frame drops during heavy streaming, as the UI thread is constantly interrupted by these unthrottled events.
+**Action:** Always wrap high-fire-rate events (like `mousemove` or `scroll`) with a throttle or debounce mechanism (e.g., using `setTimeout` at 150ms intervals) to minimize main-thread overhead and preserve smooth media playback.

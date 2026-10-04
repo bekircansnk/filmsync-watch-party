@@ -1981,13 +1981,30 @@ function startButtonObserver() {
 let idleTimer = null;
 let isFullscreen = false;
 
+
+// Helper: Throttle function to limit execution rate of high-frequency events (e.g., mousemove)
+// Why: Unthrottled mousemove/keydown on the document causes excessive DOM queries and timer resets, leading to main-thread jank on heavy streaming sites.
+// How: Limits the callback to fire at most once every limit (150ms) milliseconds.
+function throttle(func, limit) {
+  let inThrottle;
+  return function() {
+    const args = arguments;
+    const context = this;
+    if (!inThrottle) {
+      func.apply(context, args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
+    }
+  }
+}
+
 function setupFullscreenIdleDetector() {
-  const handleMouseMove = () => {
+  const handleMouseMove = throttle(() => {
     if (!isFullscreen) return;
     
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
-  };
+  }, 150); // Throttle to 150ms
 
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('keydown', handleMouseMove);
