@@ -11,3 +11,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [04.10.2026] - Otonom İyileştirme (Jules)
+- **Hata Düzeltmeleri & İyileştirmeler:**
+  - `extension/content.js` içindeki `applyRemoteState` ve `forceSync` fonksiyonlarında `isSyncing` kilidi senkronize blokların dışına çekildi, böylece asenkron `ensureVideoReady` bekleme süresinde oluşan yarış durumları (race conditions) giderildi.
+  - `PlayerAdapter.play()` içinde, tarayıcıların döndürdüğü asenkron `Promise` ele alınarak olası play() reddedilmesi hataları `catch` ile yakalandı.
