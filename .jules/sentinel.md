@@ -1,0 +1,4 @@
+## 2023-10-04 - Fix XSS in template literals via innerHTML
+**Vulnerability:** XSS (Cross-Site Scripting) vulnerabilities where unescaped user input (such as `roomName`, `roomId`, `platformName`, `displayUsersText`) was injected directly into the DOM using `innerHTML` and template literals in `extension/content.js` and `extension/popup.js`.
+**Learning:** Bypassing standard DOM elements (like `textContent`) and manually constructing HTML blocks with unsanitized dynamic data introduces a severe risk of arbitrary script execution (XSS).
+**Prevention:** Always sanitize dynamic content using a robust escaping function (e.g., `escapeHTML`) before injecting it into the DOM via `innerHTML`, or prefer using safer methods like `.textContent` or `document.createElement()` to construct nodes dynamically. Ensure type coercion is applied properly in custom escape functions to avoid bypass via array or object toString().
