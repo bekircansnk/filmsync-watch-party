@@ -7,6 +7,7 @@ let selectedAvatar = '🍿';
 let hostId = null;
 let hostOnly = false;
 let db = null;
+let serverTimeOffset = 0;
 
 let videoElement = null;
 let isSyncing = false;
@@ -257,6 +258,7 @@ function initializeFirebase(config) {
       firebase.initializeApp(config);
     }
     db = firebase.database();
+    db.ref(".info/serverTimeOffset").on("value", snap => { serverTimeOffset = snap.val() || 0; });
     
     const roomRef = db.ref(`rooms/${roomId}`);
     
@@ -564,6 +566,7 @@ function cleanupFirebase() {
       });
     });
 
+    db.ref(".info/serverTimeOffset").off();
     db.ref(`rooms/${roomId}/lastState`).off();
     db.ref(`rooms/${roomId}/messages`).off();
     db.ref(`rooms/${roomId}/users`).off();
@@ -667,14 +670,20 @@ function startDriftCorrection() {
       const state = snapshot.val();
       if (!state || state.senderId === userId || isSyncing) return;
 
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
+      const currentServerTime = Date.now() + serverTimeOffset;
+      const timeSinceUpdate = Math.max(0, (currentServerTime - state.lastUpdated) / 1000);
+      const timeDiff = state.isPlaying ? timeSinceUpdate : 0;
       const expectedTime = state.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
+      // Oynatma durumu uyuşmuyorsa veya süre sapması dinamik eşikten büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
 
-      if (playStateMismatch || drift > 2.5) {
+      const MAX_THRESHOLD = 5.0; // Maksimum 5 saniye
+      const baseThreshold = 2.5; // Temel eşik
+      const dynamicThreshold = Math.min(MAX_THRESHOLD, baseThreshold + timeSinceUpdate * 0.05);
+
+      if (playStateMismatch || drift > dynamicThreshold) {
         console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
         isSyncing = true;
         

@@ -1,0 +1,6 @@
+1. Add `let serverTimeOffset = 0;` at the top of `extension/content.js`.
+2. Add `db.ref('.info/serverTimeOffset').on('value', snap => { serverTimeOffset = snap.val() || 0; });` in `initializeFirebase`.
+3. Add `db.ref('.info/serverTimeOffset').off();` in `cleanupFirebase`.
+4. Update `startDriftCorrection` in `extension/content.js`.
+5. Write Turkish changelog entry to `docs/jules/JULES_CHANGELOG.md`.
+6. Pre-commit check.
