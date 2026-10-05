@@ -7,6 +7,7 @@ let selectedAvatar = '🍿';
 let hostId = null;
 let hostOnly = false;
 let db = null;
+let serverTimeOffset = 0;
 
 let videoElement = null;
 let isSyncing = false;
@@ -56,7 +57,10 @@ const PlayerAdapter = {
     if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
     } else if (videoElement) {
-      videoElement.play();
+      const playPromise = videoElement.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => console.warn('[FilmSync] Play engellendi:', error));
+      }
     }
   },
 
@@ -351,6 +355,11 @@ function setupFirebaseListeners() {
     hostOnly = snap.val();
   });
 
+  // Sunucu zaman farkını al
+  db.ref('.info/serverTimeOffset').on('value', (snap) => {
+    serverTimeOffset = snap.val();
+  });
+
   // 1. Medya Durumunu Dinle
   db.ref(`rooms/${roomId}/lastState`).on('value', (snapshot) => {
     const state = snapshot.val();
@@ -453,8 +462,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -464,12 +473,15 @@ function applyRemoteState(state) {
     }
   }
 
+  isSyncing = true;
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
-
-    isSyncing = true;
+    if (!isReady || !videoElement) {
+      isSyncing = false;
+      return;
+    }
     try {
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
+      const timeSinceUpdate = Math.max(0, (Date.now() + serverTimeOffset - state.lastUpdated) / 1000);
+      const timeDiff = state.isPlaying ? Math.min(10, timeSinceUpdate) : 0;
       const targetTime = state.currentTime + timeDiff;
 
       // Programatik eylem öncesi yerel dinleyicileri kaldır
@@ -517,15 +529,16 @@ function forceSync() {
       return;
     }
 
+    isSyncing = true;
     ensureVideoReady((isReady) => {
       if (!isReady || !videoElement) {
+        isSyncing = false;
         isFirstSync = false;
         return;
       }
-
-      isSyncing = true;
       try {
-        const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
+        const timeSinceUpdate = Math.max(0, (Date.now() + serverTimeOffset - state.lastUpdated) / 1000);
+      const timeDiff = state.isPlaying ? Math.min(10, timeSinceUpdate) : 0;
         const targetTime = state.currentTime + timeDiff;
 
         removeVideoListeners(); // Dinleyicileri kaldır
@@ -667,7 +680,8 @@ function startDriftCorrection() {
       const state = snapshot.val();
       if (!state || state.senderId === userId || isSyncing) return;
 
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
+      const timeSinceUpdate = Math.max(0, (Date.now() + serverTimeOffset - state.lastUpdated) / 1000);
+      const timeDiff = state.isPlaying ? Math.min(10, timeSinceUpdate) : 0;
       const expectedTime = state.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
