@@ -1982,11 +1982,19 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let throttleTimer = null;
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    // Throttle high-fire-rate events to prevent main-thread jank (leading-edge)
+    if (throttleTimer) return;
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
+
+    throttleTimer = setTimeout(() => {
+      throttleTimer = null;
+    }, 150);
   };
 
   document.addEventListener('mousemove', handleMouseMove);
