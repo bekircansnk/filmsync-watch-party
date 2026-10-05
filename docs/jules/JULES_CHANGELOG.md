@@ -3,6 +3,13 @@
 Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm otonom bakım, iyileştirme ve hata giderme seanslarının kaydını tutar.
 
 ---
+## [05.10.2026] - Firebase Listener Bellek Sızıntısı Giderme
+- **Hata Düzeltmeleri:**
+  - `extension/content.js` içerisindeki `cleanupFirebase()` ve diğer temizleme fonksiyonları güncellendi.
+  - `db.ref(.../messages).limitToLast(50)` ve `db.ref(.../reactions).limitToLast(5)` için oluşturulan dinleyicilerin tam sorgu yoluyla kapatılması sağlandı.
+  - Eksik olan `hostId` ve `hostOnly` dinleyicilerinin (.off() çağrıları ile) temizlenmesi eklendi.
+  - Uzun süreli video sekmelerindeki bellek sızıntıları önlendi.
+
 
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
