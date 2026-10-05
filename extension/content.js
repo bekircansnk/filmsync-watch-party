@@ -1225,7 +1225,7 @@ function createChatUI() {
   root.innerHTML = `
     <!-- Dikey Araç Çubuğu (Mini-Toolbar) -->
     <div id="filmsync-mini-toolbar" class="panel-active">
-      <button class="filmsync-tool-btn tp-logo" data-tooltip="Evo & Beko Partisi">
+      <button class="filmsync-tool-btn tp-logo" data-tooltip="Evo & Beko Partisi" aria-label="Sohbet panelini aç/kapat">
         <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
       </button>
     </div>
@@ -1236,7 +1236,7 @@ function createChatUI() {
         <div class="filmsync-header-top">
           <div class="filmsync-header-title">Evo & Beko<span>.</span>🍿</div>
           <div class="filmsync-premium-badge">PREMIUM</div>
-          <button class="filmsync-close-btn" id="filmsyncCloseBtn">×</button>
+          <button class="filmsync-close-btn" id="filmsyncCloseBtn" aria-label="Sohbeti kapat">×</button>
         </div>
         <div class="filmsync-users" id="filmsyncUserList">
           <span class="filmsync-users-dot"></span>
@@ -1254,18 +1254,18 @@ function createChatUI() {
 
       <!-- Emoji Reaksiyon Barı -->
       <div class="filmsync-reaction-bar">
-        <button class="filmsync-react-btn" data-emoji="👍">👍</button>
-        <button class="filmsync-react-btn" data-emoji="😮">😮</button>
-        <button class="filmsync-react-btn" data-emoji="😢">😢</button>
-        <button class="filmsync-react-btn" data-emoji="😂">😂</button>
-        <button class="filmsync-react-btn" data-emoji="🤯">🤯</button>
-        <button class="filmsync-react-btn" data-emoji="🔥">🔥</button>
+        <button class="filmsync-react-btn" data-emoji="👍" aria-label="Tepki gönder: Harika">👍</button>
+        <button class="filmsync-react-btn" data-emoji="😮" aria-label="Tepki gönder: Şaşırtıcı">😮</button>
+        <button class="filmsync-react-btn" data-emoji="😢" aria-label="Tepki gönder: Üzücü">😢</button>
+        <button class="filmsync-react-btn" data-emoji="😂" aria-label="Tepki gönder: Komik">😂</button>
+        <button class="filmsync-react-btn" data-emoji="🤯" aria-label="Tepki gönder: Akıllara ziyan">🤯</button>
+        <button class="filmsync-react-btn" data-emoji="🔥" aria-label="Tepki gönder: Ateş ediyor">🔥</button>
       </div>
       
       <!-- Mesaj Girişi -->
       <div class="filmsync-input-area">
         <input type="text" id="filmsyncMsgInput" placeholder="Mesaj yazın..." autocomplete="off">
-        <button class="filmsync-send-btn" id="filmsyncSendBtn">
+        <button class="filmsync-send-btn" id="filmsyncSendBtn" aria-label="Mesaj gönder">
           <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
       </div>
