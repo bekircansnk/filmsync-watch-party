@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Kullanıcı adı değiştiğinde veya tıklanıldığında dinamik avatar ata
   if (userAvatarDisplay) {
-    userAvatarDisplay.addEventListener('click', () => {
+    const handleAvatarChange = () => {
       selectedAvatar = MOVIE_AVATARS[Math.floor(Math.random() * MOVIE_AVATARS.length)];
       userAvatarDisplay.textContent = selectedAvatar;
       chrome.storage.local.set({ selectedAvatar });
@@ -125,6 +125,13 @@ document.addEventListener('DOMContentLoaded', () => {
           db.ref(`rooms/${res.roomId}/users/${res.userId}/avatar`).set(selectedAvatar);
         }
       });
+    };
+    userAvatarDisplay.addEventListener('click', handleAvatarChange);
+    userAvatarDisplay.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleAvatarChange();
+      }
     });
   }
 
@@ -699,7 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div style="display: flex; align-items: center; gap: 4px;">
               <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)" aria-label="Boş Odayı Sil">🗑️</button>` : ''}
             </div>
           `;
 
