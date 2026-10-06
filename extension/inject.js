@@ -113,7 +113,12 @@
       if (player) {
         try {
           if (action === 'play') {
-            player.play();
+            const playPromise = player.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(err => {
+                console.error('[Evo ve Beko Inject] Netflix player play hatası:', err);
+              });
+            }
           } else if (action === 'pause') {
             player.pause();
           } else if (action === 'seek') {
@@ -132,7 +137,12 @@
       if (player) {
         try {
           if (action === 'play') {
-            player.play();
+            const playPromise = player.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(err => {
+                console.error('[Evo ve Beko Inject] Disney+ player play hatası:', err);
+              });
+            }
           } else if (action === 'pause') {
             player.pause();
           } else if (action === 'seek') {
@@ -152,7 +162,12 @@
       if (player) {
         try {
           if (action === 'play' && typeof player.playVideo === 'function') {
-            player.playVideo();
+            const playPromise = player.playVideo();
+            if (playPromise !== undefined) {
+              playPromise.catch(err => {
+                console.error('[Evo ve Beko Inject] YouTube player play hatası:', err);
+              });
+            }
           } else if (action === 'pause' && typeof player.pauseVideo === 'function') {
             player.pauseVideo();
           } else if (action === 'seek' && typeof player.seekTo === 'function') {
