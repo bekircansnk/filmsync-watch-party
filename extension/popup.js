@@ -1,4 +1,14 @@
 // Evo ve Beko Film Partisi Popup JS 🍿
+function escapeHTML(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
   authDomain: "movieparty-af87f.firebaseapp.com",
@@ -663,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Kullanıcı isimleri özeti
           const userNames = validUserEntries.map(([_, u]) => u.username || 'Üye').join(', ');
-          const displayUsersText = activeUserCount > 0 ? `${activeUserCount} Üye (${userNames})` : 'Boş Oda (Katılabilirsiniz)';
+          const displayUsersText = activeUserCount > 0 ? `${activeUserCount} Üye (${escapeHTML(userNames)})` : 'Boş Oda (Katılabilirsiniz)';
 
           processedRooms.push({
             roomId,
@@ -692,9 +702,9 @@ document.addEventListener('DOMContentLoaded', () => {
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
+                <span>🔑 ${escapeHTML(roomId)}</span>
               </div>
-              <div class="public-room-platform">${platformName}</div>
+              <div class="public-room-platform">${escapeHTML(platformName)}</div>
               <div class="public-room-users">${displayUsersText}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 4px;">
