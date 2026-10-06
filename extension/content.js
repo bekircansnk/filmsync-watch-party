@@ -1982,9 +1982,19 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let isThrottled = false;
+
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    // Performance optimization: Throttle high-frequency events (like mousemove)
+    // using a leading-edge strategy.
+    // Why: Prevent continuous DOM queries (getElementById) and timeout resets that cause layout thrashing and degrade playback performance.
+    // How: Trigger the action immediately on the first event, then drop subsequent events for 250ms.
+    if (isThrottled) return;
+    isThrottled = true;
+    setTimeout(() => { isThrottled = false; }, 250);
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
   };
