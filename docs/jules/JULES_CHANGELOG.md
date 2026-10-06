@@ -11,3 +11,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [06.10.2026] - Drift Correction & Network Latency İyileştirmesi
+- **Hata Düzeltmeleri ve Geliştirmeler:**
+  - Firebase senkronizasyonunda ağ gecikmesi hesaplamak için `.info/serverTimeOffset` entegre edildi.
+  - `startDriftCorrection` fonksiyonunda sabit eşik (2.5s) yerine, `timeSinceUpdate` (ağ gecikmesi) metrikleri kullanılarak dinamik eşik hesaplama (`Math.min(5.0, 1.5 + (timeSinceUpdate * 0.05))`) yapısı eklendi.
