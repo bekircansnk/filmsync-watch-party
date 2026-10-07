@@ -1982,11 +1982,23 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let isThrottled = false;
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
-    showPanelAndToolbar();
-    resetIdleTimer(isInputFocused ? 5000 : 3000);
+    // ⚡ Bolt Performance Optimization:
+    // Throttle high-frequency mousemove events using a leading-edge strategy.
+    // This executes immediately (no UI latency) but drops subsequent events for 200ms,
+    // saving redundant DOM queries.
+    if (!isThrottled) {
+      showPanelAndToolbar();
+      resetIdleTimer(isInputFocused ? 5000 : 3000);
+
+      isThrottled = true;
+      setTimeout(() => {
+        isThrottled = false;
+      }, 200);
+    }
   };
 
   document.addEventListener('mousemove', handleMouseMove);
