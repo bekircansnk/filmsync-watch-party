@@ -21,6 +21,7 @@ let pendingState = null;
 let isFirstSync = true;
 let messagesQueue = [];
 let isInputFocused = false;
+let serverTimeOffset = 0;
 
 // Firebase Canlı Yapılandırması
 const firebaseConfig = {
@@ -342,6 +343,10 @@ function initializeFirebase(config) {
 // Firebase Olay Dinleyicileri
 function setupFirebaseListeners() {
   if (!db) return;
+
+  db.ref('.info/serverTimeOffset').on('value', (snap) => {
+    serverTimeOffset = snap.val() || 0;
+  });
 
   // Host Bilgilerini Dinle
   db.ref(`rooms/${roomId}/hostId`).on('value', (snap) => {
@@ -667,14 +672,14 @@ function startDriftCorrection() {
       const state = snapshot.val();
       if (!state || state.senderId === userId || isSyncing) return;
 
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
-      const expectedTime = state.currentTime + timeDiff;
+      const timeSinceUpdate = state.isPlaying ? Math.max(0, (Date.now() + serverTimeOffset - state.lastUpdated) / 1000) : 0;
+      const expectedTime = state.currentTime + timeSinceUpdate;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
+      const dynamicThreshold = playStateMismatch ? 0.5 : Math.min(5.0, 2.5 + timeSinceUpdate * 0.05);
 
-      if (playStateMismatch || drift > 2.5) {
+      if (playStateMismatch || drift > dynamicThreshold) {
         console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
         isSyncing = true;
         
