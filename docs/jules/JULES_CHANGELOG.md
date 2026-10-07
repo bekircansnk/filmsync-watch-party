@@ -11,3 +11,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [07.10.2026] - Güvenlik Denetimi
+- **Güvenlik İncelemesi:**
+  - manifest.json, content.js, popup.js ve background.js dosyaları güvenlik açıklarına karşı tarandı.
+  - Kod içinde bulunan Firebase API anahtarlarının (AIzaSy...) istemci taraflı genel (public) tanımlayıcılar olduğu ve hassas yönetici (admin) yetkileri taşımadığı doğrulandı.
+  - Yönetici kimlik bilgisi sızıntısı veya yerel veritabanı yazma kuralı zafiyeti bulunamadı (veritabanı kuralları harici olarak Firebase Console üzerinden yönetilmektedir).
