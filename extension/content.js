@@ -1982,11 +1982,21 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let throttleTimer = null;
+
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
-    showPanelAndToolbar();
-    resetIdleTimer(isInputFocused ? 5000 : 3000);
+    // Yüksek frekanslı mousemove olayları için leading-edge throttle (100ms)
+    // Neden: Yüzlerce kez tetiklenen mousemove olayında gereksiz style güncellemelerini ve setTimeout/clearTimeout işlemlerini önleyerek ana iş parçacığı (main thread) yükünü azaltır.
+    // Nasıl: İlk event anında çalışır, sonrasındaki 100ms içindeki eventleri yutar.
+    if (!throttleTimer) {
+      showPanelAndToolbar();
+      resetIdleTimer(isInputFocused ? 5000 : 3000);
+      throttleTimer = setTimeout(() => {
+        throttleTimer = null;
+      }, 100);
+    }
   };
 
   document.addEventListener('mousemove', handleMouseMove);

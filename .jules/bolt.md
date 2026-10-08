@@ -1,0 +1,3 @@
+## 2026-10-08 - Leading-Edge Throttling for UI Events
+**Learning:** Attaching unthrottled mousemove handlers that manipulate DOM styles and reset setTimeout timers on video playback pages causes significant main-thread blocking, which can drop frames during video rendering. A standard trailing-edge debounce introduces perceptible UI latency when revealing controls.
+**Action:** Always implement a leading-edge throttle for high-frequency UI visibility toggles over video players, ensuring instantaneous UI response on the first event while dropping subsequent redundant events to preserve frame rates.
