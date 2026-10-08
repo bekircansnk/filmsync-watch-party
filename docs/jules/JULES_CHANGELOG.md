@@ -11,3 +11,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [08.10.2026] - Firebase Sunucu Zamanı Ofseti ve Dinamik Eşik ile Senkronizasyon İyileştirmesi
+- **Geliştirmeler:**
+  - `extension/content.js` içindeki sapma düzeltme mantığına (drift correction) ağ gecikmesini kompanse etmek için Firebase `.info/serverTimeOffset` verisi entegre edildi.
+  - Sabit 2.5 saniyelik sapma eşiği, ağ ve oynatma süresine bağlı olarak dinamik olarak ayarlanacak (maksimum 5 saniye) şekilde güncellendi (`dynamicThreshold`).
