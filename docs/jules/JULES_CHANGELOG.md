@@ -11,3 +11,7 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [08.10.2026] - Performans ve Layout Optimizasyonu
+- **Performans İyileştirmeleri:**
+  - İzleme partileri sırasında yüksek kare hızını korumak ve DOM reflow (yeniden hesaplama) yükünü en aza indirmek için `body.filmsync-sidebar-open` sınıfından `transition` özelliği kaldırıldı. Bu sayede yerleşim değişiklikleri animasyonsuz, anlık olarak gerçekleştirilerek medya oynatıcıların (Netflix, Disney+, YouTube) performansı artırıldı.
