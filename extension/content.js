@@ -1236,7 +1236,7 @@ function createChatUI() {
         <div class="filmsync-header-top">
           <div class="filmsync-header-title">Evo & Beko<span>.</span>🍿</div>
           <div class="filmsync-premium-badge">PREMIUM</div>
-          <button class="filmsync-close-btn" id="filmsyncCloseBtn">×</button>
+          <button class="filmsync-close-btn" id="filmsyncCloseBtn" aria-label="Sohbeti Kapat">×</button>
         </div>
         <div class="filmsync-users" id="filmsyncUserList">
           <span class="filmsync-users-dot"></span>
@@ -1264,8 +1264,8 @@ function createChatUI() {
       
       <!-- Mesaj Girişi -->
       <div class="filmsync-input-area">
-        <input type="text" id="filmsyncMsgInput" placeholder="Mesaj yazın..." autocomplete="off">
-        <button class="filmsync-send-btn" id="filmsyncSendBtn">
+        <input type="text" id="filmsyncMsgInput" placeholder="Mesaj yazın..." autocomplete="off" aria-label="Sohbet Mesajı">
+        <button class="filmsync-send-btn" id="filmsyncSendBtn" aria-label="Mesaj Gönder">
           <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
       </div>
