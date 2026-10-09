@@ -113,7 +113,12 @@
       if (player) {
         try {
           if (action === 'play') {
-            player.play();
+            const playPromise = player.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(e => {
+                console.error('[Evo ve Beko Inject] Play promise error:', e);
+              });
+            }
           } else if (action === 'pause') {
             player.pause();
           } else if (action === 'seek') {
@@ -132,7 +137,12 @@
       if (player) {
         try {
           if (action === 'play') {
-            player.play();
+            const playPromise = player.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(e => {
+                console.error('[Evo ve Beko Inject] Play promise error:', e);
+              });
+            }
           } else if (action === 'pause') {
             player.pause();
           } else if (action === 'seek') {
