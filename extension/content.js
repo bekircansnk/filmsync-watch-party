@@ -1982,11 +1982,20 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let mouseMoveThrottleTimer = null;
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    // Throttling mousemove events with leading-edge execution strategy (triggering immediately on first event, then dropping subsequent events during the timeout).
+    // Delaying execution by the throttle duration (trailing-edge only) introduces perceptible UI latency.
+    if (mouseMoveThrottleTimer) return;
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
+
+    mouseMoveThrottleTimer = setTimeout(() => {
+      mouseMoveThrottleTimer = null;
+    }, 100);
   };
 
   document.addEventListener('mousemove', handleMouseMove);

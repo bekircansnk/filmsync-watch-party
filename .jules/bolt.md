@@ -1,0 +1,3 @@
+## 2024-10-09 - [Throttling High-Frequency UI Events]
+**Learning:** [When throttling high-frequency UI events like `mousemove` (e.g. for showing a toolbar or resetting idle timers), a trailing-edge strategy introduces perceptible UI latency and degrades user experience. Instead, a leading-edge execution strategy (triggering immediately on the first event, then dropping subsequent events during the timeout) is required.]
+**Action:** [Always implement leading-edge execution strategies when throttling high-frequency events meant to trigger immediate UI feedback, ensuring the initial user action feels instantly responsive while still mitigating performance overhead.]
