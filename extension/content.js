@@ -21,6 +21,7 @@ let pendingState = null;
 let isFirstSync = true;
 let messagesQueue = [];
 let isInputFocused = false;
+let serverTimeOffset = 0;
 
 // Firebase Canlı Yapılandırması
 const firebaseConfig = {
@@ -258,6 +259,10 @@ function initializeFirebase(config) {
     }
     db = firebase.database();
     
+    db.ref('.info/serverTimeOffset').on('value', (snap) => {
+      serverTimeOffset = snap.val() || 0;
+    });
+
     const roomRef = db.ref(`rooms/${roomId}`);
     
     roomRef.once('value').then((snapshot) => {
@@ -453,8 +458,8 @@ function applyRemoteState(state) {
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
-    const normalizedCurrent = window.location.href.split('?')[0].replace(/\\/$/, '');
-    const normalizedState = state.url.split('?')[0].replace(/\\/$/, '');
+    const normalizedCurrent = window.location.href.split('?')[0].replace(/\/$/, '');
+    const normalizedState = state.url.split('?')[0].replace(/\/$/, '');
     
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
@@ -469,8 +474,9 @@ function applyRemoteState(state) {
 
     isSyncing = true;
     try {
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
-      const targetTime = state.currentTime + timeDiff;
+      const estimatedServerTime = Date.now() + serverTimeOffset;
+      const timeSinceUpdate = state.isPlaying ? Math.max(0, (estimatedServerTime - state.lastUpdated) / 1000) : 0;
+      const targetTime = state.currentTime + timeSinceUpdate;
 
       // Programatik eylem öncesi yerel dinleyicileri kaldır
       removeVideoListeners();
@@ -525,8 +531,9 @@ function forceSync() {
 
       isSyncing = true;
       try {
-        const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
-        const targetTime = state.currentTime + timeDiff;
+        const estimatedServerTime = Date.now() + serverTimeOffset;
+        const timeSinceUpdate = state.isPlaying ? Math.max(0, (estimatedServerTime - state.lastUpdated) / 1000) : 0;
+        const targetTime = state.currentTime + timeSinceUpdate;
 
         removeVideoListeners(); // Dinleyicileri kaldır
         PlayerAdapter.seek(targetTime);
@@ -667,15 +674,18 @@ function startDriftCorrection() {
       const state = snapshot.val();
       if (!state || state.senderId === userId || isSyncing) return;
 
-      const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
-      const expectedTime = state.currentTime + timeDiff;
+      const estimatedServerTime = Date.now() + serverTimeOffset;
+      const timeSinceUpdate = state.isPlaying ? Math.max(0, (estimatedServerTime - state.lastUpdated) / 1000) : 0;
+      const expectedTime = state.currentTime + timeSinceUpdate;
       const drift = Math.abs(videoElement.currentTime - expectedTime);
 
-      // Oynatma durumu uyuşmuyorsa veya süre sapması 2.5 saniyeden büyükse otomatik eşitle
+      // Oynatma durumu uyuşmuyorsa veya süre sapması dinamik eşikten büyükse otomatik eşitle
       const playStateMismatch = state.isPlaying !== !videoElement.paused;
 
-      if (playStateMismatch || drift > 2.5) {
-        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
+      const dynamicThreshold = Math.min(5.0, 2.5 + (timeSinceUpdate * 0.1));
+
+      if (playStateMismatch || drift > dynamicThreshold) {
+        console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn, Eşik: ${dynamicThreshold.toFixed(1)}sn`);
         isSyncing = true;
         
         removeVideoListeners(); // Dinleyicileri kaldır
