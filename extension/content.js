@@ -1185,7 +1185,6 @@ function createChatUI() {
     /* Sayfa Daraltma & Kaydırma Kuralları */
     body.filmsync-sidebar-open {
       width: calc(100% - 270px) !important;
-      transition: width 0.3s ease;
     }
     /* Netflix, YouTube, Disney+ Player İzolasyonları */
     body.filmsync-sidebar-open .watch-video,
@@ -1197,6 +1196,7 @@ function createChatUI() {
     body.filmsync-sidebar-open .media-client-container {
       width: calc(100% - 270px) !important;
       left: 0 !important;
+      transition: none !important;
     }
 
     @keyframes fs-spin {
