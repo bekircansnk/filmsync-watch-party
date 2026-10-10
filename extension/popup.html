@@ -398,8 +398,8 @@
 
     <!-- Kullanıcı Girişi & Otomatik Emoji Rozeti -->
     <div id="commonUserConfig" class="user-input-wrapper">
-      <span id="userAvatarDisplay" class="user-avatar-badge" title="Profil Simgesini Değiştir">🍿</span>
-      <input type="text" id="usernameInput" class="username-input" placeholder="Kullanıcı Adınız...">
+      <span id="userAvatarDisplay" class="user-avatar-badge" title="Profil Simgesini Değiştir" role="button" tabindex="0" aria-label="Profil Simgesini Değiştir">🍿</span>
+      <input type="text" id="usernameInput" class="username-input" placeholder="Kullanıcı Adınız..." aria-label="Kullanıcı Adınız">
     </div>
 
     <!-- AÇIK ODALAR REHBERİ -->
@@ -419,7 +419,7 @@
         <span class="section-title">Oda Koduyla Katıl</span>
       </div>
       <div class="join-code-row">
-        <input type="text" id="joinRoomCodeInput" class="join-code-input" placeholder="ABCD" maxlength="4">
+        <input type="text" id="joinRoomCodeInput" class="join-code-input" placeholder="ABCD" maxlength="4" aria-label="Katılınacak Oda Kodu">
         <button id="btnJoinWithCode" class="btn-join-code">Katıl</button>
       </div>
     </div>
@@ -445,9 +445,9 @@
     <!-- 2. PARTİ KURUCU EKRANI (Desteklenen bir film sayfasındayken) -->
     <div id="partyCreatorContainer" class="party-creator-panel hidden">
       <div class="switch-group">
-        <span class="switch-text">Sadece Bende Kontrol Olsun</span>
+        <label for="hostOnlySwitch" class="switch-text" style="cursor: pointer;">Sadece Bende Kontrol Olsun</label>
         <label class="switch">
-          <input type="checkbox" id="hostOnlySwitch">
+          <input type="checkbox" id="hostOnlySwitch" aria-label="Sadece Bende Kontrol Olsun">
           <span class="slider"></span>
         </label>
       </div>
@@ -460,15 +460,15 @@
         <span class="section-title">Servisler</span>
       </div>
       <div class="platform-grid">
-        <div class="platform-card" data-url="https://www.netflix.com">
+        <div class="platform-card" data-url="https://www.netflix.com" role="button" tabindex="0" aria-label="Netflix platformuna git">
           <span class="platform-icon">🍿</span>
           <span class="platform-name">Netflix</span>
         </div>
-        <div class="platform-card" data-url="https://www.hdfilmcehennemi.com">
+        <div class="platform-card" data-url="https://www.hdfilmcehennemi.com" role="button" tabindex="0" aria-label="HDFilmCehennemi platformuna git">
           <span class="platform-icon">🎬</span>
           <span class="platform-name">HDFilmCehennemi</span>
         </div>
-        <div class="platform-card" data-url="https://t.ly/dizipalgiris">
+        <div class="platform-card" data-url="https://t.ly/dizipalgiris" role="button" tabindex="0" aria-label="Dizipal platformuna git">
           <span class="platform-icon">🎥</span>
           <span class="platform-name">Dizipal</span>
         </div>

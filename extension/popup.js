@@ -115,6 +115,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Kullanıcı adı değiştiğinde veya tıklanıldığında dinamik avatar ata
   if (userAvatarDisplay) {
+    userAvatarDisplay.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        userAvatarDisplay.click();
+      }
+    });
+
     userAvatarDisplay.addEventListener('click', () => {
       selectedAvatar = MOVIE_AVATARS[Math.floor(Math.random() * MOVIE_AVATARS.length)];
       userAvatarDisplay.textContent = selectedAvatar;
@@ -143,6 +150,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const url = card.getAttribute('data-url');
       if (url) {
         chrome.tabs.create({ url });
+      }
+    });
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        card.click();
       }
     });
   });
