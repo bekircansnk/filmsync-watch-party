@@ -1,0 +1,3 @@
+## 2023-10-10 - Throttling High-Frequency Mouse Events
+**Learning:** Throttling `mousemove` events in a fullscreen idle detector is critical to avoid unnecessary main-thread overhead. Because `mousemove` can fire dozens of times per second, directly executing DOM-updating functions (like `showPanelAndToolbar` which calls `getElementById`) and clearing/setting timeouts on every trigger leads to CPU spikes, frame drops, and perceptible UI jank.
+**Action:** Use a timestamp-based leading-edge throttle on high-frequency UI events like `mousemove` and `scroll` to limit execution frequency (e.g., every 250ms), reducing main-thread blockage without sacrificing UI responsiveness.
