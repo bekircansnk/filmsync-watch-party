@@ -11,3 +11,7 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [11.10.2026] - Reflow Overhead Optimizasyonu
+- **Performans İyileştirmeleri:**
+  - Watch party'lerde video oynatımı sırasında (Netflix, Disney+, YouTube) frame düşüşlerine neden olan `transition: width 0.3s ease;` (layout thrashing ve DOM reflow) kuralı `extension/content.js` içerisinden kaldırıldı.

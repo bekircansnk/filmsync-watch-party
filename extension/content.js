@@ -1185,7 +1185,7 @@ function createChatUI() {
     /* Sayfa Daraltma & Kaydırma Kuralları */
     body.filmsync-sidebar-open {
       width: calc(100% - 270px) !important;
-      transition: width 0.3s ease;
+      /* transition: width 0.3s ease; - Removed to prevent layout thrashing */
     }
     /* Netflix, YouTube, Disney+ Player İzolasyonları */
     body.filmsync-sidebar-open .watch-video,
