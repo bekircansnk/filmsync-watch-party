@@ -1982,11 +1982,21 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let isThrottled = false;
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    // Throttle high-frequency events to save main-thread overhead
+    // 250ms is short enough to feel instant, but long enough to skip hundreds of redundant calls
+    if (isThrottled) return;
+    isThrottled = true;
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
+
+    setTimeout(() => {
+      isThrottled = false;
+    }, 250);
   };
 
   document.addEventListener('mousemove', handleMouseMove);
