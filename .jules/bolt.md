@@ -1,0 +1,3 @@
+## 2026-10-12 - Throttle High-Frequency UI Events
+**Learning:** The `mousemove` event listener for hiding the UI during fullscreen playback was unthrottled, triggering `handleMouseMove` on every single pixel movement. This causes continuous DOM recalculations and timer churn, noticeably blocking the main thread on slower machines.
+**Action:** Always implement a leading-edge throttle for high-frequency events like `mousemove` or `scroll`. Executing immediately on the first event and dropping subsequent ones during a short timeout (e.g., 250ms) keeps the UI responsive while saving significant CPU cycles.
