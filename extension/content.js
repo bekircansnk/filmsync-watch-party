@@ -56,7 +56,10 @@ const PlayerAdapter = {
     if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
     } else if (videoElement) {
-      videoElement.play();
+      const playPromise = videoElement.play();
+      if (playPromise !== undefined && typeof playPromise.catch === 'function') {
+        playPromise.catch(e => console.error('[FilmSync] Play promise rejected:', e));
+      }
     }
   },
 
@@ -500,7 +503,7 @@ function applyRemoteState(state) {
         pendingState = null;
         applyRemoteState(nextState);
       }
-    }, 1000);
+    }, 300);
   });
 }
 
@@ -543,7 +546,7 @@ function forceSync() {
         isSyncing = false; 
         isFirstSync = false; // İlk senkronizasyon kilidini kaldır
         console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
-      }, 2000);
+      }, 500);
     });
   });
 }
@@ -689,7 +692,7 @@ function startDriftCorrection() {
         setTimeout(() => {
           setupVideoListeners(); // Dinleyicileri geri tak
           isSyncing = false;
-        }, 1500);
+        }, 500);
       }
     });
   }, 4000);
