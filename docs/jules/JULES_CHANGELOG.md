@@ -4,6 +4,13 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [14.10.2026] - XSS Zafiyetlerinin Giderilmesi (Güvenlik Güncellemesi)
+- **Güvenlik İyileştirmeleri:**
+  - `extension/content.js` ve `extension/popup.js` dosyalarında tespit edilen Cross-Site Scripting (XSS) zafiyetleri giderildi.
+  - Dinamik HTML enjeksiyonlarında kullanıcıdan alınan veriler (oda isimleri, platform isimleri, vb.) `escapeHTML` fonksiyonu ile sanitize edildi.
+  - DOM üzerindeki `innerHTML` kullanımları güvenli hale getirildi.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
