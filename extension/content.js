@@ -1982,9 +1982,16 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let lastActivityTime = 0;
+
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
+    // Performance: Leading-edge throttle (250ms) to prevent DOM thrashing on rapid events
+    const now = Date.now();
+    if (now - lastActivityTime < 250) return;
+    lastActivityTime = now;
+
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
   };
