@@ -4,6 +4,14 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+
+## [14.10.2026] - Güvenlik, Loglama ve Oynatma Hata Yönetimi İyileştirmeleri
+- **Loglama (Geliştirici Deneyimi):**
+  - `extension/content.js`, `extension/popup.js` ve `extension/inject.js` dosyalarında kullanılan tüm `console.log`, `console.warn` ve `console.error` çağrıları özel bir yapılandırılmış `Logger` nesnesi (Tarihsel log basan yapı) ile değiştirildi.
+- **Hata Toleransı (Crash Önleme):**
+  - Video elementi veya API ile çağırılan oynatma işlemi ( `.play()` / `.playVideo()` ) asenkron olarak dönebileceğinden, `catch` ile potansiyel asenkron oynatma hatalarının ele alınması sağlandı. Böylece browser uzantı kaynaklı çökme riskleri engellendi.
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
