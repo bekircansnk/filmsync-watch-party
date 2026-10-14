@@ -1,0 +1,3 @@
+## 2024-10-14 - Keyboard Accessibility for Non-Interactive Elements Acting as Buttons
+**Learning:** When turning a span or div into an interactive element (like the avatar selector), simply adding cursor pointer is insufficient. Screen readers and keyboard users require role, tabindex, aria-label, and keydown event listeners for Enter and Space to fully engage with the custom UI element.
+**Action:** Always ensure that any non-interactive element designed to trigger actions receives the full accessibility treatment (role, tabindex, ARIA, focus styles, and keyboard event handlers) to avoid creating focusable dead ends.
