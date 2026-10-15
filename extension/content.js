@@ -1982,11 +1982,19 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let lastExec = 0;
+  const throttleMs = 250;
+
   const handleMouseMove = () => {
     if (!isFullscreen) return;
     
-    showPanelAndToolbar();
-    resetIdleTimer(isInputFocused ? 5000 : 3000);
+    const now = Date.now();
+    if (now - lastExec >= throttleMs) {
+      lastExec = now;
+      // ⚡ Bolt: Throttled high-frequency events to reduce DOM queries and timeout thrashing
+      showPanelAndToolbar();
+      resetIdleTimer(isInputFocused ? 5000 : 3000);
+    }
   };
 
   document.addEventListener('mousemove', handleMouseMove);
