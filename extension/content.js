@@ -10,6 +10,7 @@ let db = null;
 
 let videoElement = null;
 let isSyncing = false;
+let syncLockTimer = null;
 let chatPanel = null;
 let messageInput = null;
 let messageList = null;
@@ -56,7 +57,10 @@ const PlayerAdapter = {
     if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
     } else if (videoElement) {
-      videoElement.play();
+      const playPromise = videoElement.play();
+      if (playPromise !== undefined && typeof playPromise.catch === 'function') {
+        playPromise.catch(error => console.error('[FilmSync] Play promise rejected:', error));
+      }
     }
   },
 
@@ -464,8 +468,13 @@ function applyRemoteState(state) {
     }
   }
 
+  isSyncing = true;
+
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+    if (!isReady || !videoElement) {
+      isSyncing = false;
+      return;
+    }
 
     isSyncing = true;
     try {
@@ -489,7 +498,8 @@ function applyRemoteState(state) {
     }
     
     // Gecikmeli olarak yerel dinleyicileri geri tak ve kilidi kaldır (Kekelemeyi önlemek için 1.0 saniye kilit)
-    setTimeout(() => {
+    clearTimeout(syncLockTimer);
+    syncLockTimer = setTimeout(() => {
       setupVideoListeners();
       isSyncing = false;
       isFirstSync = false; // İlk senkronizasyon kilidini kaldır
@@ -517,9 +527,12 @@ function forceSync() {
       return;
     }
 
+    isSyncing = true;
+
     ensureVideoReady((isReady) => {
       if (!isReady || !videoElement) {
         isFirstSync = false;
+        isSyncing = false;
         return;
       }
 
@@ -538,7 +551,8 @@ function forceSync() {
       } catch (e) {
         console.error(e);
       }
-      setTimeout(() => { 
+      clearTimeout(syncLockTimer);
+      syncLockTimer = setTimeout(() => {
         setupVideoListeners(); // Dinleyicileri geri tak
         isSyncing = false; 
         isFirstSync = false; // İlk senkronizasyon kilidini kaldır
@@ -686,7 +700,8 @@ function startDriftCorrection() {
           PlayerAdapter.pause();
         }
         
-        setTimeout(() => {
+        clearTimeout(syncLockTimer);
+        syncLockTimer = setTimeout(() => {
           setupVideoListeners(); // Dinleyicileri geri tak
           isSyncing = false;
         }, 1500);

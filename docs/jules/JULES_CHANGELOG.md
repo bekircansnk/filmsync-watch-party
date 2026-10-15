@@ -11,3 +11,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [15.10.2026] - Oynatıcı Adaptörü ve Eşitleme İyileştirmeleri
+- **Hata Düzeltmeleri & İyileştirmeler:**
+  - `applyRemoteState` ve `forceSync` fonksiyonlarında `isSyncing` kilidi `ensureVideoReady` çağrılarından önceye alınarak race condition sorunları giderildi.
+  - `PlayerAdapter.play` metoduna asenkron hataları yakalamak için Promise hata yönetimi eklendi.
+  - Senkronizasyon işlemlerindeki kilit mekanizmaları için `syncLockTimer` değişkeni tanımlanarak ardışık timeout çakışmaları ve video kekelemeleri (stuttering) önlendi.
