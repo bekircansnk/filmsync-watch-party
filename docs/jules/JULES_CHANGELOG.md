@@ -11,3 +11,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [Güncel Tarih] - Dinamik Senkronizasyon Eşiği İyileştirmesi
+- **Geliştirme:**
+  - `startDriftCorrection` fonksiyonundaki sabit 2.5 saniyelik sapma eşiği (threshold) dinamik hale getirildi.
+  - Ağ gecikmesi (network latency) ve oynatma durumu uyumsuzluğu (play state mismatch) göz önüne alınarak, eşik değeri dinamik olarak hesaplanmaktadır.
+  - Durum uyumsuzluğu durumunda anında eşitleme için 0.5s tolerans kullanılırken, diğer durumlarda ağ gecikmesine bağlı olarak 1.5s ile 4.0s arasında esnek bir eşik uygulanmaktadır. Bu, senkronizasyonun daha kesintisiz olmasını sağlamaktadır.
