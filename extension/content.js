@@ -56,7 +56,10 @@ const PlayerAdapter = {
     if (PlayerAdapter.isNetflix() || PlayerAdapter.isDisney() || PlayerAdapter.isYouTube()) {
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
     } else if (videoElement) {
-      videoElement.play();
+      const playPromise = videoElement.play();
+      if (playPromise !== undefined && typeof playPromise.catch === 'function') {
+        playPromise.catch(e => console.error('[FilmSync] Oynatma hatası:', e));
+      }
     }
   },
 
@@ -450,6 +453,8 @@ function ensureVideoReady(callback, retriesLeft = 10) {
 // Uzak Durumu Videoya Uygula
 function applyRemoteState(state) {
   if (!state) return;
+
+  isSyncing = true;
   
   // Yönlendirme bildirimi (Sadece video adresi farklıysa ve üst penceredeysek)
   if (state.url && state.url !== window.location.href && window === window.top) {
@@ -459,15 +464,17 @@ function applyRemoteState(state) {
     if (normalizedCurrent !== normalizedState && !isEmbedUrl(state.url)) {
       if (window.filmsyncDismissedUrl !== state.url) {
         showMovieRedirectNotification(state.url);
+        isSyncing = false;
         return;
       }
     }
   }
 
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
-
-    isSyncing = true;
+    if (!isReady || !videoElement) {
+      isSyncing = false;
+      return;
+    }
     try {
       const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
       const targetTime = state.currentTime + timeDiff;
@@ -507,23 +514,28 @@ function applyRemoteState(state) {
 // Zorla Senkronize Et
 function forceSync() {
   if (!db || !roomId) return;
+
+  isSyncing = true;
   db.ref(`rooms/${roomId}/lastState`).once('value').then((snapshot) => {
     const state = snapshot.val();
-    if (!state) return;
+    if (!state) {
+      isSyncing = false;
+      return;
+    }
 
     // Yönlendirme bildirimi (Eğer veritabanındaki URL ile mevcut URL farklıysa ve üst penceredeysek, yönlendirme bildirimini göster)
     if (state.url && state.url !== window.location.href && window === window.top) {
       showMovieRedirectNotification(state.url);
+      isSyncing = false;
       return;
     }
 
     ensureVideoReady((isReady) => {
       if (!isReady || !videoElement) {
         isFirstSync = false;
+        isSyncing = false;
         return;
       }
-
-      isSyncing = true;
       try {
         const timeDiff = state.isPlaying ? Math.max(0, (Date.now() - state.lastUpdated) / 1000) : 0;
         const targetTime = state.currentTime + timeDiff;
@@ -545,6 +557,9 @@ function forceSync() {
         console.log('[FilmSync] İlk senkronizasyon başarıyla tamamlandı, kilit kaldırıldı.');
       }, 2000);
     });
+  }).catch((err) => {
+    console.error('[FilmSync] forceSync db read hatası:', err);
+    isSyncing = false;
   });
 }
 
@@ -676,20 +691,24 @@ function startDriftCorrection() {
 
       if (playStateMismatch || drift > 2.5) {
         console.log(`[FilmSync Auto-Sync] Sapma veya durum uyumsuzluğu düzeltiliyor. Sapma: ${drift.toFixed(1)}sn`);
-        isSyncing = true;
         
-        removeVideoListeners(); // Dinleyicileri kaldır
-        PlayerAdapter.seek(expectedTime);
-        if (state.isPlaying && videoElement.paused) {
-          PlayerAdapter.play();
-        } else if (!state.isPlaying && !videoElement.paused) {
-          PlayerAdapter.pause();
-        }
-        
-        setTimeout(() => {
-          setupVideoListeners(); // Dinleyicileri geri tak
-          isSyncing = false;
-        }, 1500);
+        ensureVideoReady((isReady) => {
+          if (!isReady || !videoElement) return;
+
+          isSyncing = true;
+          removeVideoListeners(); // Dinleyicileri kaldır
+          PlayerAdapter.seek(expectedTime);
+          if (state.isPlaying && videoElement.paused) {
+            PlayerAdapter.play();
+          } else if (!state.isPlaying && !videoElement.paused) {
+            PlayerAdapter.pause();
+          }
+
+          setTimeout(() => {
+            setupVideoListeners(); // Dinleyicileri geri tak
+            isSyncing = false;
+          }, 1500);
+        });
       }
     });
   }, 4000);
