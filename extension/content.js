@@ -1981,13 +1981,26 @@ function startButtonObserver() {
 let idleTimer = null;
 let isFullscreen = false;
 
+
+// Leading-edge throttle for high-frequency events like mousemove
+function throttleLeadingEdge(func, limit) {
+  let inThrottle = false;
+  return function(...args) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
+    }
+  };
+}
+
 function setupFullscreenIdleDetector() {
-  const handleMouseMove = () => {
+  const handleMouseMove = throttleLeadingEdge(() => {
     if (!isFullscreen) return;
     
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
-  };
+  }, 100);
 
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('keydown', handleMouseMove);
