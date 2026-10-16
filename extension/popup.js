@@ -692,16 +692,63 @@ document.addEventListener('DOMContentLoaded', () => {
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
+                <span class="dynamic-room-id"></span>
               </div>
-              <div class="public-room-platform">${platformName}</div>
-              <div class="public-room-users">${displayUsersText}</div>
+              <div class="public-room-platform dynamic-platform"></div>
+              <div class="public-room-users dynamic-users"></div>
             </div>
             <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+              <div class="dynamic-buttons-container"></div>
             </div>
           `;
+
+          card.querySelector('.dynamic-room-id').textContent = `🔑 ${roomId}`;
+
+          card.querySelector('.dynamic-platform').textContent = platformName;
+
+          card.querySelector('.dynamic-users').textContent = displayUsersText;
+
+
+          const btnContainer = card.querySelector('.dynamic-buttons-container');
+
+
+          const joinBtn = document.createElement('button');
+
+
+          joinBtn.className = 'btn-join-public';
+
+
+          joinBtn.dataset.code = roomId;
+
+
+          joinBtn.textContent = 'Katıl';
+
+
+          btnContainer.appendChild(joinBtn);
+
+
+          if (activeUserCount === 0) {
+
+
+            const deleteBtn = document.createElement('button');
+
+
+            deleteBtn.className = 'btn-delete-public';
+
+
+            deleteBtn.dataset.room = roomId;
+
+
+            deleteBtn.title = 'Boş Odayı Sil (İmha Et)';
+
+
+            deleteBtn.textContent = '🗑️';
+
+
+            btnContainer.appendChild(deleteBtn);
+
+
+          }
 
           card.querySelector('.btn-join-public').addEventListener('click', () => {
             joinRoomWithCode(roomId);
