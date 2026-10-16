@@ -1,3 +1,9 @@
+
+const Logger = {
+  log: (prefix, msg, ...args) => console.log(`[${new Date().toISOString()}] ${prefix}`, msg, ...args),
+  warn: (prefix, msg, ...args) => console.warn(`[${new Date().toISOString()}] ${prefix}`, msg, ...args),
+  error: (prefix, msg, ...args) => console.error(`[${new Date().toISOString()}] ${prefix}`, msg, ...args)
+};
 // Evo ve Beko Film Partisi Popup JS 🍿
 const firebaseConfig = {
   apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
@@ -55,9 +61,9 @@ function copyToClipboard(text) {
     document.body.removeChild(dummy);
     return true;
   } catch (err) {
-    console.error("[FilmSync] execCommand kopyalama hatası, API denenecek:", err);
+    Logger.error('[FilmSync]', "[FilmSync] execCommand kopyalama hatası, API denenecek:", err);
     navigator.clipboard.writeText(text).catch(e => {
-      console.error("[FilmSync] Kopyalama tamamen başarısız oldu:", e);
+      Logger.error('[FilmSync]', "[FilmSync] Kopyalama tamamen başarısız oldu:", e);
     });
     return false;
   }
@@ -269,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Film Sayfasına Yönlendirme Kontrolü
                 if (roomMovieUrl && currentUrl !== roomMovieUrl && !currentUrl.includes(roomMovieUrl)) {
-                  console.log(`[FilmSync Yönlendirme] Film sayfasına gidiliyor: ${roomMovieUrl}`);
+                  Logger.log('[FilmSync]', `[FilmSync Yönlendirme] Film sayfasına gidiliyor: ${roomMovieUrl}`);
                   if (activeTabId) {
                     chrome.tabs.update(activeTabId, { url: roomMovieUrl });
                   } else {
@@ -282,13 +288,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
               });
             }).catch(err => {
-              console.error('[FilmSync Katılım Hatası]', err);
+              Logger.error('[FilmSync]', '[FilmSync Katılım Hatası]', err);
               showGlobalToast('Odaya katılırken hata oluştu!');
               resetStatus();
             });
           })
           .catch(err => {
-            console.error('[FilmSync REST Oda Arama Hatası]', err);
+            Logger.error('[FilmSync]', '[FilmSync REST Oda Arama Hatası]', err);
             showGlobalToast('Oda doğrulanırken bağlantı hatası oluştu!');
             resetStatus();
           });
@@ -368,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       })
       .catch(err => {
-        console.error('[FilmSync REST Url Hatası]', err);
+        Logger.error('[FilmSync]', '[FilmSync REST Url Hatası]', err);
         showGlobalToast('Film adresi alınamadı!');
       });
   });
@@ -551,7 +557,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
     } catch (e) {
-      console.error(e);
+      Logger.error('[FilmSync]', e);
     }
   }
 
@@ -648,7 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const isInactive3h = (now - latestUserActivity > THREE_HOURS_MS);
 
           if (isExpired24h || isInactive3h) {
-            console.log(`[FilmSync İmha Motoru] Oda ${roomId} 3 saattir inaktif veya 24h dolduğu için siliniyor.`);
+            Logger.log('[FilmSync]', `[FilmSync İmha Motoru] Oda ${roomId} 3 saattir inaktif veya 24h dolduğu için siliniyor.`);
             fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' }).catch(e => {});
             return;
           }
@@ -717,7 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   loadPublicRooms();
                 })
                 .catch(err => {
-                  console.error('[FilmSync Oda Silme Hatası]', err);
+                  Logger.error('[FilmSync]', '[FilmSync Oda Silme Hatası]', err);
                   showGlobalToast('Oda silinirken hata oluştu!');
                 });
             });
@@ -727,7 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       })
       .catch(err => {
-        console.error('[FilmSync Public Rooms REST Hatası]', err);
+        Logger.error('[FilmSync]', '[FilmSync Public Rooms REST Hatası]', err);
         publicRoomCountBadge.textContent = '0 Aktif';
         publicRoomList.innerHTML = '<div style="font-size: 0.72rem; color: #888; text-align: center; padding: 6px 0;">Açık oda verisi alınamadı.</div>';
       });
