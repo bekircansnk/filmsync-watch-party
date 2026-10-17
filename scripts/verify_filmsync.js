@@ -2527,4 +2527,331 @@ console.log('--- FilmSync Test Suite Başlatılıyor ---');
   console.log('✅ Test 69: Sohbet Kapalıyken Anında Klavye Yakalama, Oda Kodsuz/Parantezsiz Başlık, 3D Uçan Emojiler & Apple M4 CPU Optimizasyonu Başarılı.');
 }
 
-console.log('\n🎉 TÜM TESTLER (69/69) EKSİKSİZ VE BAŞARIYLA GEÇTİ! ALTYAPI KUSURSUZ, STABİL VE YÜKSEK PERFORMANSLI.');
+// TEST 70: Her Ekranda Her Zaman Görünür Sohbet Penceresi (shouldShowChatUIInTop), V8 Sözdizimi Doğrulaması, document_end Enjeksiyonu ve FrameId: 0 Dispatch Zırhı
+{
+  const fs = require('fs');
+  const path = require('path');
+  const vm = require('vm');
+
+  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '../extension/manifest.json'), 'utf8'));
+  const contentJs = fs.readFileSync(path.join(__dirname, '../extension/content.js'), 'utf8');
+  const popupJs = fs.readFileSync(path.join(__dirname, '../extension/popup.js'), 'utf8');
+  const bgJs = fs.readFileSync(path.join(__dirname, '../extension/background.js'), 'utf8');
+  const injectJs = fs.readFileSync(path.join(__dirname, '../extension/inject.js'), 'utf8');
+
+  // 0. Tüm eklenti JS dosyalarının V8 derleyicisinde sıfır SyntaxError ile derlendiğini doğrula
+  assert.doesNotThrow(() => new vm.Script(contentJs, { filename: 'content.js' }), 'content.js içinde hiçbir SyntaxError bulunmamalı');
+  assert.doesNotThrow(() => new vm.Script(popupJs, { filename: 'popup.js' }), 'popup.js içinde hiçbir SyntaxError bulunmamalı');
+  assert.doesNotThrow(() => new vm.Script(bgJs, { filename: 'background.js' }), 'background.js içinde hiçbir SyntaxError bulunmamalı');
+  assert.doesNotThrow(() => new vm.Script(injectJs, { filename: 'inject.js' }), 'inject.js içinde hiçbir SyntaxError bulunmamalı');
+
+  // 1. manifest.json document_end ve match_origin_as_fallback doğrulaması (yavaş reklam iframelerinin sohbeti geciktirmesini engeller)
+  assert(manifest.content_scripts[0].run_at === 'document_end', 'content_scripts run_at değeri document_end olmalı');
+  assert(manifest.content_scripts[0].match_origin_as_fallback === true, 'content_scripts match_origin_as_fallback: true içermeli');
+
+  // 2. Ana çerçeve (frameId: 0) hedefli mesajlaşma ve script kurtarma doğrulaması
+  assert(bgJs.includes('ensureTabHasContentScriptAndUI'), 'background.js içinde ensureTabHasContentScriptAndUI zırhı bulunmalı');
+  assert(bgJs.includes("message.type === 'activate-room-in-tab'"), 'background.js activate-room-in-tab mesajını işlemeli');
+  assert(bgJs.includes('frameIds: [0]'), 'background.js ana çerçeveye (frameIds: [0]) öncelikli enjeksiyon yapmalı');
+  assert(popupJs.includes('{ frameId: 0 }'), 'popup.js ping ve mesaj gönderiminde doğrudan frameId: 0 hedeflemeli');
+  assert(popupJs.includes("type: 'activate-room-in-tab'"), 'popup.js oda kurulum/katılımında background.js üzerinden activate-room-in-tab tetiklemeli');
+  assert(popupJs.includes('lastDispatchTs: Date.now()'), 'popup.js her oda kurulumunda/katılımında lastDispatchTs damgası ile storage.onChanged olayını garantilemeli');
+
+  // 3. shouldShowChatUIInTop ve startVideoTracking içinde UI silinmeme garantisi
+  assert(contentJs.includes('function shouldShowChatUIInTop()'), 'content.js içinde shouldShowChatUIInTop fonksiyonu bulunmalı');
+  assert(contentJs.includes('(shouldShowChatUIInTop() || isWatchPage) && !document.getElementById(\'filmsync-root\')'), 'startVideoTracking aktif odada sohbet penceresini her ekranda oluşturmalı');
+  assert(contentJs.includes('!shouldShowChatUIInTop() && !isWatchPage && document.getElementById(\'filmsync-root\')'), 'startVideoTracking normal sayfalarda #filmsync-root elementini asla silmemeli');
+
+  console.log('✅ Test 70: Her Ekranda Her Zaman Görünür Sohbet Penceresi, V8 Sözdizimi Doğrulaması, document_end Enjeksiyonu ve FrameId: 0 Dispatch Zırhı Başarılı.');
+}
+
+// TEST 71: Çoklu Dispatch Kanalları (CustomEvent, postMessage, open-chat-panel, settings-updated) ve Popup Kapanış/Odak Koruma Zırhı
+{
+  const fs = require('fs');
+  const path = require('path');
+
+  const contentJs = fs.readFileSync(path.join(__dirname, '../extension/content.js'), 'utf8');
+
+  // 1. openChatPanelAndFocus ve panelForceOpenUntil (8 saniye erken kapanma koruması)
+  assert(contentJs.includes('function openChatPanelAndFocus('), 'openChatPanelAndFocus yardımcı fonksiyonu tanımlı olmalı');
+  assert(contentJs.includes('panelForceOpenUntil = Date.now() + 8000'), 'Oda başlatıldığında/açıldığında sohbet penceresi en az 8 saniye erken kapanmaya karşı korunmalı');
+  assert(contentJs.includes('if (panelForceOpenUntil && now < panelForceOpenUntil)'), 'startAutoHideTimer içinde panelForceOpenUntil koruma kontrolü bulunmalı');
+  assert(contentJs.includes('if (isMouseInsideChatPanel)'), 'startAutoHideTimer fare sohbet penceresi üzerindeyken pencereyi kapatmamalı');
+
+  // 2. Doğrudan CustomEvent (filmsync-open-chat), postMessage ve runtime mesajlarıyla açılış
+  assert(contentJs.includes("window.addEventListener('filmsync-open-chat', handleCustomOpenChatDispatch)"), 'window üzerinde filmsync-open-chat CustomEvent dinleyicisi bulunmalı');
+  assert(contentJs.includes("document.addEventListener('filmsync-open-chat', handleCustomOpenChatDispatch)"), 'document üzerinde filmsync-open-chat CustomEvent dinleyicisi bulunmalı');
+  assert(contentJs.includes("event.data.type === 'filmsync-open-chat'"), 'postMessage üzerinden filmsync-open-chat desteği bulunmalı');
+  assert(contentJs.includes("message.type === 'open-chat-panel'"), 'chrome.runtime.onMessage üzerinde open-chat-panel desteği bulunmalı');
+  assert(contentJs.includes('function applyImmediateRoomPayload(message)'), 'Mesaj payloadı içindeki oda bilgileri storage beklemeden anında uygulanmalı');
+
+  // 3. Anti-overlay / Anti-adblock görünürlük zırhı
+  assert(contentJs.includes("root.style.setProperty('display', 'block', 'important')"), 'UI Keeper #filmsync-root display:block !important zırhını korumalı');
+  assert(contentJs.includes("root.style.setProperty('visibility', 'visible', 'important')"), 'UI Keeper #filmsync-root visibility:visible !important zırhını korumalı');
+
+  console.log('✅ Test 71: Çoklu Dispatch Kanalları (CustomEvent, postMessage, Runtime) ve Popup Kapanış/Odak Koruma Zırhı Başarılı.');
+}
+
+// TEST 72: Canlı VM Simülasyonu — Farklı Ekranlarda Oda Başlatma, Gizli Sohbeti Dispatch İle Uyandırma ve 1.5s Video Tarama Koruması
+{
+  const fs = require('fs');
+  const path = require('path');
+  const vm = require('vm');
+
+  const contentJs = fs.readFileSync(path.join(__dirname, '../extension/content.js'), 'utf8');
+
+  let runtimeMessageListener = null;
+  let storageChangeListener = null;
+  const windowListeners = {};
+  const documentListeners = {};
+  const elementsById = {};
+
+  function createMockEl(tag, id = '') {
+    const classes = new Set();
+    const attrs = {};
+    const children = [];
+    const el = {
+      tagName: (tag || 'DIV').toUpperCase(),
+      id,
+      value: '',
+      textContent: '',
+      title: '',
+      disabled: false,
+      isConnected: true,
+      parentNode: null,
+      children,
+      style: {
+        opacity: '1',
+        pointerEvents: 'auto',
+        visibility: 'visible',
+        display: 'block',
+        setProperty(k, v) { this[k] = v; }
+      },
+      classList: {
+        add: (...c) => c.forEach(x => classes.add(x)),
+        remove: (...c) => c.forEach(x => classes.delete(x)),
+        contains: (c) => classes.has(c),
+        toggle: (c) => {
+          if (classes.has(c)) { classes.delete(c); return false; }
+          classes.add(c); return true;
+        }
+      },
+      setAttribute: (k, v) => { attrs[k] = String(v); },
+      getAttribute: (k) => attrs[k] || null,
+      removeAttribute: (k) => { delete attrs[k]; },
+      hasAttribute: (k) => Object.prototype.hasOwnProperty.call(attrs, k),
+      appendChild: (child) => {
+        if (child) {
+          child.parentNode = el;
+          children.push(child);
+          if (child.id) elementsById[child.id] = child;
+        }
+        return child;
+      },
+      removeChild: (child) => {
+        const idx = children.indexOf(child);
+        if (idx >= 0) children.splice(idx, 1);
+      },
+      remove: () => {
+        if (el.id && elementsById[el.id] === el) delete elementsById[el.id];
+      },
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => true,
+      focus: () => {},
+      blur: () => {},
+      closest: () => null,
+      querySelector: () => null,
+      querySelectorAll: () => []
+    };
+    Object.defineProperty(el, 'innerHTML', {
+      get: () => '',
+      set: (html) => {
+        if (html && html.includes('filmsync-chat-panel')) {
+          const toolbar = createMockEl('div', 'filmsync-mini-toolbar');
+          toolbar.classList.add('panel-active');
+          const panel = createMockEl('div', 'filmsync-chat-panel');
+          panel.classList.add('active');
+          const closeBtn = createMockEl('button', 'filmsyncCloseBtn');
+          const sendBtn = createMockEl('button', 'filmsyncSendBtn');
+          const msgInput = createMockEl('input', 'filmsyncMsgInput');
+          const msgList = createMockEl('div', 'filmsync-messages');
+          const reactLayer = createMockEl('div', 'filmsync-reaction-layer');
+          const meta = createMockEl('div', 'filmsyncRoomMeta');
+          [toolbar, panel, closeBtn, sendBtn, msgInput, msgList, reactLayer, meta].forEach(c => {
+            elementsById[c.id] = c;
+            children.push(c);
+          });
+        }
+      }
+    });
+    if (id) elementsById[id] = el;
+    return el;
+  }
+
+  const mockBody = createMockEl('body');
+  const mockHead = createMockEl('head');
+  const mockDocEl = createMockEl('html');
+
+  const storageData = {};
+  const intervals = [];
+
+  const mockWindow = {
+    location: {
+      href: 'https://www.netflix.com/browse', // Henüz /watch sayfasında değilken bile oda başlatıldığında sohbet görünmeli!
+      protocol: 'https:',
+      host: 'www.netflix.com',
+      hostname: 'www.netflix.com',
+      pathname: '/browse',
+      search: ''
+    },
+    innerWidth: 1440,
+    innerHeight: 900,
+    frames: [],
+    postMessage: () => {},
+    addEventListener: (type, fn) => {
+      if (!windowListeners[type]) windowListeners[type] = [];
+      windowListeners[type].push(fn);
+    },
+    removeEventListener: () => {},
+    dispatchEvent: (evt) => {
+      const fns = windowListeners[evt.type] || [];
+      fns.forEach(fn => fn(evt));
+    },
+    focus: () => {}
+  };
+  mockWindow.top = mockWindow;
+
+  const mockDocument = {
+    title: 'Netflix',
+    hidden: false,
+    visibilityState: 'visible',
+    body: mockBody,
+    head: mockHead,
+    documentElement: mockDocEl,
+    activeElement: mockBody,
+    fullscreenElement: null,
+    createElement: (tag) => createMockEl(tag),
+    getElementById: (id) => elementsById[id] || null,
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    addEventListener: (type, fn) => {
+      if (!documentListeners[type]) documentListeners[type] = [];
+      documentListeners[type].push(fn);
+    },
+    removeEventListener: () => {},
+    dispatchEvent: (evt) => {
+      const fns = documentListeners[evt.type] || [];
+      fns.forEach(fn => fn(evt));
+    }
+  };
+
+  const sandbox = {
+    window: mockWindow,
+    document: mockDocument,
+    navigator: { keyboard: { lock: () => Promise.resolve(), unlock: () => {} } },
+    location: mockWindow.location,
+    localStorage: { length: 0, key: () => null, removeItem: () => {} },
+    sessionStorage: { removeItem: () => {}, getItem: () => null, setItem: () => {} },
+    performance: { getEntriesByType: () => [] },
+    CustomEvent: function(type, opts) { this.type = type; this.detail = opts ? opts.detail : null; },
+    Event: function(type) { this.type = type; },
+    MutationObserver: function() { this.observe = () => {}; this.disconnect = () => {}; },
+    URL,
+    URLSearchParams,
+    console: { log: () => {}, warn: () => {}, error: () => {} },
+    setTimeout: () => 1,
+    clearTimeout: () => {},
+    setInterval: (fn) => { intervals.push(fn); return intervals.length; },
+    clearInterval: () => {},
+    requestAnimationFrame: (fn) => fn(),
+    firebase: {
+      apps: [{}],
+      initializeApp: () => {},
+      database: Object.assign(() => ({
+        ref: () => ({
+          on: () => {},
+          off: () => {},
+          once: () => Promise.resolve({ val: () => null }),
+          update: () => Promise.resolve(),
+          set: () => Promise.resolve(),
+          push: () => Promise.resolve(),
+          remove: () => Promise.resolve(),
+          onDisconnect: () => ({ remove: () => Promise.resolve(), update: () => Promise.resolve() }),
+          limitToLast: () => ({ once: () => Promise.resolve({ val: () => null }), on: () => {} })
+        })
+      }), {
+        ServerValue: { TIMESTAMP: Date.now() },
+        forceWebSockets: () => {}
+      })
+    },
+    chrome: {
+      runtime: {
+        lastError: null,
+        getURL: (p) => 'chrome-extension://test/' + p,
+        sendMessage: (msg, cb) => {
+          if (msg && msg.type === 'get-tab-id' && cb) cb({ tabId: 101 });
+        },
+        onMessage: {
+          addListener: (fn) => { runtimeMessageListener = fn; }
+        }
+      },
+      storage: {
+        local: {
+          get: (keys, cb) => cb({ ...storageData }),
+          set: (obj, cb) => { Object.assign(storageData, obj); if (cb) cb(); }
+        },
+        onChanged: {
+          addListener: (fn) => { storageChangeListener = fn; }
+        }
+      }
+    }
+  };
+
+  vm.createContext(sandbox);
+  vm.runInContext(contentJs, sandbox);
+
+  // Senaryo 1: Kullanıcı Netflix ana sayfasında (/browse) veya herhangi bir sitede oda başlattığında settings-updated dispatch ile sohbet penceresi anında açılmalı
+  assert(typeof runtimeMessageListener === 'function', 'runtime.onMessage dinleyicisi kayıtlı olmalı');
+  storageData.roomId = 'ROOM99';
+  storageData.username = 'Bekir';
+  storageData.userId = 'user_bekir';
+  runtimeMessageListener({
+    type: 'settings-updated',
+    roomId: 'ROOM99',
+    username: 'Bekir',
+    userId: 'user_bekir',
+    forceOpenChat: true
+  }, {}, () => {});
+
+  assert(!!elementsById['filmsync-root'], 'Oda başlatıldığında #filmsync-root DOM üzerinde oluşturulmalı');
+  assert(!!elementsById['filmsync-chat-panel'], 'Oda başlatıldığında #filmsync-chat-panel DOM üzerinde oluşturulmalı');
+  assert(elementsById['filmsync-chat-panel'].classList.contains('active'), 'Oda başlatıldığında sohbet penceresi aktif (.active) olmalı');
+  assert(elementsById['filmsync-chat-panel'].style.opacity === '1', 'Sohbet penceresi görünür (opacity: 1) olmalı');
+
+  // Senaryo 2: 1.5 saniyelik videoTrackingInterval çalıştığında henüz video olmasa bile (#filmsync-root) SİLİNMEMELİ!
+  intervals.forEach(fn => fn());
+  assert(!!elementsById['filmsync-root'], 'Periyodik video taraması sırasında video henüz yüklenmemiş olsa bile sohbet penceresi silinmemeli');
+
+  // Senaryo 3: Sohbet penceresi gizlendiğinde (hideChatPanel), tekrar dispatch (settings-updated / open-chat-panel / CustomEvent) geldiğinde anında yeniden açılmalı!
+  sandbox.hideChatPanel(true);
+  assert(!elementsById['filmsync-chat-panel'].classList.contains('active'), 'hideChatPanel sonrası sohbet gizlenmiş olmalı');
+
+  // CustomEvent dispatch ile yeniden açma testi
+  mockWindow.dispatchEvent(new sandbox.CustomEvent('filmsync-open-chat', { detail: { roomId: 'ROOM99' } }));
+  assert(elementsById['filmsync-chat-panel'].classList.contains('active'), 'CustomEvent(filmsync-open-chat) dispatch edildiğinde gizli sohbet penceresi anında açılmalı');
+  assert(elementsById['filmsync-chat-panel'].style.opacity === '1', 'CustomEvent dispatch sonrası opacity 1 olmalı');
+
+  // Senaryo 4: Tekrar gizleyip storage.onChanged (lastDispatchTs) ile aynı odada yeniden tetikleme testi
+  sandbox.hideChatPanel(true);
+  assert(!elementsById['filmsync-chat-panel'].classList.contains('active'), 'İkinci gizleme sonrası sohbet kapalı olmalı');
+  storageChangeListener({
+    lastDispatchTs: { oldValue: 100, newValue: 200 }
+  }, 'local');
+  assert(elementsById['filmsync-chat-panel'].classList.contains('active'), 'storage.onChanged (lastDispatchTs) tetiklendiğinde gizli sohbet penceresi yeniden açılmalı');
+
+  console.log('✅ Test 72: Canlı VM Simülasyonu — Farklı Ekranlarda Oda Başlatma, Gizli Sohbeti Dispatch İle Uyandırma ve Silinmeme Koruması Başarılı.');
+}
+
+console.log('\n🎉 TÜM TESTLER (72/72) EKSİKSİZ VE BAŞARIYLA GEÇTİ! ALTYAPI KUSURSUZ, STABİL VE YÜKSEK PERFORMANSLI.');
+

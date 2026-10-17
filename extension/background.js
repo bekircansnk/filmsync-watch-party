@@ -2,6 +2,66 @@
 const DEFAULT_DIZIPAL_URL = 'https://dizipal1590.com/';
 const DIZIPAL_SHORTLINK_URL = 'https://t.ly/dizipalgiris';
 
+// Sekmede (özellikle ana çerçeve frameId: 0 içinde) content.js ve sohbet arayüzünün aktif olduğundan emin olan zırhlı yardımcı
+function ensureTabHasContentScriptAndUI(tabId, roomPayload = null, callback = null) {
+  if (!tabId) {
+    if (callback) callback();
+    return;
+  }
+  const syncMsg = {
+    type: 'settings-updated',
+    forceOpenChat: !!(roomPayload && roomPayload.forceOpenChat),
+    roomId: roomPayload && roomPayload.roomId ? roomPayload.roomId : undefined,
+    username: roomPayload && roomPayload.username ? roomPayload.username : undefined,
+    userId: roomPayload && roomPayload.userId ? roomPayload.userId : undefined,
+    hostId: roomPayload && roomPayload.hostId ? roomPayload.hostId : undefined,
+    hostOnly: roomPayload && roomPayload.hostOnly !== undefined ? roomPayload.hostOnly : undefined,
+    selectedAvatar: roomPayload && roomPayload.selectedAvatar ? roomPayload.selectedAvatar : undefined
+  };
+
+  // Önce doğrudan ana pencereyi (frameId: 0) yokla; yan reklam/about:blank iframelerinin sahte yanıt dönmesini engelle!
+  chrome.tabs.sendMessage(tabId, { type: 'ping-content' }, { frameId: 0 }, (resp) => {
+    const needsInject = Boolean(chrome.runtime.lastError || !resp || !resp.alive);
+    if (needsInject && chrome.scripting && chrome.scripting.executeScript) {
+      chrome.scripting.executeScript({
+        target: { tabId: tabId, frameIds: [0] },
+        files: ['libs/firebase-app.js', 'libs/firebase-database.js', 'content.js']
+      }, () => {
+        if (chrome.runtime.lastError) {}
+        chrome.scripting.executeScript({
+          target: { tabId: tabId, allFrames: true },
+          files: ['libs/firebase-app.js', 'libs/firebase-database.js', 'content.js']
+        }, () => {
+          if (chrome.runtime.lastError) {}
+        });
+        setTimeout(() => {
+          chrome.tabs.sendMessage(tabId, syncMsg, { frameId: 0 }, () => {
+            if (chrome.runtime.lastError) {}
+          });
+          chrome.tabs.sendMessage(tabId, syncMsg, () => {
+            if (chrome.runtime.lastError) {}
+          });
+          chrome.tabs.sendMessage(tabId, { type: 'force-sync', forceOpenChat: syncMsg.forceOpenChat }, () => {
+            if (chrome.runtime.lastError) {}
+            if (callback) callback();
+          });
+        }, 120);
+      });
+    } else {
+      chrome.tabs.sendMessage(tabId, syncMsg, { frameId: 0 }, () => {
+        if (chrome.runtime.lastError) {}
+      });
+      chrome.tabs.sendMessage(tabId, syncMsg, () => {
+        if (chrome.runtime.lastError) {}
+      });
+      chrome.tabs.sendMessage(tabId, { type: 'force-sync', forceOpenChat: syncMsg.forceOpenChat }, () => {
+        if (chrome.runtime.lastError) {}
+        if (callback) callback();
+      });
+    }
+  });
+}
+
 // Eklenti kurulduğunda, güncellendiğinde veya yeniden başlatıldığında açık sekmeleri otomatik kurtar
 function reinjectContentScriptsIntoOpenTabs() {
   try {
@@ -10,18 +70,7 @@ function reinjectContentScriptsIntoOpenTabs() {
       tabs.forEach((tab) => {
         if (!tab || !tab.id || !tab.url) return;
         if (tab.url.startsWith('chrome://') || tab.url.startsWith('https://chrome.google.com/webstore')) return;
-        chrome.tabs.sendMessage(tab.id, { type: 'ping-content' }, (resp) => {
-          if (chrome.runtime.lastError || !resp || !resp.alive) {
-            if (chrome.scripting && chrome.scripting.executeScript) {
-              chrome.scripting.executeScript({
-                target: { tabId: tab.id, allFrames: true },
-                files: ['libs/firebase-app.js', 'libs/firebase-database.js', 'content.js']
-              }, () => {
-                if (chrome.runtime.lastError) {}
-              });
-            }
-          }
-        });
+        ensureTabHasContentScriptAndUI(tab.id);
       });
     });
   } catch (e) {}
@@ -46,7 +95,7 @@ if (chrome.runtime.onStartup) {
 // Metin/HTML içerisinden en güncel dizipalXXXX.com adresini ayıklayan yardımcı
 function extractDizipalDomainFromText(text) {
   if (!text || typeof text !== 'string') return null;
-  const regex = /dizipal(\d{3,5})\.(com|org|net|tv|link)/gi;
+  const regex = /dizipal(\d{2,5})\.(com|org|net|tv|link|uk|cc|xyz|club|site|online|fun|me|io|co|in|pro|live)/gi;
   let match;
   let bestDomain = null;
   let bestNum = 0;
@@ -54,7 +103,7 @@ function extractDizipalDomainFromText(text) {
     const num = parseInt(match[1], 10);
     const tld = match[2].toLowerCase();
     // İlk karşılaşılan (arama sonucunda en üstte çıkan) veya geçerli aralıktaki domaini seç
-    if (!bestDomain && num >= 500 && num <= 9999) {
+    if (!bestDomain && num >= 100 && num <= 99999) {
       bestDomain = `https://dizipal${num}.${tld}/`;
       bestNum = num;
     }
@@ -157,6 +206,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       return true;
     }
+  } else if (message.type === 'activate-room-in-tab') {
+    const targetTabId = message.tabId || (sender && sender.tab ? sender.tab.id : null);
+    if (targetTabId) {
+      ensureTabHasContentScriptAndUI(targetTabId, {
+        forceOpenChat: message.forceOpenChat !== false,
+        roomId: message.roomId,
+        username: message.username,
+        userId: message.userId,
+        hostId: message.hostId,
+        hostOnly: message.hostOnly,
+        selectedAvatar: message.selectedAvatar
+      }, () => {
+        sendResponse({ status: 'success' });
+      });
+      return true;
+    }
+    sendResponse({ status: 'no_tab' });
+    return false;
   } else if (message.type === 'get-tab-id') {
     const tabId = sender.tab ? sender.tab.id : null;
     const topUrl = (sender.tab && sender.tab.url) ? sender.tab.url : '';
@@ -534,7 +601,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     try {
       const parsed = new URL(tab.url);
       // 1. Kullanıcı güncel bir dizipalXXXX.com adresine girdiğinde otomatik öğren ve kaydet
-      if (/^dizipal\d+\.(com|org|net|tv|link)$/i.test(parsed.hostname.replace(/^www\./, ''))) {
+      if (/^dizipal\d*\.(com|org|net|tv|link|uk|cc|xyz|club|site|online|fun|me|io|co|in|pro|live)$/i.test(parsed.hostname.replace(/^www\./, ''))) {
         const latestOrigin = `${parsed.protocol}//${parsed.hostname}/`;
         chrome.storage.local.set({ dizipalCurrentUrl: latestOrigin });
       }
@@ -550,6 +617,46 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       }
     } catch (e) {}
 
+    if (changeInfo.status === 'complete' && (tab.url.startsWith('http://') || tab.url.startsWith('https://'))) {
+      chrome.storage.local.get(['roomId', 'username', 'userId', 'hostId', 'hostOnly', 'selectedAvatar'], (res) => {
+        if (res && res.roomId) {
+          ensureTabHasContentScriptAndUI(tabId, {
+            forceOpenChat: false,
+            roomId: res.roomId,
+            username: res.username,
+            userId: res.userId,
+            hostId: res.hostId,
+            hostOnly: res.hostOnly,
+            selectedAvatar: res.selectedAvatar
+          });
+        }
+      });
+    }
+
     syncCurrentTabMovieUrl(tabId, tab.url, tab.title || '');
   }
 });
+
+if (chrome.tabs && chrome.tabs.onActivated) {
+  chrome.tabs.onActivated.addListener((activeInfo) => {
+    if (!activeInfo || !activeInfo.tabId) return;
+    chrome.storage.local.get(['roomId', 'username', 'userId', 'hostId', 'hostOnly', 'selectedAvatar'], (res) => {
+      if (res && res.roomId) {
+        chrome.tabs.get(activeInfo.tabId, (tab) => {
+          if (chrome.runtime.lastError || !tab || !tab.url) return;
+          if (tab.url.startsWith('http://') || tab.url.startsWith('https://')) {
+            ensureTabHasContentScriptAndUI(activeInfo.tabId, {
+              forceOpenChat: false,
+              roomId: res.roomId,
+              username: res.username,
+              userId: res.userId,
+              hostId: res.hostId,
+              hostOnly: res.hostOnly,
+              selectedAvatar: res.selectedAvatar
+            });
+          }
+        });
+      }
+    });
+  });
+}

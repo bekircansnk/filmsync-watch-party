@@ -111,15 +111,33 @@ function copyToClipboard(text) {
   }
 }
 
-// Sekmede content.js yüklü değilse (eklenti yeni güncellendiyse/yeniden yüklendiyse) anında enjekte et ve senkronize et
-function ensureTabContentScriptAndSync(tabId, callback) {
+// Sekmede content.js yüklü değilse (eklenti yeni güncellendiyse/yeniden yüklendiyse) anında enjekte et ve sohbet penceresini garantili aç
+function ensureTabContentScriptAndSync(tabId, callback, roomMeta = null) {
   if (!tabId) {
     if (callback) callback();
     return;
   }
-  chrome.tabs.sendMessage(tabId, { type: 'settings-updated' }, () => {
-    if (chrome.runtime.lastError) {
-      // Sekmede content script henüz yok veya eski sürüm kopmuş -> Dinamik enjekte et
+
+  const syncPayload = {
+    type: 'settings-updated',
+    forceOpenChat: true,
+    ...(roomMeta && typeof roomMeta === 'object' ? roomMeta : {})
+  };
+
+  // 1. Kalıcı Background Service Worker üzerinden de sekme enjeksiyonunu ve sohbet açılışını garantile (Popup kapansa bile yarıda kalmaz!)
+  try {
+    chrome.runtime.sendMessage({
+      type: 'activate-room-in-tab',
+      tabId: tabId,
+      ...syncPayload
+    }, () => {
+      if (chrome.runtime.lastError) {}
+    });
+  } catch (e) {}
+
+  // 2. Doğrudan ana pencereye (frameId: 0) ping/güncelleme gönder (Alt reklam/about:blank iframelerinin sahte yanıtını engelle!)
+  chrome.tabs.sendMessage(tabId, syncPayload, { frameId: 0 }, (resp) => {
+    if (chrome.runtime.lastError || !resp || !resp.hasUI) {
       if (chrome.scripting && chrome.scripting.executeScript) {
         chrome.scripting.executeScript({
           target: { tabId: tabId, allFrames: true },
@@ -127,17 +145,26 @@ function ensureTabContentScriptAndSync(tabId, callback) {
         }, () => {
           if (chrome.runtime.lastError) {}
           setTimeout(() => {
-            chrome.tabs.sendMessage(tabId, { type: 'force-sync' }, () => {
+            chrome.tabs.sendMessage(tabId, syncPayload, { frameId: 0 }, () => {
+              if (chrome.runtime.lastError) {}
+            });
+            chrome.tabs.sendMessage(tabId, syncPayload, () => {
+              if (chrome.runtime.lastError) {}
+            });
+            chrome.tabs.sendMessage(tabId, { type: 'force-sync', forceOpenChat: true }, () => {
               if (chrome.runtime.lastError) {}
               if (callback) callback();
             });
-          }, 150);
+          }, 120);
         });
       } else if (callback) {
         callback();
       }
     } else {
-      chrome.tabs.sendMessage(tabId, { type: 'force-sync' }, () => {
+      chrome.tabs.sendMessage(tabId, syncPayload, () => {
+        if (chrome.runtime.lastError) {}
+      });
+      chrome.tabs.sendMessage(tabId, { type: 'force-sync', forceOpenChat: true }, () => {
         if (chrome.runtime.lastError) {}
         if (callback) callback();
       });
@@ -373,6 +400,16 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         let isCompleted = false;
+        const roomMeta = {
+          roomId,
+          username,
+          userId,
+          hostId: userId,
+          hostOnly,
+          selectedAvatar,
+          forceOpenChat: true
+        };
+
         const finalizePartyCreation = () => {
           if (isCompleted) return;
           isCompleted = true;
@@ -387,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                   window.close();
                 }, 400);
-              });
+              }, roomMeta);
             } else {
               setTimeout(() => {
                 window.close();
@@ -395,6 +432,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           });
         };
+
+        // 0. Sıfır gecikmeli yerel kayıt ve sekme sohbet penceresi açılışı (Ağ yanıtını beklemeden anında ekranda göster!)
+        chrome.runtime.sendMessage({
+          type: 'create-room',
+          roomId,
+          hostId: userId,
+          username,
+          avatar: selectedAvatar,
+          hostOnly,
+          isPublic,
+          url: currentTabUrl,
+          pageTitle,
+          platformName
+        }, () => {
+          if (chrome.runtime.lastError) {}
+        });
 
         // 1. Önbelleksiz Doğrudan REST PUT (MV3 Popup içinde ~100ms'de tamamlanır, asla asılı kalmaz)
         fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json?t=${nowTs}`, {
@@ -436,6 +489,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }).catch(() => {});
           }
         } catch (e) {}
+
+        // 3. Maksimum 250ms içinde ağ yanıtı gelmese bile UI'ı ve sohbet penceresini derhal aç!
+        setTimeout(() => {
+          finalizePartyCreation();
+        }, 250);
       });
     });
   });
@@ -494,6 +552,15 @@ document.addEventListener('DOMContentLoaded', () => {
           chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
             const activeTab = tabs && tabs[0];
             const activeTabId = activeTab ? activeTab.id : null;
+            const joinMeta = {
+              roomId: code,
+              username,
+              userId,
+              hostId: roomData.hostId || null,
+              hostOnly: roomData.hostOnly || false,
+              selectedAvatar,
+              forceOpenChat: true
+            };
 
             saveSettings(code, username, '', userId, roomData.hostOnly || false, roomData.isPublic !== false, activeTabId, roomData.hostId || null, () => {
               showGlobalToast('Odaya katıldınız! Yönlendiriliyorsunuz 🎉');
@@ -510,7 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     setTimeout(() => {
                       window.close();
                     }, 400);
-                  });
+                  }, joinMeta);
                 }
               }
             });
@@ -725,8 +792,18 @@ document.addEventListener('DOMContentLoaded', () => {
   btnRetrySync.addEventListener('click', () => {
     chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
       if (tabs[0]) {
-        ensureTabContentScriptAndSync(tabs[0].id, () => {
-          showGlobalToast('Senkronizasyon yenilendi ⚡');
+        chrome.storage.local.get(['roomId', 'username', 'userId', 'hostId', 'hostOnly'], (res) => {
+          ensureTabContentScriptAndSync(tabs[0].id, () => {
+            showGlobalToast('Senkronizasyon ve sohbet penceresi yenilendi ⚡');
+          }, {
+            roomId: (res && res.roomId) || currentRoomId,
+            username: res && res.username,
+            userId: res && res.userId,
+            hostId: res && res.hostId,
+            hostOnly: res && res.hostOnly,
+            selectedAvatar,
+            forceOpenChat: true
+          });
         });
       }
     });
@@ -779,11 +856,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function saveSettings(roomId, username, password, userId, hostOnly, isPublic, activeTabId, hostId, callback) {
-    const payload = { roomId, username, password, userId, hostOnly, isPublic, selectedAvatar };
+    const payload = {
+      roomId,
+      username,
+      password,
+      userId,
+      hostOnly,
+      isPublic,
+      selectedAvatar,
+      lastDispatchTs: Date.now()
+    };
     if (activeTabId) payload.activeTabId = activeTabId;
     if (hostId) payload.hostId = hostId;
     chrome.storage.local.set(payload, () => {
-      notifyContentScript();
+      notifyContentScript(payload);
       updateUI();
       if (callback) callback();
     });
@@ -791,10 +877,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateUI() {
     chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-      const currentTabUrl = (tabs && tabs[0] && tabs[0].url) ? tabs[0].url : '';
+      const currentTab = tabs && tabs[0];
+      const currentTabUrl = (currentTab && currentTab.url) ? currentTab.url : '';
       const isVideoPage = Boolean(currentTabUrl && currentTabUrl.startsWith('http'));
 
-      chrome.storage.local.get(['roomId', 'username', 'password'], (result) => {
+      chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'hostId', 'hostOnly'], (result) => {
         if (result.roomId) {
           activeRoomContainer.classList.remove('hidden');
           partyCreatorContainer.classList.add('hidden');
@@ -803,6 +890,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
           currentRoomId = result.roomId;
           setupFirebaseListeners(result.roomId);
+
+          if (currentTab && currentTab.id && isVideoPage) {
+            ensureTabContentScriptAndSync(currentTab.id, null, {
+              roomId: result.roomId,
+              username: result.username,
+              userId: result.userId,
+              hostId: result.hostId,
+              hostOnly: result.hostOnly,
+              selectedAvatar,
+              forceOpenChat: true
+            });
+          }
         } else if (isVideoPage) {
           activeRoomContainer.classList.add('hidden');
           partyCreatorContainer.classList.remove('hidden');
@@ -929,11 +1028,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3000);
   }
 
-  function notifyContentScript() {
+  function notifyContentScript(roomPayload = null) {
+    const msg = {
+      type: 'settings-updated',
+      forceOpenChat: !!(roomPayload && roomPayload.roomId),
+      ...(roomPayload || {})
+    };
     chrome.tabs.query({}, (tabs) => {
       tabs.forEach((tab) => {
         if (tab.url && (tab.url.startsWith('http://') || tab.url.startsWith('https://'))) {
-          chrome.tabs.sendMessage(tab.id, { type: 'settings-updated' }, () => {
+          try {
+            chrome.tabs.sendMessage(tab.id, msg, { frameId: 0 }, () => {
+              if (chrome.runtime.lastError) return;
+            });
+          } catch (e) {}
+          chrome.tabs.sendMessage(tab.id, msg, () => {
             if (chrome.runtime.lastError) return;
           });
         }
