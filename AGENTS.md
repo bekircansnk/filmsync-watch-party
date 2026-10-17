@@ -1,3 +1,18 @@
+# [0] BAŞMÜHENDİS, YEREL ALT AJAN (SUB-AGENT) VE OTONOM İCRA PROTOKOLÜ (P0++)
+1. YEREL ALT AJAN ÖNCELİĞİ: Karmaşık olmayan veya standart işlerde harici bağımsız süreçler (agy-dispatch) tetiklenmez. Sistem içerisinde doğrudan model çağrılarıyla çalışan yerel alt ajan yapısı (`invoke_subagent`, `define_subagent`, `manage_subagents` veya odaklı araştırma alt ajanı) öncelikli olarak kullanılır.
+2. BAŞMÜHENDİS ORKESTRASYON REFLEKSİ: Aktif oturum Başmühendis/Orkestratördür. Karmaşık konularda tek başına körlemesine tüm kodları taramak yerine işi yerel alt ajanlara böler, inceler ve doğrular.
+3. HARİCİ İZOLE WORKER (OPSİYONEL): Ağır batch, harici kota koruması veya 50+ sayfalık derin dış araştırma hallerinde terminalden izole worker havuzuna (`agy-dispatch`) görev devredilebilir; ancak standart süreçlerde yerel alt ajan mekanizması esastır.
+4. OTONOM İCRA & OTOMATİK ÖN-ONAY (HITL ESNEKLİĞİ - P0++): Kullanıcı bir sorundan, hatadan veya geliştirme talebinden bahsettiğinde bu talep peşin ve doğrudan onay kabul edilir. Ajan plan sunup onay beklemez; doğrudan kodlamaya geçer, derleme/testleri tamamlar ve sonucu raporlar. Yalnızca canlı DB veri silme, `git push --force` ve yetkisiz canlı prod yayınında açık onay istenir.
+5. SIFIR-BLOKLAMA VE SINIRSIZ PARALELLEŞTİRME STANDARDI (P0++): Ajanlar veya otomasyon sistemleri işleri asla tek tek yapamaz. API limitleri veya donanımın elverdiği en yüksek paralel iş parçacığı/chunk boyutu ile çalışmak, ağır işleri arka plana devretmek ve kullanıcıyı 0 saniye bekletmek anayasal zorunluluktur.
+6. SIFIR UNUTULAN ARKA PLAN GÖREVİ & ZOMBIE TASK REAPER (P0++): Kodlama veya analiz tamamlandığında arka planda çalışan `grep`, `rg`, `find` veya geçici görev bırakmak KESİNLİKLE YASAKTIR. Tur bitiminde açık kalan geçici görevler `manage_task(Action='list')` + `manage_task(Action='kill')` ve `stop_task_reaper.py` (`Stop` Hook) ile derhal sonlandırılır.
+
+---
+
+## [0a2] Otonom Beceri & Niyet Keşfi (auto_discover_skill.py)
+Kullanıcı istemi geldiğinde niyet, bilişsel kapı ve beceri yönlendirmesi `python3 /Users/bekir/.gemini/maestro/scripts/auto_discover_skill.py` üzerinden otonom işletilir.
+
+---
+
 # 📖 BAĞIMSIZ WORKSPACE VE AJAN REHBERİ (P0++ - EN ÜST ÖNCELİK)
 
 Bu proje, ana monorepodan tamamen ayrıştırılmış ve **kendi başına bağımsız bir pnpm workspace** olarak yapılandırılmıştır. Tüm yapay zeka ajanları geliştirme yaparken bu rehberi mutlak kural olarak uygulamak zorundadır.

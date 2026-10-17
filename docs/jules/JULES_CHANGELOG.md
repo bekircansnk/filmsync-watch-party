@@ -11,3 +11,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## [06.08.2026] - Jules Görevlerinin Tamamının Durdurulması ve Pasife Alınması
+- **Operasyon:**
+  - Kullanıcı talimatı doğrultusunda tüm zamanlanmış Jules sidecar görevleri (`/jules-yonet` cron) iptal edildi ve kaldırıldı.
+  - Çalışan tüm Jules arka plan süreçleri `pkill` ile sonlandırıldı.
+  - Proje dokümantasyonundaki tüm Jules görev durumları pasif/iptal olarak güncellendi.

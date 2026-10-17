@@ -61,3 +61,61 @@
 3.  Copy your Web SDK configuration credentials.
 4.  Update the `firebaseConfig` objects in both **`extension/content.js`** and **`extension/popup.js`** with your credentials.
 
+---
+
+## 🗺️ Dizin Haritası & Klasör Yapısı
+
+```
+12-FilmSync/
+├── .brain                 # Proje kurumsal hafızası
+│   ├── ACTIVE_CONTEXT.md
+│   ├── BASELINE_HEALTH.json
+│   ├── DECISIONS.md
+│   ├── knowledge_graph.json
+│   ├── LESSONS.md
+│   ├── LIVING_KNOWLEDGE_BASE.md
+│   └── PATTERNS.md
+├── docs                    # Proje ve AI kullanım rehberleri
+│   ├── jules
+│   ├── DEBUG_PROTOCOL.md
+│   ├── filmsync_docs.md
+│   ├── index.html
+│   └── README.md
+├── extension
+│   ├── icons_alt_sync
+│   ├── icons_backup_neon
+│   ├── libs
+│   ├── background.js
+│   ├── content.js
+│   ├── icon.png
+│   ├── icon128.png
+│   ├── icon16.png
+│   ├── icon32.png
+│   ├── icon48.png
+│   ├── inject.js
+│   ├── manifest.json
+│   ├── popup.html
+│   └── popup.js
+├── extension_backup_stable
+│   ├── libs
+│   ├── background.js
+│   ├── content.js
+│   ├── icon.png
+│   ├── inject.js
+│   ├── manifest.json
+│   ├── popup.html
+│   └── popup.js
+├── scripts                 # Yardımcı otomasyon ve araçlar
+│   ├── archive
+│   ├── build_safari_app.sh
+│   └── verify_filmsync.js
+├── teleparty
+│   ├── _locales
+```
+
+## 📜 Ajan Anayasası & Hafıza Mimarisi
+- **Evrensel Anayasa:** [`GEMINI.md`](./GEMINI.md) (Global Maestro kuralları)
+- **Yerel Proje Anayasası:** [`AGENTS.md`](./AGENTS.md) (Bu projeye özel kurallar ve standartlar)
+- **Kurumsal Hafıza:** [`.brain/`](./.brain/) (`ACTIVE_CONTEXT.md`, `DECISIONS.md`, `LESSONS.md`, `PATTERNS.md`)
+- **Dokümantasyon İndeksi:** [`docs/README.md`](./docs/README.md)
+

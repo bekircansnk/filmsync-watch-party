@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Film Partisi 🍿 | Birlikte Film İzleyin</title>
+  <link rel="icon" href="https://raw.githubusercontent.com/bekircansnk/filmsync-watch-party/main/extension/icon48.png" type="image/png">
+  <style>
+    :root {
+      --bg-dark: #0b0c14;
+      --card-bg: rgba(18, 20, 32, 0.72);
+      --card-border: rgba(255, 255, 255, 0.14);
+      --card-border-hover: rgba(69, 243, 255, 0.40);
+      --accent-cyan: #45f3ff;
+      --accent-red: #ff3d47;
+      --accent-green: #2ed573;
+      --text-main: #ffffff;
+      --text-muted: rgba(255, 255, 255, 0.68);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(circle at top right, rgba(229, 9, 20, 0.18), transparent 45%),
+                  radial-gradient(circle at bottom left, rgba(69, 243, 255, 0.15), transparent 50%),
+                  radial-gradient(ellipse at center, rgba(30, 35, 55, 0.4), transparent 70%),
+                  var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 680px;
+      background: var(--card-bg);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 40px 32px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .brand-logo {
+      font-size: 48px;
+      margin-bottom: 12px;
+      display: inline-block;
+      filter: drop-shadow(0 4px 14px rgba(255, 61, 71, 0.45));
+      animation: bounce 2s infinite ease-in-out;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 span {
+      background: linear-gradient(135deg, #ff3d47, #ff7675);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 10px rgba(255, 61, 71, 0.35));
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      line-height: 1.5;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Durum Rozeti - 2026 Frosted Glass Pill */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      backdrop-filter: blur(14px) saturate(180%);
+      -webkit-backdrop-filter: blur(14px) saturate(180%);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .status-badge.detected {
+      background: rgba(46, 213, 115, 0.16);
+      border: 1px solid rgba(46, 213, 115, 0.45);
+      color: var(--accent-green);
+      box-shadow: 0 0 24px rgba(46, 213, 115, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .status-badge.not-detected {
+      background: rgba(255, 165, 2, 0.16);
+      border: 1px solid rgba(255, 165, 2, 0.38);
+      color: #ffa502;
+      box-shadow: 0 0 20px rgba(255, 165, 2, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    /* Parti Davet Kutusu - 2026 Frosted Glass */
+    .party-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 22px;
+      margin-bottom: 28px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    }
+
+    .party-card-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-cyan);
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-shadow: 0 0 10px rgba(69, 243, 255, 0.3);
+    }
+
+    .room-code-badge {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      padding: 6px 20px;
+      border-radius: 12px;
+      border: 1px dashed rgba(69, 243, 255, 0.45);
+      display: inline-block;
+      margin: 6px 0 14px 0;
+      box-shadow: 0 4px 16px rgba(69, 243, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Butonlar - 5-State Frosted Glass */
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: center;
+      margin-bottom: 28px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 24px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border: none;
+      letter-spacing: 0.2px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ff3d47, #e50914);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 6px 22px rgba(229, 9, 20, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 28px rgba(229, 9, 20, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .btn-primary:focus-visible {
+      outline: 2px solid rgba(229, 9, 20, 0.6);
+      outline-offset: 2px;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #fff;
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.30);
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .btn-secondary:focus-visible {
+      outline: 2px solid rgba(69, 243, 255, 0.5);
+      outline-offset: 2px;
+    }
+
+    /* Kurulum Adımları - 2026 Frosted Glass Panel */
+    .setup-guide {
+      text-align: left;
+      background: rgba(12, 14, 24, 0.55);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border-radius: 20px;
+      padding: 20px 24px;
+      margin-top: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .setup-guide h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-shadow: 0 0 10px rgba(69, 243, 255, 0.3);
+    }
+
+    .setup-steps {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      counter-reset: steps-counter;
+    }
+
+    .setup-steps li {
+      counter-increment: steps-counter;
+      font-size: 13.5px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.88);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .setup-steps li::before {
+      content: counter(steps-counter);
+      background: rgba(69, 243, 255, 0.2);
+      color: var(--accent-cyan);
+      font-weight: 700;
+      font-size: 12px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+      border: 1px solid rgba(69, 243, 255, 0.35);
+      box-shadow: 0 0 8px rgba(69, 243, 255, 0.2);
+    }
+
+    .code-snippet {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: #fff;
+      backdrop-filter: blur(10px) saturate(180%);
+      -webkit-backdrop-filter: blur(10px) saturate(180%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    /* Özellik Izgarası - 2026 Frosted Glass Bento Cards */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin-top: 24px;
+      text-align: center;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 16px;
+      padding: 14px 10px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+
+    .feature-card:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(255, 255, 255, 0.22);
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+      color: #fff;
+    }
+
+    .feature-icon {
+      font-size: 22px;
+      margin-bottom: 6px;
+      display: block;
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+    }
+
+    footer {
+      margin-top: 24px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.65);
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(14px) saturate(180%);
+      -webkit-backdrop-filter: blur(14px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    footer a {
+      color: rgba(255, 255, 255, 0.85);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    footer a:hover {
+      color: var(--accent-cyan);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="brand-logo">🍿</div>
+    <h1>Film <span>Partisi</span></h1>
+    <p class="subtitle">Arkadaşlarınızla Netflix, YouTube, Disney+ ve tüm platformlarda eşzamanlı izleyin, sohbet edin.</p>
+
+    <!-- Durum Rozeti -->
+    <div id="statusBadge" class="status-badge not-detected">
+      <span class="status-dot"></span>
+      <span id="statusText">Eklenti kontrol ediliyor...</span>
+    </div>
+
+    <!-- Davet Bilgi Alanı -->
+    <div id="inviteArea" class="party-card" style="display: none;">
+      <div class="party-card-title">🎉 Katılacağınız Parti</div>
+      <div id="roomCodeDisplay" class="room-code-badge">----</div>
+      <p id="inviteNotice" style="font-size: 13.5px; color: var(--text-muted);">
+        Odaya katılmak ve filmi senkronize izlemek için eklenti gereklidir.
+      </p>
+    </div>
+
+    <!-- Butonlar -->
+    <div class="btn-group">
+      <a href="https://github.com/bekircansnk/filmsync-watch-party/archive/refs/heads/main.zip" class="btn btn-primary" id="btnDownload">
+        📥 Eklentiyi İndir (.ZIP)
+      </a>
+      <a href="https://github.com/bekircansnk/filmsync-watch-party" target="_blank" class="btn btn-secondary">
+        🐙 GitHub Deposu
+      </a>
+    </div>
+
+    <!-- Kurulum Rehberi -->
+    <div class="setup-guide" id="setupGuide">
+      <h3>🚀 Hızlı Kurulum (1 Dakika)</h3>
+      <ol class="setup-steps">
+        <li>Yukarıdaki butondan ZIP dosyasını indirin ve bilgisayarınızda klasöre çıkartın.</li>
+        <li>Chrome veya Edge tarayıcınızda <span class="code-snippet">chrome://extensions</span> adresini açın.</li>
+        <li>Sağ üst köşedeki <strong>Geliştirici Modu</strong> anahtarını aktif edin.</li>
+        <li>Sol üstteki <strong>Paketlenmemiş öge yükle</strong> butonuna basıp çıkarttığınız klasördeki <span class="code-snippet">extension</span> klasörünü seçin.</li>
+        <li>Kurulum tamamlandı! Bu sayfayı yenilediğinizde partiye anında yönlendirileceksiniz.</li>
+      </ol>
+    </div>
+
+    <!-- Özellikler -->
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">⚡</span>
+        Sıfır Gecikme & Canlı RTT
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🛡️</span>
+        Güvenli & XSS Korumalı
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔊</span>
+        Web Audio Ses Efektleri
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🍿</span>
+        Netflix, YouTube, Disney+
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Film Partisi &bull; Açık Kaynak Watch Party Deneyimi &bull; <a href="https://github.com/bekircansnk/filmsync-watch-party" target="_blank">GitHub</a>
+  </footer>
+
+  <script>
+    (function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const joinCode = urlParams.get('join');
+      const pass = urlParams.get('pass') || '';
+
+      const statusBadge = document.getElementById('statusBadge');
+      const statusText = document.getElementById('statusText');
+      const inviteArea = document.getElementById('inviteArea');
+      const roomCodeDisplay = document.getElementById('roomCodeDisplay');
+      const inviteNotice = document.getElementById('inviteNotice');
+      const setupGuide = document.getElementById('setupGuide');
+      const btnDownload = document.getElementById('btnDownload');
+
+      if (joinCode) {
+        inviteArea.style.display = 'block';
+        roomCodeDisplay.textContent = joinCode.toUpperCase();
+      }
+
+      function onExtensionDetected() {
+        statusBadge.className = 'status-badge detected';
+        statusText.textContent = 'Film Partisi Tespit Edildi! 🍿';
+
+        if (joinCode) {
+          inviteNotice.innerHTML = '<strong>Eklenti aktif!</strong> Parti hazırlandı, yönlendiriliyorsunuz... 🎬';
+          if (setupGuide) setupGuide.style.display = 'none';
+          if (btnDownload) btnDownload.style.display = 'none';
+        } else {
+          if (setupGuide) setupGuide.style.display = 'none';
+          if (btnDownload) {
+            btnDownload.textContent = '🍿 Yeni Parti Başlat';
+            btnDownload.href = 'https://www.netflix.com';
+          }
+        }
+      }
+
+      function checkExtension() {
+        const isInstalled = document.documentElement.getAttribute('data-filmsync-installed') === 'true';
+        if (isInstalled) {
+          onExtensionDetected();
+          return true;
+        }
+        return false;
+      }
+
+      // 1. Custom Event Dinleyicisi
+      window.addEventListener('filmsync-extension-installed', () => {
+        onExtensionDetected();
+      });
+
+      // 2. Anlık (0ms) DOM Özniteliği Değişim Gözlemcisi (MutationObserver)
+      try {
+        const observer = new MutationObserver((mutations) => {
+          for (const m of mutations) {
+            if (m.attributeName === 'data-filmsync-installed') {
+              if (checkExtension()) {
+                observer.disconnect();
+              }
+            }
+          }
+        });
+        observer.observe(document.documentElement, { attributes: true });
+      } catch (e) {}
+
+      // 3. İlk kontrol ve kısa aralıklı fallback sorgulama
+      if (!checkExtension()) {
+        let attempts = 0;
+        const interval = setInterval(() => {
+          attempts++;
+          if (checkExtension() || attempts > 10) {
+            clearInterval(interval);
+            if (!checkExtension()) {
+              statusBadge.className = 'status-badge not-detected';
+              statusText.textContent = 'Eklenti Yüklü Değil';
+            }
+          }
+        }, 200);
+      }
+    })();
+  </script>
+</body>
+</html>

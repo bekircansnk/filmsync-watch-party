@@ -1,0 +1,99 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      ".read": true,
+      ".indexOn": ["createdAt"],
+      "$roomId": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['lastState']) || newData.hasChildren(['users']) || !newData.exists()",
+        "name": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "hostId": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "hostOnly": {
+          ".validate": "newData.isBoolean()"
+        },
+        "password": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "lastState": {
+          ".validate": "!newData.exists() || newData.hasChildren(['isPlaying', 'currentTime'])",
+          "currentTime": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "isPlaying": {
+            ".validate": "newData.isBoolean()"
+          },
+          "url": {
+            ".validate": "!newData.exists() || newData.isString()"
+          },
+          "lastUpdated": {
+            ".validate": "!newData.exists() || newData.isNumber()"
+          },
+          "action": {
+            ".validate": "!newData.exists() || newData.isString()"
+          },
+          "senderId": {
+            ".validate": "!newData.exists() || newData.isString()"
+          }
+        },
+        "users": {
+          "$userId": {
+            ".validate": "!newData.exists() || newData.hasChildren(['username'])",
+            "username": {
+              ".validate": "newData.isString() && newData.val().length <= 50"
+            },
+            "avatar": {
+              ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 10)"
+            },
+            "lastActive": {
+              ".validate": "!newData.exists() || newData.isNumber()"
+            },
+            "isBuffering": {
+              ".validate": "!newData.exists() || newData.isBoolean()"
+            }
+          }
+        },
+        "messages": {
+          "$messageId": {
+            ".validate": "!newData.exists() || newData.hasChildren(['username', 'message'])",
+            "username": {
+              ".validate": "newData.isString() && newData.val().length <= 50"
+            },
+            "message": {
+              ".validate": "newData.isString() && newData.val().length <= 2000"
+            },
+            "timestamp": {
+              ".validate": "!newData.exists() || newData.isNumber()"
+            },
+            "isSystem": {
+              ".validate": "!newData.exists() || newData.isBoolean()"
+            }
+          }
+        },
+        "reactions": {
+          "$reactionId": {
+            ".validate": "!newData.exists() || newData.hasChildren(['emoji'])",
+            "emoji": {
+              ".validate": "newData.isString() && newData.val().length <= 10"
+            },
+            "senderId": {
+              ".validate": "!newData.exists() || newData.isString()"
+            },
+            "timestamp": {
+              ".validate": "!newData.exists() || newData.isNumber()"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

@@ -34,3 +34,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Maestro Runtime & Ephemeral Brain State
+.brain/BASELINE_HEALTH.json
+.brain/PREFLIGHT_TOKEN
+.brain/SESSION_STATE.json
+.brain/*.tmp

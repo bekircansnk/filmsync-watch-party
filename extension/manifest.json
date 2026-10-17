@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Evo ve Beko Film Partisi",
+  "name": "Film Partisi",
   "version": "1.2.0",
-  "description": "Evo ve Beko ile Netflix, YouTube ve diğer platformlarda arkadaşlarınızla eşzamanlı film izleyin ve sohbet edin.",
+  "description": "Arkadaşlarınızla Netflix, YouTube ve tüm platformlarda eşzamanlı film ve video izleyin, sohbet edin.",
   "permissions": [
     "storage",
     "activeTab",
@@ -13,12 +13,18 @@
   ],
   "icons": {
     "16": "icon16.png",
+    "32": "icon32.png",
     "48": "icon48.png",
     "128": "icon128.png"
   },
   "action": {
     "default_popup": "popup.html",
-    "default_icon": "icon48.png"
+    "default_icon": {
+      "16": "icon16.png",
+      "32": "icon32.png",
+      "48": "icon48.png"
+    },
+    "default_title": "Film Partisi"
   },
   "background": {
     "service_worker": "background.js"

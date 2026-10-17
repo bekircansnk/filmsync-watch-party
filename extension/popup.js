@@ -1,4 +1,4 @@
-// Evo ve Beko Film Partisi Popup JS 🍿
+// Film Partisi Popup JS 🍿
 const firebaseConfig = {
   apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
   authDomain: "movieparty-af87f.firebaseapp.com",
@@ -34,6 +34,17 @@ function getRandomMovieAvatar(nameStr) {
   return MOVIE_AVATARS[index];
 }
 
+// XSS Koruması: HTML karakterlerini güvenle kaçış karakterine dönüştür
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // 4 Harfli Büyük Harflerden Oluşan Oda Kodu Üretici
 function generate4LetterCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -42,6 +53,79 @@ function generate4LetterCode() {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
+}
+
+// Film URL'lerini platform bazlı kanonik hale getiren motor
+function normalizeMovieUrl(url) {
+  if (!url || typeof url !== 'string') return '';
+  try {
+    const parsed = new URL(url);
+    // Netflix: Sadece /watch/ID kısmını al, tüm trackId, tctx vb. parametreleri temizle!
+    const netflixMatch = parsed.pathname.match(/\/watch\/(\d+)/);
+    if (parsed.hostname.includes('netflix.com') && netflixMatch) {
+      return `https://www.netflix.com/watch/${netflixMatch[1]}`;
+    }
+    // YouTube: v parametresini al
+    if (parsed.hostname.includes('youtube.com')) {
+      const v = parsed.searchParams.get('v');
+      if (v) return `https://www.youtube.com/watch?v=${v}`;
+    }
+    if (parsed.hostname.includes('youtu.be')) {
+      const v = parsed.pathname.replace(/^\//, '');
+      if (v) return `https://www.youtube.com/watch?v=${v}`;
+    }
+    // Disney+: Sadece /video/ID kısmını al
+    const disneyMatch = parsed.pathname.match(/\/video\/([a-zA-Z0-9-]+)/);
+    if (parsed.hostname.includes('disneyplus.com') && disneyMatch) {
+      return `https://www.disneyplus.com/video/${disneyMatch[1]}`;
+    }
+    // Genel video siteleri: query ve hash'i kırp, trailing slash temizle
+    return `${parsed.origin}${parsed.pathname}`.replace(/\/$/, '');
+  } catch (e) {
+    return url.split('?')[0].split('#')[0].replace(/\/$/, '');
+  }
+}
+
+// İki URL'nin aynı filme/bölüme ait olup olmadığını doğrulayan karşılaştırıcı
+function areUrlsSameMovie(url1, url2) {
+  if (!url1 || !url2) return false;
+  if (url1 === url2) return true;
+  const n1 = normalizeMovieUrl(url1);
+  const n2 = normalizeMovieUrl(url2);
+  return !!(n1 && n2 && n1 === n2);
+}
+
+// Yalnızca geçerli film/dizi izleme sayfalarını belirleyen koruma filtresi
+function isMovieWatchUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  const u = url.toLowerCase();
+  if (u.includes('hdfilmcehennemi')) return true;
+  if (u.includes('dizipal')) return true;
+  if (u.includes('netflix.com/watch')) return true; // Sadece aktif video izleme sayfası! (browse/title fragmanları atlanır)
+  if (u.includes('youtube.com/watch')) return true;
+  if (u.includes('disneyplus.com/video/')) return true;
+  if (u.includes('primevideo.com/detail') || u.includes('primevideo.com/watch')) return true;
+  if (u.includes('blutv.com') || u.includes('exxen.com') || u.includes('gain.tv') || u.includes('todtv.com.tr')) return true;
+  return false;
+}
+
+// Aktif sekmeyi her ortamda (popup, bağımsız pencere vb.) garantili bulan yardımcı
+function getActiveTab(callback) {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs && tabs[0]) {
+      callback(tabs[0]);
+    } else {
+      chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs2) => {
+        if (tabs2 && tabs2[0]) {
+          callback(tabs2[0]);
+        } else {
+          chrome.tabs.query({ active: true }, (tabs3) => {
+            callback(tabs3 && tabs3[0] ? tabs3[0] : null);
+          });
+        }
+      });
+    }
+  });
 }
 
 // Güvenli Kopyalama Metodu (Popup bağlamında sorunsuz çalışır)
@@ -90,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const activeUsersList = document.getElementById('activeUsersList');
   
   const globalStatusDot = document.getElementById('globalStatusDot');
-  const globalStatusText = document.getElementById('globalStatusText');
   const copiedToast = document.getElementById('copiedToast');
   const globalToast = document.getElementById('globalToast');
 
@@ -151,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btnStartParty.addEventListener('click', () => {
     const username = usernameInput.value.trim();
     if (!username) {
-      showGlobalToast('Lütfen bir kullanıcı adı girin! 🍿');
+      showGlobalToast('Lütfen adınızı girin.');
       return;
     }
     const hostOnly = hostOnlySwitch.checked;
@@ -165,9 +248,10 @@ document.addEventListener('DOMContentLoaded', () => {
         userId = 'usr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
       }
 
-      chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-        const currentTabUrl = (tabs && tabs[0] && tabs[0].url) ? tabs[0].url : '';
-        const activeTabId = (tabs && tabs[0]) ? tabs[0].id : null;
+      getActiveTab((tab) => {
+        const currentTabUrl = (tab && tab.url) ? tab.url : '';
+        const activeTabId = tab ? tab.id : null;
+        const normalizedUrl = isMovieWatchUrl(currentTabUrl) ? normalizeMovieUrl(currentTabUrl) : '';
 
         // Arka plan Service Worker'ına REST oda kurulum isteği gönder
         chrome.runtime.sendMessage({
@@ -177,19 +261,24 @@ document.addEventListener('DOMContentLoaded', () => {
           username: username,
           avatar: selectedAvatar,
           hostOnly: hostOnly,
-          url: currentTabUrl
+          url: normalizedUrl
         }, (response) => {
           // Yerel depolamaya kaydet ve arayüzü anında güncelle
-          saveSettings(roomId, username, '', userId, hostOnly, activeTabId, () => {
-            const inviteUrl = `https://github.com/bekircansnk/filmsync-watch-party?join=${encodeURIComponent(roomId)}&pass=`;
+          saveSettings(roomId, username, '', userId, hostOnly, activeTabId, userId, () => {
+            const inviteUrl = `https://bekircansnk.github.io/filmsync-watch-party/?join=${encodeURIComponent(roomId)}&pass=`;
             copyToClipboard(inviteUrl);
-            showGlobalToast('Parti kuruldu! Davet linki kopyalandı! 🍿');
+            showGlobalToast('Film partisi hazır! Davet bağlantısı kopyalandı.');
 
             if (activeTabId) {
               chrome.tabs.sendMessage(activeTabId, { type: 'force-sync' }, () => {
                 if (chrome.runtime.lastError) {}
               });
             }
+
+            // Partiyi başlattıktan sonra eklenti penceresini otomatik kapat (kullanıcıyı film sayfasına bırak)
+            setTimeout(() => {
+              window.close();
+            }, 400);
           });
         });
       });
@@ -200,13 +289,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function joinRoomWithCode(codeValue) {
     const code = codeValue.trim().toUpperCase();
     if (!code || code.length !== 4) {
-      showGlobalToast('Lütfen 4 haneli geçerli bir oda kodu girin!');
+      showGlobalToast('Lütfen 4 haneli oda kodunu girin.');
       return;
     }
 
     const username = usernameInput.value.trim();
     if (!username) {
-      showGlobalToast('Lütfen odaya katılmadan önce adınızı girin! 🍿');
+      showGlobalToast('Lütfen önce adınızı girin.');
       return;
     }
 
@@ -218,36 +307,22 @@ document.addEventListener('DOMContentLoaded', () => {
         userId = 'usr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
       }
 
-      chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-        const activeTabId = tabs && tabs[0] ? tabs[0].id : null;
-        const currentUrl = tabs && tabs[0] ? tabs[0].url : '';
+      getActiveTab((tab) => {
+        const activeTabId = tab ? tab.id : null;
+        const currentUrl = tab ? tab.url : '';
 
-        // Doğrudan Firebase REST API ile tüm odaları tara (Harf büyüklüğü bağımsız)
-        fetch('https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json')
+        // Doğrudan hedeflenen odayı çek (tüm veritabanını indirme!)
+        fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${code}.json`)
           .then(r => r.json())
-          .then(allRooms => {
-            if (!allRooms) {
-              showGlobalToast('Böyle bir oda bulunamadı! ❌');
+          .then(roomData => {
+            if (!roomData) {
+              showGlobalToast('Oda bulunamadı.');
               resetStatus();
               return;
             }
 
-            // Case-Insensitive oda arama
-            let matchedRoomId = null;
-            let matchedRoomData = null;
-
-            Object.entries(allRooms).forEach(([rId, rData]) => {
-              if (rId.trim().toUpperCase() === code) {
-                matchedRoomId = rId;
-                matchedRoomData = rData;
-              }
-            });
-
-            if (!matchedRoomData || !matchedRoomId) {
-              showGlobalToast('Böyle bir oda bulunamadı! ❌');
-              resetStatus();
-              return;
-            }
+            const matchedRoomId = code;
+            const matchedRoomData = roomData;
 
             // Odaya katılan kullanıcıyı kaydet
             const roomMovieUrl = (matchedRoomData.lastState && matchedRoomData.lastState.url) ? matchedRoomData.lastState.url : '';
@@ -264,32 +339,41 @@ document.addEventListener('DOMContentLoaded', () => {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(updatePayload)
             }).then(() => {
-              saveSettings(matchedRoomId, username, '', userId, matchedRoomData.hostOnly || false, activeTabId, () => {
-                showGlobalToast('Odaya başarıyla katıldınız! 🎉');
+              saveSettings(matchedRoomId, username, '', userId, matchedRoomData.hostOnly || false, activeTabId, matchedRoomData.hostId || '', () => {
+                showGlobalToast('Odaya katıldınız.');
 
-                // Film Sayfasına Yönlendirme Kontrolü
-                if (roomMovieUrl && currentUrl !== roomMovieUrl && !currentUrl.includes(roomMovieUrl)) {
-                  console.log(`[FilmSync Yönlendirme] Film sayfasına gidiliyor: ${roomMovieUrl}`);
+                // Film Sayfasına Yönlendirme Kontrolü (Çift Sayfa Açılmasını ve Yenilenmeyi Önle)
+                const cleanCurrentUrl = normalizeMovieUrl(currentUrl);
+                const cleanRoomUrl = normalizeMovieUrl(roomMovieUrl);
+
+                if (cleanRoomUrl && !areUrlsSameMovie(cleanCurrentUrl, cleanRoomUrl)) {
+                  console.log(`[FilmSync Yönlendirme] Film sayfasına gidiliyor: ${cleanRoomUrl}`);
                   if (activeTabId) {
-                    chrome.tabs.update(activeTabId, { url: roomMovieUrl });
+                    chrome.tabs.update(activeTabId, { url: cleanRoomUrl });
                   } else {
-                    chrome.tabs.create({ url: roomMovieUrl });
+                    chrome.tabs.create({ url: cleanRoomUrl });
                   }
                 } else if (activeTabId) {
+                  console.log('[FilmSync] Zaten aynı film sayfasındayız, sekme yenilenmeyecek. force-sync gönderiliyor.');
                   chrome.tabs.sendMessage(activeTabId, { type: 'force-sync' }, () => {
                     if (chrome.runtime.lastError) {}
                   });
                 }
+
+                // Odaya katıldıktan sonra eklenti penceresini otomatik kapat
+                setTimeout(() => {
+                  window.close();
+                }, 400);
               });
             }).catch(err => {
               console.error('[FilmSync Katılım Hatası]', err);
-              showGlobalToast('Odaya katılırken hata oluştu!');
+              showGlobalToast('Odaya katılırken bir sorun oluştu.');
               resetStatus();
             });
           })
           .catch(err => {
             console.error('[FilmSync REST Oda Arama Hatası]', err);
-            showGlobalToast('Oda doğrulanırken bağlantı hatası oluştu!');
+            showGlobalToast('Bağlantı kurulamadı.');
             resetStatus();
           });
       });
@@ -323,17 +407,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Yönlendirme yardımcısı
         const redirectTab = (urlStr) => {
-          chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-            if (tabs && tabs[0]) {
-              const currentTabUrl = tabs[0].url || '';
-              if (currentTabUrl === urlStr || (currentTabUrl.includes(urlStr) && urlStr.length > 15)) {
-                chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, () => {
+          getActiveTab((activeTab) => {
+            if (activeTab) {
+              const currentTabUrl = activeTab.url || '';
+              if (areUrlsSameMovie(currentTabUrl, urlStr)) {
+                chrome.tabs.sendMessage(activeTab.id, { type: 'force-sync' }, () => {
                   if (chrome.runtime.lastError) {}
                 });
-                showGlobalToast('Zaten bu film sayfasındasınız! 🍿');
+                showGlobalToast('Zaten film sayfasındasınız.');
               } else {
-                chrome.tabs.update(tabs[0].id, { url: urlStr }, () => {
-                  showGlobalToast('Film sayfasına gidiliyor... 🍿');
+                chrome.tabs.update(activeTab.id, { url: normalizeMovieUrl(urlStr) }, () => {
+                  showGlobalToast('Film sayfasına geçiliyor...');
                   setTimeout(() => window.close(), 300);
                 });
               }
@@ -358,31 +442,31 @@ document.addEventListener('DOMContentLoaded', () => {
             if (foundTab) {
               chrome.tabs.update(foundTab.id, { active: true }, () => {
                 chrome.windows.update(foundTab.windowId, { focused: true });
-                showGlobalToast('Film sekmesine geçildi! 🍿');
+                showGlobalToast('Film sekmesine geçildi.');
                 setTimeout(() => window.close(), 300);
               });
             } else {
-              showGlobalToast('Oda henüz film sayfasına bağlanmamış. Bir film açın! 🍿');
+              showGlobalToast('Oda henüz bir filme bağlı değil. Bir film başlatın.');
             }
           });
         }
       })
       .catch(err => {
         console.error('[FilmSync REST Url Hatası]', err);
-        showGlobalToast('Film adresi alınamadı!');
+        showGlobalToast('Film bağlantısı alınamadı.');
       });
   });
 
-  // "Senkronizasyonu Yenile"
+  // "Senkronize Et"
   btnRetrySync.addEventListener('click', () => {
-    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-      if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, (response) => {
+    getActiveTab((tab) => {
+      if (tab) {
+        chrome.tabs.sendMessage(tab.id, { type: 'force-sync' }, (response) => {
           if (chrome.runtime.lastError) {
-            showGlobalToast('Oynatıcı bulunamadı. Film sayfasını açın!');
+            showGlobalToast('Oynatıcı bulunamadı. Lütfen film sayfasını açın.');
             return;
           }
-          showGlobalToast('Senkronizasyon yenileniyor...');
+          showGlobalToast('Senkronize ediliyor...');
         });
       }
     });
@@ -391,9 +475,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // "Odadan Ayrıl"
   btnLeaveRoom.addEventListener('click', () => {
     cleanupFirebaseListeners();
-    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-      if (tabs && tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: 'leave-room' }, () => {
+    getActiveTab((tab) => {
+      if (tab) {
+        chrome.tabs.sendMessage(tab.id, { type: 'leave-room' }, () => {
           if (chrome.runtime.lastError) {}
         });
       }
@@ -404,13 +488,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // "Davet Linkini Kopyala"
+  // "Davet Bağlantısını Kopyala"
   btnCopyInvite.addEventListener('click', () => {
     chrome.storage.local.get(['roomId', 'password'], (result) => {
       if (result.roomId) {
-        const inviteUrl = `https://github.com/bekircansnk/filmsync-watch-party?join=${encodeURIComponent(result.roomId)}&pass=${encodeURIComponent(result.password || '')}`;
+        const inviteUrl = `https://bekircansnk.github.io/filmsync-watch-party/?join=${encodeURIComponent(result.roomId)}&pass=${encodeURIComponent(result.password || '')}`;
         copyToClipboard(inviteUrl);
-        showGlobalToast('Davet linki kopyalandı! 📋');
+        showGlobalToast('Davet bağlantısı kopyalandı.');
       }
     });
   });
@@ -419,7 +503,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const code = roomIdDisplay.textContent;
     if (code && code !== '----') {
       copyToClipboard(code);
-      showGlobalToast('Oda kodu kopyalandı! 📋');
+      showGlobalToast('Oda kodu kopyalandı.');
+      if (copiedToast) {
+        copiedToast.style.display = 'block';
+        setTimeout(() => { copiedToast.style.display = 'none'; }, 2000);
+      }
     }
   };
 
@@ -435,8 +523,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (globalStatusDot) globalStatusDot.classList.remove('active');
   }
 
-  function saveSettings(roomId, username, password, userId, hostOnly, activeTabId, callback) {
-    chrome.storage.local.set({ roomId, username, password, userId, hostOnly, activeTabId, selectedAvatar }, () => {
+  function saveSettings(roomId, username, password, userId, hostOnly, activeTabId, hostId, callback) {
+    if (typeof hostId === 'function') {
+      callback = hostId;
+      hostId = '';
+    }
+    chrome.storage.local.set({ roomId, username, password, userId, hostOnly, activeTabId, hostId: hostId || '', selectedAvatar }, () => {
       notifyContentScript();
       updateUI();
       if (callback) callback();
@@ -448,8 +540,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const publicRoomsSection = document.getElementById('publicRoomsSection');
     const joinCodeSection = document.getElementById('joinCodeSection');
 
-    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-      const currentTabUrl = (tabs && tabs[0] && tabs[0].url) ? tabs[0].url : '';
+    getActiveTab((tab) => {
+      const currentTabUrl = (tab && tab.url) ? tab.url : '';
       const isVideoPage = currentTabUrl && (
         currentTabUrl.includes('netflix.com/watch/') || 
         currentTabUrl.includes('hdfilmcehennemi') ||
@@ -542,10 +634,10 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
         
-        userCountTitle.textContent = `Aktif Üyeler (${count})`;
+        userCountTitle.textContent = `Katılımcılar (${count})`;
       });
 
-      // 2. "Film Sayfasına Git 🎬" Butonunu Daima Görünür Tut
+      // 2. "Filme Git" Butonunu Daima Görünür Tut
       if (btnGoToMovie) {
         btnGoToMovie.classList.remove('hidden');
       }
@@ -611,8 +703,8 @@ document.addEventListener('DOMContentLoaded', () => {
         publicRoomList.innerHTML = '';
 
         if (!rooms) {
-          publicRoomCountBadge.textContent = '0 Aktif Oda';
-          publicRoomList.innerHTML = '<div style="font-size: 0.72rem; color: #888; text-align: center; padding: 6px 0;">Şu anda açık oda bulunmuyor. Hemen yukarıdan parti başlatın! 🍿</div>';
+          publicRoomCountBadge.textContent = '0 Oda';
+          publicRoomList.innerHTML = '<div class="empty-room-msg">Açık oda bulunmuyor. Yeni bir parti başlatabilirsiniz.</div>';
           return;
         }
 
@@ -654,16 +746,16 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           const movieUrl = (roomData.lastState && roomData.lastState.url) ? roomData.lastState.url : '';
-          let platformName = '🍿 İzleme Partisi';
-          if (movieUrl.includes('netflix.com')) platformName = '🍿 Netflix';
-          else if (movieUrl.includes('hdfilmcehennemi')) platformName = '🎬 HDFilmCehennemi';
-          else if (movieUrl.includes('dizipal')) platformName = '🎥 Dizipal';
-          else if (movieUrl.includes('youtube.com')) platformName = '📺 YouTube';
-          else if (movieUrl.includes('disneyplus.com')) platformName = '✨ Disney+';
+          let platformName = 'Film Partisi';
+          if (movieUrl.includes('netflix.com')) platformName = 'Netflix';
+          else if (movieUrl.includes('hdfilmcehennemi')) platformName = 'HDFilmCehennemi';
+          else if (movieUrl.includes('dizipal')) platformName = 'Dizipal';
+          else if (movieUrl.includes('youtube.com')) platformName = 'YouTube';
+          else if (movieUrl.includes('disneyplus.com')) platformName = 'Disney+';
 
-          // Kullanıcı isimleri özeti
-          const userNames = validUserEntries.map(([_, u]) => u.username || 'Üye').join(', ');
-          const displayUsersText = activeUserCount > 0 ? `${activeUserCount} Üye (${userNames})` : 'Boş Oda (Katılabilirsiniz)';
+          // Kullanıcı isimleri özeti (XSS korumalı)
+          const userNames = validUserEntries.map(([_, u]) => escapeHtml(u.username || 'Katılımcı')).join(', ');
+          const displayUsersText = activeUserCount > 0 ? `${activeUserCount} kişi (${userNames})` : 'Müsait oda';
 
           processedRooms.push({
             roomId,
@@ -679,27 +771,29 @@ document.addEventListener('DOMContentLoaded', () => {
         // 📅 EN YENİ AÇILAN ODA EN ÜSTTE SIRALAMASI (Desc Order by createdAt / lastUpdated)
         processedRooms.sort((a, b) => b.createdAt - a.createdAt || b.lastUpdated - a.lastUpdated);
 
-        publicRoomCountBadge.textContent = `${processedRooms.length} Aktif Oda`;
+        publicRoomCountBadge.textContent = `${processedRooms.length} Oda`;
 
         if (processedRooms.length === 0) {
-          publicRoomList.innerHTML = '<div style="font-size: 0.72rem; color: #888; text-align: center; padding: 6px 0;">Şu anda açık oda bulunmuyor. Hemen yukarıdan parti başlatın! 🍿</div>';
+          publicRoomList.innerHTML = '<div class="empty-room-msg">Açık oda bulunmuyor. Yeni bir parti başlatabilirsiniz.</div>';
           return;
         }
 
         processedRooms.forEach(({ roomId, platformName, displayUsersText, activeUserCount }) => {
+          const safeRoomId = escapeHtml(roomId);
+          const safePlatform = escapeHtml(platformName);
           const card = document.createElement('div');
           card.className = 'public-room-card';
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
+                <span class="room-code-pill">${safeRoomId}</span>
               </div>
-              <div class="public-room-platform">${platformName}</div>
+              <div class="public-room-platform">${safePlatform}</div>
               <div class="public-room-users">${displayUsersText}</div>
             </div>
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button class="btn-join-public" data-code="${safeRoomId}">Katıl</button>
+              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${safeRoomId}" title="Odayı Kapat">🗑️</button>` : ''}
             </div>
           `;
 
@@ -713,12 +807,12 @@ document.addEventListener('DOMContentLoaded', () => {
               e.stopPropagation();
               fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json`, { method: 'DELETE' })
                 .then(() => {
-                  showGlobalToast(`Oda ${roomId} başarıyla imha edildi! 🗑️`);
+                  showGlobalToast(`Oda (${roomId}) kapatıldı.`);
                   loadPublicRooms();
                 })
                 .catch(err => {
                   console.error('[FilmSync Oda Silme Hatası]', err);
-                  showGlobalToast('Oda silinirken hata oluştu!');
+                  showGlobalToast('Oda kapatılırken bir sorun oluştu.');
                 });
             });
           }
@@ -728,8 +822,8 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(err => {
         console.error('[FilmSync Public Rooms REST Hatası]', err);
-        publicRoomCountBadge.textContent = '0 Aktif';
-        publicRoomList.innerHTML = '<div style="font-size: 0.72rem; color: #888; text-align: center; padding: 6px 0;">Açık oda verisi alınamadı.</div>';
+        publicRoomCountBadge.textContent = '0 Oda';
+        publicRoomList.innerHTML = '<div class="empty-room-msg">Açık oda verisi alınamadı.</div>';
       });
   }
 });

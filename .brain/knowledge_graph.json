@@ -1,0 +1,1124 @@
+{
+  "nodes": [
+    {
+      "id": "ORIGINAL_REQUEST.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": "PROJECT.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": "SYSTEM_CHANGELOG.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": "README.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": "AGENTS.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": "teleparty/firebase-messaging-sw.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/background_service_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/ci_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/popup_react_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/web/emojiPicker.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/web/detect_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/web/connect_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/hulujp/hulujp_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/hulujp/hulujp_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/vix/vix_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/vix/vix_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/hotstar/hotstar_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/hotstar/hotstar_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/hbo_max/hbo_max_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/hbo_max/hbo_max_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/migu/migu_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/migu/migu_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/amazon/amazon_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/amazon/amazon_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/fancode/fancode_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/fancode/fancode_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/shahid/shahid_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/shahid/shahid_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/jio_cinema/jio_cinema_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/jio_cinema/jio_cinema_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/viki/viki_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/viki/viki_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/tubitv/tubitv_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/tubitv/tubitv_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/foxone/foxone_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/foxone/foxone_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/crave/crave_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/crave/crave_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/max/max_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/max/max_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/viu/viu_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/viu/viu_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/stan/stan_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/stan/stan_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/netflix/netflix_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/netflix/netflix_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/unext/unext_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/unext/unext_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/peacock/peacock_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/peacock/peacock_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/vidio/vidio_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/vidio/vidio_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/mubi/mubi_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/mubi/mubi_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/crunchyroll/crunchyroll_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/crunchyroll/crunchyroll_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/espn/espn_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/espn/espn_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/zee5/zee5_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/zee5/zee5_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/dazn/dazn_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/dazn/dazn_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/funimation/funimation_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/funimation/funimation_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/sling/sling_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/sling/sling_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/appletv/appletv_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/appletv/appletv_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/leaguepass/leaguepass_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/leaguepass/leaguepass_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/hulu/hulu_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/hulu/hulu_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/shudder/shudder_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/shudder/shudder_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/paramount/paramount_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/paramount/paramount_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/disney/disney_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/disney/disney_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/plutotv/plutotv_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/plutotv/plutotv_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/sonyliv/sonyliv_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/sonyliv/sonyliv_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/fubo/fubo_browse_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/browse_scripts/fubo/fubo_browse_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/bug_report/bug_report_react_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/bug_report/bug_report_injector_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/lib/tp_libraries_min.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/lib/replace_state_script.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/hulujp/hulujp_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/hulujp/hulujp_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/vix/vix_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/vix/vix_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/hotstar/hotstar_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/hotstar/hotstar_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/hbo_max/hbo_max_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/hbo_max/hbo_max_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/migu/migu_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/migu/migu_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/amazon/amazon_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/amazon/amazon_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/canalplus/canalplus_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/canalplus/canalplus_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/fancode/fancode_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/fancode/fancode_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/shahid/shahid_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/shahid/shahid_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/spotify/spotify_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/spotify/spotify_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/jio_cinema/jio_cinema_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/jio_cinema/jio_cinema_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/viki/viki_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/viki/viki_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/tubitv/tubitv_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/tubitv/tubitv_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/starplus/starplus_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/starplus/starplus_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/foxone/foxone_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/foxone/foxone_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/youtube/youtube_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/youtube/youtube_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/crave/crave_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/crave/crave_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/max/max_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/max/max_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/viu/viu_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/viu/viu_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/stan/stan_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/stan/stan_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/netflix/netflix_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/netflix/netflix_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/unext/unext_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/unext/unext_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/peacock/peacock_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/peacock/peacock_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/vidio/vidio_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/vidio/vidio_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/mubi/mubi_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/mubi/mubi_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/crunchyroll/crunchyroll_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/crunchyroll/crunchyroll_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/espn/espn_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/espn/espn_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/zee5/zee5_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/zee5/zee5_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/disneymena/disneymena_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/disneymena/disneymena_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/dazn/dazn_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/dazn/dazn_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/funimation/funimation_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/funimation/funimation_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/sling/sling_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/sling/sling_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/appletv/appletv_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/appletv/appletv_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/leaguepass/leaguepass_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/leaguepass/leaguepass_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/hulu/hulu_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/hulu/hulu_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/shudder/shudder_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/shudder/shudder_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/paramount/paramount_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/paramount/paramount_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/disney/disney_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/disney/disney_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/plutotv/plutotv_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/plutotv/plutotv_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/sonyliv/sonyliv_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/sonyliv/sonyliv_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/fubo/fubo_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/fubo/fubo_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/willow/willow_content_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "teleparty/content_scripts/willow/willow_injected_bundled.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "extension/popup.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "extension/background.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "extension/inject.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "extension/content.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "extension/libs/firebase-app.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "extension/libs/firebase-database.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "extension_backup_stable/popup.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "extension_backup_stable/background.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "extension_backup_stable/inject.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "extension_backup_stable/content.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "extension_backup_stable/libs/firebase-app.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "extension_backup_stable/libs/firebase-database.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": ".agents/explorer_m1_3/ORIGINAL_REQUEST.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/explorer_m1_3/BRIEFING.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/explorer_m1_3/progress.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/explorer_m1_3/analysis.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/explorer_m1_3/handoff.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/explorer_m1_2/ORIGINAL_REQUEST.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/explorer_m1_2/BRIEFING.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/explorer_m1_2/progress.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/explorer_m1_2/analysis.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/explorer_m1_2/handoff.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/worker_m1/ORIGINAL_REQUEST.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/worker_m1/BRIEFING.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/worker_m1/progress.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/worker_m1/handoff.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/sentinel/BRIEFING.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/sentinel/handoff.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/explorer_m1_1/ORIGINAL_REQUEST.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/explorer_m1_1/BRIEFING.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/explorer_m1_1/progress.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/explorer_m1_1/analysis.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/explorer_m1_1/handoff.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/orchestrator/ORIGINAL_REQUEST.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/orchestrator/BRIEFING.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/orchestrator/progress.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/orchestrator/README.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": ".agents/orchestrator/plan.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": "docs/filmsync_docs.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": "docs/DEBUG_PROTOCOL.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": "docs/jules/JULES_CHANGELOG.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": "docs/jules/JULES_AUTOMATION_REGISTRY.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": "docs/jules/JULES_TASKS_REPORT.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": "docs/jules/JULES_PRO_PROMPTS_LIBRARY.md",
+      "type": "file",
+      "extension": ".md"
+    },
+    {
+      "id": "yedek filmsync/popup.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "yedek filmsync/background.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "yedek filmsync/inject.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "yedek filmsync/content.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "yedek filmsync/libs/firebase-app.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "yedek filmsync/libs/firebase-database.js",
+      "type": "file",
+      "extension": ".js"
+    },
+    {
+      "id": "scripts/archive/process_icons.py",
+      "type": "file",
+      "extension": ".py"
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "generated_at": "02.08.2026",
+    "total_files": 223
+  }
+}
