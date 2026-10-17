@@ -1,3 +1,12 @@
+(function() {
+  'use strict';
+  if (typeof window !== 'undefined' && window.__FILMSYNC_CONTENT_LOADED__) {
+    return;
+  }
+  if (typeof window !== 'undefined') {
+    window.__FILMSYNC_CONTENT_LOADED__ = true;
+  }
+
 // Film Partisi (FilmSync) — Evrensel Watch Party & Sohbet Motoru 🍿
 let roomId = null;
 let username = 'Anonim';
@@ -4749,3 +4758,11 @@ if (window !== window.top) {
     window.top.postMessage({ type: 'filmsync-query-chat-state' }, '*');
   } catch (e) {}
 }
+
+  if (typeof window !== 'undefined') {
+    window.hideChatPanel = hideChatPanel;
+  }
+  if (typeof globalThis !== 'undefined') {
+    globalThis.hideChatPanel = hideChatPanel;
+  }
+})();

@@ -43,7 +43,7 @@ Firebase istemci yapılandırması şu 2 dosyada tanımlıdır:
 
 ```javascript
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
+  apiKey: "AIzaSyBckyDBVxN6xFC5bBKkiyxNvww5seXRM1U",
   authDomain: "movieparty-af87f.firebaseapp.com",
   databaseURL: "https://movieparty-af87f-default-rtdb.firebaseio.com",
   projectId: "movieparty-af87f",

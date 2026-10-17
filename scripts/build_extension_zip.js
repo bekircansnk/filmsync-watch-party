@@ -32,6 +32,9 @@ function collectFiles(dir, baseDir = dir, list = []) {
       collectFiles(fullPath, baseDir, list);
     } else if (entry.isFile()) {
       const relPath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
+      // Hem doğrudan kök dizinde (Chrome Web Store & doğrudan klasör seçimi için)
+      // hem de extension/ alt klasöründe barındırarak %100 uyumluluk sağlar
+      list.push({ fullPath, zipPath: relPath });
       list.push({ fullPath, zipPath: `extension/${relPath}` });
     }
   }
