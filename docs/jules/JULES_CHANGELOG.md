@@ -11,3 +11,6 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Aynı tarayıcı oturumunda odaya tekrar katılım anında mükerrer "odaya katıldı" mesajlarının fırlatılması `sessionStorage` ile engellendi.
 - **Jules Entegrasyonu:**
   - Jules otonom prompt kütüphanesi (`JULES_PRO_PROMPTS_LIBRARY.md`) ve otomasyon planı (`JULES_AUTOMATION_REGISTRY.md`) oluşturuldu.
+
+## 2026-10-17
+- FilmSync uzantısındaki sekme gezinmelerinde, iframe yenilemelerinde veya oda değişikliklerinde `cleanupFirebase()` fonksiyonunun tüm aktif Firebase dinleyicilerini (özellikle `hostId` ve `hostOnly` için olanları) düzgün bir şekilde temizlemesi sağlandı. Bu sayede bellek sızıntılarının (memory leak) önüne geçildi.

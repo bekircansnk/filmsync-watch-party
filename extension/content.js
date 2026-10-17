@@ -564,6 +564,8 @@ function cleanupFirebase() {
       });
     });
 
+    db.ref(`rooms/${roomId}/hostId`).off();
+    db.ref(`rooms/${roomId}/hostOnly`).off();
     db.ref(`rooms/${roomId}/lastState`).off();
     db.ref(`rooms/${roomId}/messages`).off();
     db.ref(`rooms/${roomId}/users`).off();
