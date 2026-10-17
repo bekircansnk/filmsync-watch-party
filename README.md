@@ -1,11 +1,37 @@
 # 🍿 Film Partisi (FilmSync) — Senkronize Video İzleme & Sohbet Ekosistemi
 
+[![Web Portal & İndir](https://img.shields.io/badge/%F0%9F%8C%90%20Canl%C4%B1%20Web%20Portal%C4%B1-Eklentiyi%20%C4%B0ndir-ff3d47?style=for-the-badge)](https://bekircansnk.github.io/filmsync-watch-party/)
+[![Doğrudan ZIP İndir](https://img.shields.io/badge/%F0%9F%93%A5%20Haz%C4%B1r%20Paket-film--partisi--extension.zip-2ed573?style=for-the-badge)](https://bekircansnk.github.io/filmsync-watch-party/film-partisi-extension.zip)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-success?style=for-the-badge&logo=googlechrome)](https://developer.chrome.com/docs/extensions/mv3/intro/)
-[![Version](https://img.shields.io/badge/Version-1.2.0-red?style=for-the-badge)](./extension/manifest.json)
-[![Tests Passing](https://img.shields.io/badge/Tests-63%2F63%20Passing-brightgreen?style=for-the-badge)](./scripts/verify_filmsync.js)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](./LICENSE)
+[![Version](https://img.shields.io/badge/Version-1.3.0-red?style=for-the-badge)](./extension/manifest.json)
+[![Tests Passing](https://img.shields.io/badge/Tests-67%2F67%20Passing-brightgreen?style=for-the-badge)](./scripts/verify_filmsync.js)
 
-**Film Partisi (FilmSync)**, arkadaşlarınızla farklı cihaz ve tarayıcılarda uzaktan aynı anda **Netflix, YouTube, Disney+, Dizipal, HDFilmCehennemi** ve tüm HTML5 video sitelerinde eşzamanlı (0-gecikmeli) film ve dizi izlemenizi, sayfa üzerinde yüzen şık cam efektli (2026 Frosted Glass) dikey sohbet paneli üzerinden mesajlaşmanızı ve anlık emoji reaksiyonları fırlatmanızı sağlayan açık kaynaklı bir Web Uzantısıdır (Chrome, Brave, Edge & Safari).
+**Film Partisi (FilmSync)**, arkadaşlarınızla farklı cihaz ve tarayıcılarda uzaktan aynı anda **Netflix, YouTube, Amazon Prime Video, Disney+, HDFilmCehennemi, FullHDFilmizlesene, Dizipal** ve tüm HTML5 video sitelerinde eşzamanlı (0-gecikmeli) film ve dizi izlemenizi, sayfa üzerinde yüzen şık cam efektli (2026 Frosted Glass) dikey sohbet paneli üzerinden mesajlaşmanızı ve anlık emoji reaksiyonları fırlatmanızı sağlayan açık kaynaklı bir Web Uzantısıdır (Chrome, Brave, Edge & Safari).
+
+---
+
+## 📥 30 Saniyede Hızlı İndirme & Chrome Kurulumu (Kod Bilmeden)
+
+Arkadaşlarınızla hemen film partisi başlatmak için Git veya kod indirmeye gerek yoktur:
+
+1. **Paketi İndirin:**
+   - 🌐 **[Canlı İndirme & Davet Portalını Açın](https://bekircansnk.github.io/filmsync-watch-party/)** veya doğrudan **[📥 `film-partisi-extension.zip` Paketini İndirin](./docs/film-partisi-extension.zip)**
+2. **Klasöre Çıkartın:** İnen `film-partisi-extension.zip` dosyasını masaüstüne çıkartın.
+3. **Tarayıcıya Ekleyin:**
+   - Chrome / Edge / Brave adres çubuğuna `chrome://extensions` yazıp girin.
+   - Sağ üst köşedeki **Geliştirici modu (Developer mode)** anahtarını açın.
+   - Sol üstteki **Paketlenmemiş öğe yükle (Load unpacked)** butonuna tıklayıp çıkarttığınız klasörün içindeki **`extension`** klasörünü seçin.
+
+---
+
+## 🌐 GitHub Pages İndirme Sitesini Aktifleştirme (Repo Sahibi İçin)
+
+Bu depoda otomatik GitHub Pages dağıtım iş akışı (`.github/workflows/deploy-pages.yml`) ve hazır `docs/film-partisi-extension.zip` paketi yer almaktadır. GitHub üzerinde web sitesini ve sağ üstteki tıklanabilir bağlantıyı açmak için:
+
+1. GitHub deponuzda (`bekircansnk/filmsync-watch-party`) üst menüden **Settings (Ayarlar)** sekmesine girin.
+2. Depo *Private (Özel)* ise en alttaki **Danger Zone → Change repository visibility → Make public** ile herkese açık yapın.
+3. Sol menüden **Pages** sekmesine tıklayın; **Build and deployment → Source** kısmını **GitHub Actions** (veya **Deploy from a branch → `main` → `/docs`**) olarak seçin.
+4. Deponun ana sayfasında sağ üstteki **About (Hakkında) ⚙️** çark simgesine tıklayıp **"Use your GitHub Pages website"** kutucuğunu işaretleyin ve kaydedin. Artık herkes doğrudan `https://bekircansnk.github.io/filmsync-watch-party/` adresinden eklentiyi indirebilir!
 
 ---
 
@@ -18,17 +44,14 @@
 
 ---
 
-## ✨ Temel Özellikler
+## ✨ Temel Özellikler (v1.3.0 Evrensel Mimari)
 
+- **3-Katmanlı Klavye Kalkanı (Chat-First Anti-Mute):** Sayfa bağlamında (`EventTarget.prototype.addEventListener` sarmalayıcısı + `window` capture + cross-frame bridge) `Space` ve `Escape` hariç tüm tuşları (`M`, `F`, `K`, `J`, `L`, `C`, `0-9`) oynatıcıdan izole eder; film izlerken hiçbir tuş videoyu sessize almaz veya tam ekrandan çıkarmaz, doğrudan sohbete yazar.
+- **Evrensel Iframe & Tam Ekran Koordinatörü:** `HTMLVideoElement.prototype.requestFullscreen` sarmalayıcısı ve `filmsync-iframe-fullscreen-request` köprüsü sayesinde HDFilmCehennemi, FullHDFilmizlesene, Dizipal gibi iç içe iframe oynatıcılarında ve TR Dublaj / TR Altyazı kaynak geçişlerinde sohbet podu tam ekranın içinde daima görünür kalır.
+- **Herkese Açık Odalarda Co-Controller Bölüm Geçişi:** Herkese açık odalarda (`hostOnly: false`) odaya bağlı herkes yeni bölüme geçebilir; geçildiği anda odadaki herkese bildirim gider ve yeni bölüm senkronize başlatılır.
+- **Canlı Açık Oda & Katılımcı Rehberi:** Popup içerisinde açık odalarda kaç kişi olduğu, katılımcıların isimleri, hangi platformun ve hangi film/bölüm başlığının açık olduğu anlık gösterilir.
 - **0-Gecikmeli Eşitleme (Firebase RTDB):** Video akışı aktarılmaz; yalnızca oynatma durumu (play, pause, seek, URL) WebSocket üzerinden milisaniyeler içinde senkronize edilir.
-- **2026 Frosted Glass Tasarım:** Apple tarzı yarı saydam cam efekti, sağ dikey yüzen sohbet podu, canlı üye avatarları ve neon rozetler.
-- **Dizipal & HDFilmCehennemi (Nested Iframe) Desteği:** `all_frames: true` mimarisi sayesinde harici oynatıcı iframeleri (Vidmoly, Rapidrame vb.) içindeki `<video>` etiketleri otomatik tespit edilir ve sıfır gecikmeyle eşitlenir.
-- **Netflix & Disney+ Özel Oynatıcı Adaptörü:** Netflix Cadmium API ve Disney+ MediaPlayer kontrolleri `inject.js` ile sayfa bağlamında yönetilir.
-- **Çift-Escape Tam Ekran Koruması:** `navigator.keyboard.lock(['Escape'])` ile tam ekranda Escape tuşuna ilk basıldığında filmden çıkılmaz, sadece sohbet paneli gizlenir. 1 saniye içinde ikinci kez basıldığında tam ekrandan çıkılır.
-- **Oda Sahibi (Host-Only) Otoritesi:** Oda kurucusu yetki kilidini açtığında misafirler filmi duraklatamaz, ileri saramaz veya linki değiştiremez.
 - **Sentetik Web Audio Ses Efektleri:** Harici ses dosyası indirilmeden Web Audio API osilatörleri ile üretilen kibar mesaj ve bildirim sesleri.
-- **Uçan Emoji Reaksiyonları:** Ekranın altından yukarı doğru süzülen eğlenceli reaksiyonlar.
-- **Açık Odalar Rehberi (Public Rooms):** Şifresiz herkese açık partileri listeleyen ve tek tıkla katılmayı sağlayan canlı lobi.
 
 ---
 
@@ -37,72 +60,20 @@
 | Platform | Uyumluluk | Entegrasyon Şekli | Özel Koruma & Notlar |
 | :--- | :---: | :--- | :--- |
 | **Netflix** | ✅ **%100** | `inject.js` (Cadmium API) | 1500ms Keyframe Seek Deadband, `getBusy()` çakışma önleyici, React Fiber Depth-35 fallback. |
-| **YouTube** | ✅ **%100** | DOM + Player API | SPA `pushState` ve `yt-navigate-finish` olay yakalayıcıları devrededir. |
+| **YouTube** | ✅ **%100** | DOM + `.html5-video-player` | SPA `pushState` ve `yt-navigate-finish` olay yakalayıcıları, reklam/önizleme filtrelemesi. |
+| **Amazon Prime Video** | ✅ **%100** | Shadow DOM + `inject.js` | Derin Shadow DOM video tarayıcısı ve tam ekran kapsayıcı yönlendirmesi. |
 | **Disney+** | ✅ **%100** | `inject.js` + MediaPlayer | Kanonik film ID çözümlemesi ve fallback simülasyonu. |
-| **Dizipal & HDFilmCehennemi** | ✅ **%100** | Nested Iframe Injection | Vidmoly, Rapidrame ve iframe içindeki gerçek `<video>` elementine 0ms doğrudan bağ. |
-| **Genel HTML5 Siteleri** | ✅ **%100** | Standart `<video>` Olayları | Otomatik video dedektörü ve timeupdate dinleyicisi. |
-| **Canlı Yayınlar (Live Stream)** | ⚠️ **Kısıtlı** | Dinamik HLS/DASH Zamanı | Sabit süre bulunmadığı için seek eşitlemesi devre dışı kalır. |
-| **Prime Video (Bölgesel)** | ⚠️ **Kısmi** | Donanım DRM Katmanı | Donanım hızlandırmalı bazı Linux/Windows sürümlerinde tam ekran podu video konteynerine sabitlenmelidir. |
+| **HDFilmCehennemi & FullHDİzlesene** | ✅ **%100** | Nested Iframe + Fullscreen Bridge | TR Dublaj / Altyazı iframe değişimlerinde kesintisiz bağlantı ve tam ekran sohbet podu. |
+| **Dizipal & Genel HTML5 Siteleri** | ✅ **%100** | Nested Iframe + Smart Video Scorer | Vidmoly, Rapidrame ve tüm HTML5 `<video>` etiketlerine 0ms doğrudan bağ. |
 
 ---
 
-## 🚀 Hızlı Başlangıç & Kurulum
+## 🧪 Doğrulama ve Paketleme
 
-### 1. Repoyu Klonlayın
-```bash
-git clone git@github.com:bekircansnk/filmsync-watch-party.git
-cd filmsync-watch-party
-```
-
-### 2. Tarayıcıya Yükleyin (Chrome / Brave / Edge)
-1. `chrome://extensions` adresine gidin.
-2. Sağ üstten **Geliştirici modu**'nu aktif edin.
-3. Sol üstteki **Paketlenmemiş öğe yükle** butonuna tıklayın.
-4. Bu depodaki **`extension/`** klasörünü seçin.
-
-### 3. Safari için Derleyin (macOS)
-```bash
-bash scripts/build_safari_app.sh
-```
-
----
-
-## 🧪 Doğrulama ve Test Paketi
-
-Kod tabanının bütünlüğünü ve 63 mimari kuralı doğrulamak için:
+Eklenti ZIP paketini (`docs/film-partisi-extension.zip`) yeniden üretmek ve 67 senaryolu regresyon test paketini çalıştırmak için:
 
 ```bash
-node scripts/verify_filmsync.js
-```
-
-Tüm testler (URL trailing slash, Netflix Cadmium API kuyruğu, XSS zırhı, clock skew senkronizasyonu vb.) 63/63 başarıyla geçer.
-
----
-
-## 🗺️ Dizin Haritası
-
-```
-12-FilmSync/
-├── .brain/                   # Kurumsal proje hafızası (Decisions, Lessons, Patterns, Context)
-├── docs/                     # Sistem ve geliştirici dokümantasyonu
-│   ├── ARCHITECTURE.md       # Master mimari ve senkronizasyon spesifikasyonu
-│   ├── SETUP_GUIDE.md        # Sıfırdan kurulum ve anahtar yönetimi kılavuzu
-│   ├── DEBUG_PROTOCOL.md     # Kök neden analizleri ve hata ayıklama protokolü
-│   ├── index.html            # Web landing ve tanıtım sayfası
-│   └── README.md             # Dokümantasyon fihristi
-├── extension/                # Dağıtıma hazır Web Extension kaynak kodları (MV3)
-│   ├── background.js         # Service worker (sekme takip, URL yetkisi, REST temizliği)
-│   ├── content.js            # İstemci koordinatörü, sohbet podu ve senkronizasyon motoru
-│   ├── inject.js             # Sayfa bağlamı (Netflix/Disney+) enjeksiyon betiği
-│   ├── manifest.json         # Chrome MV3 manifestosu
-│   ├── popup.html            # Neon cam efektli popup arayüzü
-│   ├── popup.js              # Popup mantığı ve oda yöneticisi
-│   └── libs/                 # Bağımsız Firebase istemci kütüphaneleri
-├── database.rules.json       # Firebase Realtime DB güvenlik kuralları ve veri şeması
-├── firebase.json             # Firebase CLI ayar dosyası
-└── scripts/
-    ├── build_safari_app.sh   # Safari Web Extension native paketleme betiği
-    └── verify_filmsync.js    # 63 senaryolu regresyon ve doğrulama test paketi
+npm run build
 ```
 
 ---

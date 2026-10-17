@@ -1,12 +1,12 @@
 {
   "name": "filmsync-watch-party",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "Film Partisi (FilmSync) — Senkronize Video İzleme & Sohbet Ekosistemi",
   "main": "server.js",
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js",
-    "build": "node scripts/verify_filmsync.js",
+    "build": "node scripts/build_extension_zip.js && node scripts/verify_filmsync.js",
     "lint": "node scripts/verify_filmsync.js",
     "test": "node scripts/verify_filmsync.js"
   },

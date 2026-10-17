@@ -10,12 +10,37 @@ const firebaseConfig = {
   measurementId: "G-4KR5X5Y4ZS"
 };
 
+const DEFAULT_DIZIPAL_URL = 'https://dizipal1590.com/';
+const DIZIPAL_SHORTLINK_URL = 'https://t.ly/dizipalgiris';
+
 let db = null;
 let currentRoomId = null;
 let selectedAvatar = '🍿';
 let publicRoomsRef = null;
 let currentTabPlatformName = 'Web Video';
 let currentTabCleanTitle = '';
+
+// Önbellekte kalan eski Firebase WebSocket hata bayraklarını temizle ve MV3 CSP uyumlu WebSocket zorla (Takılı kalmayı %100 önler)
+function clearStaleFirebaseCache() {
+  try {
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.includes('previous_websocket_failure') || k.startsWith('firebase:host:'))) {
+        keysToRemove.push(k);
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  } catch (e) {}
+  try {
+    sessionStorage.removeItem('firebase:previous_websocket_failure');
+  } catch (e) {}
+  try {
+    if (typeof firebase !== 'undefined' && firebase.database && typeof firebase.database.forceWebSockets === 'function') {
+      firebase.database.forceWebSockets();
+    }
+  } catch (e) {}
+}
 
 function generate4LetterCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -86,17 +111,53 @@ function copyToClipboard(text) {
   }
 }
 
+// Sekmede content.js yüklü değilse (eklenti yeni güncellendiyse/yeniden yüklendiyse) anında enjekte et ve senkronize et
+function ensureTabContentScriptAndSync(tabId, callback) {
+  if (!tabId) {
+    if (callback) callback();
+    return;
+  }
+  chrome.tabs.sendMessage(tabId, { type: 'settings-updated' }, () => {
+    if (chrome.runtime.lastError) {
+      // Sekmede content script henüz yok veya eski sürüm kopmuş -> Dinamik enjekte et
+      if (chrome.scripting && chrome.scripting.executeScript) {
+        chrome.scripting.executeScript({
+          target: { tabId: tabId, allFrames: true },
+          files: ['libs/firebase-app.js', 'libs/firebase-database.js', 'content.js']
+        }, () => {
+          if (chrome.runtime.lastError) {}
+          setTimeout(() => {
+            chrome.tabs.sendMessage(tabId, { type: 'force-sync' }, () => {
+              if (chrome.runtime.lastError) {}
+              if (callback) callback();
+            });
+          }, 150);
+        });
+      } else if (callback) {
+        callback();
+      }
+    } else {
+      chrome.tabs.sendMessage(tabId, { type: 'force-sync' }, () => {
+        if (chrome.runtime.lastError) {}
+        if (callback) callback();
+      });
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  clearStaleFirebaseCache();
+
   const activeRoomContainer = document.getElementById('activeRoomContainer');
   const partyCreatorContainer = document.getElementById('partyCreatorContainer');
   const platformSelectorContainer = document.getElementById('platformSelectorContainer');
-  const profileSection = document.getElementById('profileSection');
 
   const usernameInput = document.getElementById('usernameInput');
   const hostOnlySwitch = document.getElementById('hostOnlySwitch');
   const isPublicSwitch = document.getElementById('isPublicSwitch');
   const avatarButtons = document.querySelectorAll('.avatar-btn');
   const platformCards = document.querySelectorAll('.platform-card');
+  const dizipalLauncherCard = document.getElementById('dizipalLauncherCard');
 
   const roomIdDisplay = document.getElementById('roomIdDisplay');
   const activeMovieTitle = document.getElementById('activeMovieTitle');
@@ -135,7 +196,14 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error("Firebase init error:", e);
   }
 
-  // Aktif sekmeyi algıla
+  // Kayıtlı güncel Dizipal adresini yükle ve kart üzerinde güncelle
+  chrome.storage.local.get(['dizipalCurrentUrl'], (res) => {
+    if (res && res.dizipalCurrentUrl && dizipalLauncherCard) {
+      dizipalLauncherCard.setAttribute('data-url', res.dizipalCurrentUrl);
+    }
+  });
+
+  // Aktif sekmeyi algıla (ve eğer aktif sekme bir Dizipal adresi ise güncel adresi kaydet)
   chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
     const tab = tabs && tabs[0];
     if (tab && tab.url) {
@@ -143,6 +211,15 @@ document.addEventListener('DOMContentLoaded', () => {
       currentTabCleanTitle = cleanPageTitle(tab.title || '', currentTabPlatformName);
       if (currentPlatformTag) currentPlatformTag.textContent = `🎬 ${currentTabPlatformName}`;
       if (currentPageTitle) currentPageTitle.textContent = currentTabCleanTitle;
+
+      try {
+        const parsed = new URL(tab.url);
+        if (/dizipal\d+\./i.test(parsed.hostname)) {
+          const detectedOrigin = `${parsed.protocol}//${parsed.hostname}/`;
+          chrome.storage.local.set({ dizipalCurrentUrl: detectedOrigin });
+          if (dizipalLauncherCard) dizipalLauncherCard.setAttribute('data-url', detectedOrigin);
+        }
+      } catch (e) {}
     }
   });
 
@@ -179,16 +256,42 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.storage.local.set({ selectedAvatar });
 
       chrome.storage.local.get(['roomId', 'userId'], (res) => {
-        if (res.roomId && res.userId && db) {
-          db.ref(`rooms/${res.roomId}/users/${res.userId}/avatar`).set(selectedAvatar);
+        if (res.roomId && res.userId) {
+          fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/users/${res.userId}/avatar.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(selectedAvatar),
+            cache: 'no-store'
+          }).catch(() => {});
+          if (db) {
+            db.ref(`rooms/${res.roomId}/users/${res.userId}/avatar`).set(selectedAvatar).catch(() => {});
+          }
         }
       });
     });
   });
 
-  // Hızlı platform kartları
+  // Hızlı platform kartları (Dizipal için Otomatik Güncel Adres Çözümleyici)
   platformCards.forEach(card => {
     card.addEventListener('click', () => {
+      const platformType = card.getAttribute('data-platform');
+      if (platformType === 'dizipal') {
+        showGlobalToast('Güncel Dizipal adresi açılıyor... 🎬');
+        chrome.runtime.sendMessage({
+          type: 'open-dizipal-direct',
+          fallbackUrl: card.getAttribute('data-url') || DEFAULT_DIZIPAL_URL,
+          shortlinkUrl: DIZIPAL_SHORTLINK_URL
+        }, (resp) => {
+          if (chrome.runtime.lastError || !resp || !resp.opened) {
+            chrome.storage.local.get(['dizipalCurrentUrl'], (st) => {
+              const targetDizipal = (st && st.dizipalCurrentUrl) ? st.dizipalCurrentUrl : DEFAULT_DIZIPAL_URL;
+              chrome.tabs.create({ url: targetDizipal });
+            });
+          }
+        });
+        return;
+      }
+
       const url = card.getAttribute('data-url');
       if (url) {
         chrome.tabs.create({ url });
@@ -198,12 +301,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnRefreshPublicRooms) {
     btnRefreshPublicRooms.addEventListener('click', () => {
-      loadPublicRooms();
+      loadPublicRooms(true);
       showGlobalToast('Açık odalar güncellendi 🔄');
     });
   }
 
-  // Parti Başlat
+  // Parti Başlat (Sıfır Beklemeli REST + WebSocket Çift Motorlu Kurulum)
   btnStartParty.addEventListener('click', () => {
     const username = usernameInput.value.trim();
     if (!username) {
@@ -218,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = '';
 
     globalStatusDot.classList.add('active');
-    if (connStatusLabel) connStatusLabel.textContent = 'Bağlanıyor';
+    if (connStatusLabel) connStatusLabel.textContent = 'Kuruluyor...';
 
     chrome.storage.local.get(['userId'], (res) => {
       let userId = res.userId;
@@ -238,70 +341,101 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const platformName = detectPlatformNameFromUrl(currentTabUrl);
         const pageTitle = cleanPageTitle(currentTab.title || '', platformName);
+        const nowTs = Date.now();
 
-        try {
-          if (!db && typeof firebase !== 'undefined') {
-            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            db = firebase.database();
-          }
-          if (!db) {
-            showGlobalToast('Veritabanı bağlantısı kurulamadı.');
-            resetStatus();
-            return;
-          }
-
-          const nowTs = Date.now();
-          db.ref(`rooms/${roomId}`).set({
-            password: password,
-            hostId: userId,
-            hostOnly: hostOnly,
-            isPublic: isPublic,
-            createdAt: firebase.database.ServerValue.TIMESTAMP,
-            users: {
-              [userId]: {
-                username: username,
-                avatar: selectedAvatar,
-                isHost: true,
-                online: true,
-                lastSeen: nowTs
-              }
-            },
-            lastState: {
-              isPlaying: false,
-              status: 'pause',
-              currentTime: 0,
-              url: currentTabUrl,
-              pageTitle: pageTitle,
-              platformName: platformName,
-              updatedBy: username,
-              senderId: userId,
-              lastUpdated: firebase.database.ServerValue.TIMESTAMP
+        const roomPayload = {
+          password: password,
+          hostId: userId,
+          hostOnly: hostOnly,
+          isPublic: isPublic,
+          createdAt: nowTs,
+          users: {
+            [userId]: {
+              username: username,
+              avatar: selectedAvatar,
+              isHost: true,
+              online: true,
+              lastActive: nowTs,
+              lastSeen: nowTs
             }
-          }).then(() => {
-            saveSettings(roomId, username, password, userId, hostOnly, isPublic, currentTab ? currentTab.id : null, () => {
-              const inviteUrl = `https://bekircansnk.github.io/filmsync-watch-party/?join=${encodeURIComponent(roomId)}&pass=`;
-              copyToClipboard(inviteUrl);
-              showGlobalToast('Parti kuruldu! Davet bağlantısı kopyalandı 🍿');
+          },
+          lastState: {
+            isPlaying: false,
+            status: 'pause',
+            currentTime: 0,
+            url: currentTabUrl,
+            pageTitle: pageTitle,
+            platformName: platformName,
+            updatedBy: username,
+            senderId: userId,
+            lastUpdated: nowTs
+          }
+        };
 
-              if (currentTab) {
-                chrome.tabs.sendMessage(currentTab.id, { type: 'force-sync' }, () => {
-                  if (chrome.runtime.lastError) {}
-                });
-              }
+        let isCompleted = false;
+        const finalizePartyCreation = () => {
+          if (isCompleted) return;
+          isCompleted = true;
 
+          saveSettings(roomId, username, password, userId, hostOnly, isPublic, currentTab ? currentTab.id : null, userId, () => {
+            const inviteUrl = `https://bekircansnk.github.io/filmsync-watch-party/?join=${encodeURIComponent(roomId)}&pass=`;
+            copyToClipboard(inviteUrl);
+            showGlobalToast('Parti kuruldu! Davet bağlantısı kopyalandı 🍿');
+
+            if (currentTab && currentTab.id) {
+              ensureTabContentScriptAndSync(currentTab.id, () => {
+                setTimeout(() => {
+                  window.close();
+                }, 400);
+              });
+            } else {
               setTimeout(() => {
                 window.close();
               }, 400);
-            });
-          }).catch(e => {
-            console.error(e);
-            showGlobalToast('Oda kurulumu başarısız.');
-            resetStatus();
+            }
           });
-        } catch (e) {
-          console.error(e);
-          resetStatus();
-        }
+        };
+
+        // 1. Önbelleksiz Doğrudan REST PUT (MV3 Popup içinde ~100ms'de tamamlanır, asla asılı kalmaz)
+        fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json?t=${nowTs}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache, no-store' },
+          cache: 'no-store',
+          body: JSON.stringify(roomPayload)
+        })
+          .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(() => {
+            finalizePartyCreation();
+          })
+          .catch(err => {
+            console.warn('[FilmSync Popup] REST oda kurulum hatası, Background üzerinden tamamlanıyor:', err);
+            chrome.runtime.sendMessage({
+              type: 'create-room',
+              roomId,
+              hostId: userId,
+              username,
+              avatar: selectedAvatar,
+              hostOnly,
+              isPublic,
+              url: currentTabUrl,
+              pageTitle,
+              platformName
+            }, () => {
+              finalizePartyCreation();
+            });
+          });
+
+        // 2. Eşzamanlı WebSocket Senkronizasyonu
+        try {
+          if (db) {
+            db.ref(`rooms/${roomId}`).set(roomPayload).then(() => {
+              finalizePartyCreation();
+            }).catch(() => {});
+          }
+        } catch (e) {}
       });
     });
   });
@@ -336,22 +470,32 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.storage.local.get(['userId'], (res) => {
           const userId = res.userId || ('usr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
           const targetUrl = roomData.lastState && roomData.lastState.url ? roomData.lastState.url : '';
+          const nowTs = Date.now();
+          const userPayload = {
+            username: username,
+            avatar: selectedAvatar,
+            isHost: roomData.hostId === userId,
+            online: true,
+            lastActive: nowTs,
+            lastSeen: nowTs
+          };
+
+          fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${code}/users/${userId}.json?t=${nowTs}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            cache: 'no-store',
+            body: JSON.stringify(userPayload)
+          }).catch(() => {});
 
           if (db) {
-            db.ref(`rooms/${code}/users/${userId}`).update({
-              username: username,
-              avatar: selectedAvatar,
-              isHost: roomData.hostId === userId,
-              online: true,
-              lastSeen: Date.now()
-            }).catch(() => {});
+            db.ref(`rooms/${code}/users/${userId}`).update(userPayload).catch(() => {});
           }
 
           chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
             const activeTab = tabs && tabs[0];
             const activeTabId = activeTab ? activeTab.id : null;
 
-            saveSettings(code, username, '', userId, roomData.hostOnly || false, roomData.isPublic !== false, activeTabId, () => {
+            saveSettings(code, username, '', userId, roomData.hostOnly || false, roomData.isPublic !== false, activeTabId, roomData.hostId || null, () => {
               showGlobalToast('Odaya katıldınız! Yönlendiriliyorsunuz 🎉');
 
               if (activeTab) {
@@ -362,12 +506,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 400);
                   });
                 } else {
-                  chrome.tabs.sendMessage(activeTab.id, { type: 'force-sync' }, () => {
-                    if (chrome.runtime.lastError) {}
+                  ensureTabContentScriptAndSync(activeTab.id, () => {
+                    setTimeout(() => {
+                      window.close();
+                    }, 400);
                   });
-                  setTimeout(() => {
-                    window.close();
-                  }, 400);
                 }
               }
             });
@@ -381,135 +524,154 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  // Canlı Açık Odaları Yükle ve Dinle
+  // Açık Odaları Veriden Render Eden Yardımcı
+  function renderPublicRoomsFromData(roomsObj) {
+    if (!publicRoomsList) return;
+    if (!roomsObj || typeof roomsObj !== 'object') {
+      if (publicRoomsCountPill) publicRoomsCountPill.textContent = '0';
+      publicRoomsList.innerHTML = '<div class="empty-room-msg">Şu an aktif açık oda yok. İlk partiyi sen başlat! 🍿</div>';
+      return;
+    }
+
+    const now = Date.now();
+    const activePublicRooms = [];
+
+    Object.entries(roomsObj).forEach(([roomId, room]) => {
+      if (!room || typeof room !== 'object') return;
+      const isPublicRoom = room.isPublic !== false && (!room.password || room.password === '');
+      if (!isPublicRoom) return;
+
+      const usersMap = room.users && typeof room.users === 'object' ? room.users : {};
+      const userEntries = Object.entries(usersMap);
+      const activeUsers = [];
+
+      userEntries.forEach(([uId, u]) => {
+        if (!u || typeof u !== 'object') return;
+        const lastSeen = u.lastSeen || u.lastActive || 0;
+        if ((now - lastSeen < 900000) || userEntries.length <= 5) {
+          activeUsers.push({
+            id: uId,
+            username: u.username || 'Katılımcı',
+            avatar: u.avatar || '🍿',
+            isHost: uId === room.hostId || Boolean(u.isHost)
+          });
+        }
+      });
+
+      const roomUrl = (room.lastState && room.lastState.url) ? room.lastState.url : '';
+      const lastUpdated = (room.lastState && (room.lastState.lastUpdated || room.lastState.timestamp)) || room.createdAt || 0;
+      const isRoomFresh = activeUsers.length > 0 || (now - lastUpdated < 3600000);
+
+      if (isRoomFresh && roomUrl) {
+        const platformName = (room.lastState && room.lastState.platformName)
+          ? room.lastState.platformName
+          : detectPlatformNameFromUrl(roomUrl);
+        const pageTitle = (room.lastState && room.lastState.pageTitle)
+          ? room.lastState.pageTitle
+          : platformName;
+
+        activePublicRooms.push({
+          roomId,
+          platformName,
+          pageTitle,
+          url: roomUrl,
+          users: activeUsers,
+          userCount: Math.max(activeUsers.length, 1),
+          isPlaying: Boolean(room.lastState && (room.lastState.isPlaying || room.lastState.status === 'play')),
+          lastUpdated
+        });
+      }
+    });
+
+    activePublicRooms.sort((a, b) => b.userCount - a.userCount || b.lastUpdated - a.lastUpdated);
+
+    if (publicRoomsCountPill) {
+      publicRoomsCountPill.textContent = String(activePublicRooms.length);
+    }
+
+    if (activePublicRooms.length === 0) {
+      publicRoomsList.innerHTML = '<div class="empty-room-msg">Şu an aktif açık oda yok. İlk partiyi sen başlat! 🍿</div>';
+      return;
+    }
+
+    publicRoomsList.innerHTML = '';
+    activePublicRooms.forEach(({ roomId, platformName, pageTitle, users, userCount }) => {
+      const safeRoomId = escapeHtml(roomId);
+      const safePlatform = escapeHtml(platformName);
+      const safePageTitle = escapeHtml(pageTitle);
+
+      const userBadgesHtml = users.slice(0, 4).map(u => {
+        const safeName = escapeHtml(u.username || 'Katılımcı');
+        const safeAvatar = escapeHtml(u.avatar || '🍿');
+        return `<span class="user-badge" style="padding:2px 7px;font-size:0.66rem;">${safeAvatar} ${safeName}</span>`;
+      }).join('');
+
+      const card = document.createElement('div');
+      card.className = 'public-room-card';
+      card.innerHTML = `
+        <div class="public-room-top">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="room-code-pill">#${safeRoomId}</span>
+            <span class="room-platform-tag">${safePlatform}</span>
+          </div>
+          <span style="font-size:0.68rem;font-weight:700;color:#2ed573;">👥 ${userCount} Kişi</span>
+        </div>
+        <div class="room-page-title" title="${safePageTitle}">🎬 ${safePageTitle}</div>
+        <div class="room-users-row">
+          <div class="room-users-badges">${userBadgesHtml}</div>
+          <button class="btn-join-public" data-code="${safeRoomId}">Katıl &rarr;</button>
+        </div>
+      `;
+      publicRoomsList.appendChild(card);
+    });
+
+    publicRoomsList.querySelectorAll('.btn-join-public').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetCode = btn.getAttribute('data-code');
+        if (targetCode) {
+          joinRoomWithCode(targetCode);
+        }
+      });
+    });
+  }
+
+  // Canlı Açık Odaları Yükle ve Dinle (Önbelleksiz Anlık REST + Canlı WebSocket)
   function loadPublicRooms() {
     if (!publicRoomsList) return;
+
+    // 1. Önbelleksiz (no-store) REST sorgusu ile ~100ms içinde listeyi doldur ("Açık odalar yükleniyor..." takılmasını önler)
+    fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json?t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache, no-store' }
+    })
+      .then(res => res.json())
+      .then(roomsObj => {
+        renderPublicRoomsFromData(roomsObj);
+      })
+      .catch(() => {
+        if (publicRoomsList.innerHTML.includes('yükleniyor')) {
+          publicRoomsList.innerHTML = '<div class="empty-room-msg">Şu an aktif açık oda yok. İlk partiyi sen başlat! 🍿</div>';
+        }
+      });
+
+    // 2. Eşzamanlı WebSocket Dinleyicisi
     if (!db && typeof firebase !== 'undefined') {
       try {
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         db = firebase.database();
       } catch (e) {}
     }
-    if (!db) {
-      publicRoomsList.innerHTML = '<div class="empty-room-msg">Veritabanı bağlantısı bekleniyor...</div>';
-      return;
-    }
+    if (!db) return;
 
-    if (publicRoomsRef) {
-      publicRoomsRef.off();
-    }
-
-    publicRoomsRef = db.ref('rooms').limitToLast(40);
-    publicRoomsRef.on('value', (snapshot) => {
-      const roomsObj = snapshot.val();
-      if (!roomsObj) {
-        if (publicRoomsCountPill) publicRoomsCountPill.textContent = '0';
-        publicRoomsList.innerHTML = '<div class="empty-room-msg">Şu an aktif açık oda yok. İlk partiyi sen başlat! 🍿</div>';
-        return;
+    try {
+      if (publicRoomsRef) {
+        publicRoomsRef.off();
       }
-
-      const now = Date.now();
-      const activePublicRooms = [];
-
-      Object.entries(roomsObj).forEach(([roomId, room]) => {
-        if (!room || typeof room !== 'object') return;
-        const isPublicRoom = room.isPublic !== false && (!room.password || room.password === '');
-        if (!isPublicRoom) return;
-
-        const usersMap = room.users && typeof room.users === 'object' ? room.users : {};
-        const userEntries = Object.entries(usersMap);
-        const activeUsers = [];
-
-        userEntries.forEach(([uId, u]) => {
-          if (!u || typeof u !== 'object') return;
-          const lastSeen = u.lastSeen || 0;
-          // 15 dakika tolerans veya odadaki son aktif kullanıcılar
-          if ((now - lastSeen < 900000) || userEntries.length <= 5) {
-            activeUsers.push({
-              id: uId,
-              username: u.username || 'Katılımcı',
-              avatar: u.avatar || '🍿',
-              isHost: uId === room.hostId || Boolean(u.isHost)
-            });
-          }
-        });
-
-        const roomUrl = (room.lastState && room.lastState.url) ? room.lastState.url : '';
-        const lastUpdated = (room.lastState && (room.lastState.lastUpdated || room.lastState.timestamp)) || room.createdAt || 0;
-        const isRoomFresh = activeUsers.length > 0 || (now - lastUpdated < 3600000);
-
-        if (isRoomFresh && roomUrl) {
-          const platformName = (room.lastState && room.lastState.platformName)
-            ? room.lastState.platformName
-            : detectPlatformNameFromUrl(roomUrl);
-          const pageTitle = (room.lastState && room.lastState.pageTitle)
-            ? room.lastState.pageTitle
-            : platformName;
-
-          activePublicRooms.push({
-            roomId,
-            platformName,
-            pageTitle,
-            url: roomUrl,
-            users: activeUsers,
-            userCount: Math.max(activeUsers.length, 1),
-            isPlaying: Boolean(room.lastState && (room.lastState.isPlaying || room.lastState.status === 'play')),
-            lastUpdated
-          });
-        }
+      publicRoomsRef = db.ref('rooms').limitToLast(40);
+      publicRoomsRef.on('value', (snapshot) => {
+        renderPublicRoomsFromData(snapshot.val());
       });
-
-      activePublicRooms.sort((a, b) => b.userCount - a.userCount || b.lastUpdated - a.lastUpdated);
-
-      if (publicRoomsCountPill) {
-        publicRoomsCountPill.textContent = String(activePublicRooms.length);
-      }
-
-      if (activePublicRooms.length === 0) {
-        publicRoomsList.innerHTML = '<div class="empty-room-msg">Şu an aktif açık oda yok. İlk partiyi sen başlat! 🍿</div>';
-        return;
-      }
-
-      publicRoomsList.innerHTML = '';
-      activePublicRooms.forEach(({ roomId, platformName, pageTitle, users, userCount }) => {
-        const safeRoomId = escapeHtml(roomId);
-        const safePlatform = escapeHtml(platformName);
-        const safePageTitle = escapeHtml(pageTitle);
-
-        const userBadgesHtml = users.slice(0, 4).map(u => {
-          const safeName = escapeHtml(u.username || 'Katılımcı');
-          const safeAvatar = escapeHtml(u.avatar || '🍿');
-          return `<span class="user-badge" style="padding:2px 7px;font-size:0.66rem;">${safeAvatar} ${safeName}</span>`;
-        }).join('');
-
-        const card = document.createElement('div');
-        card.className = 'public-room-card';
-        card.innerHTML = `
-          <div class="public-room-top">
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span class="room-code-pill">#${safeRoomId}</span>
-              <span class="room-platform-tag">${safePlatform}</span>
-            </div>
-            <span style="font-size:0.68rem;font-weight:700;color:#2ed573;">👥 ${userCount} Kişi</span>
-          </div>
-          <div class="room-page-title" title="${safePageTitle}">🎬 ${safePageTitle}</div>
-          <div class="room-users-row">
-            <div class="room-users-badges">${userBadgesHtml}</div>
-            <button class="btn-join-public" data-code="${safeRoomId}">Katıl &rarr;</button>
-          </div>
-        `;
-        publicRoomsList.appendChild(card);
-      });
-
-      publicRoomsList.querySelectorAll('.btn-join-public').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const targetCode = btn.getAttribute('data-code');
-          if (targetCode) {
-            joinRoomWithCode(targetCode);
-          }
-        });
-      });
-    });
+    } catch (e) {}
   }
 
   btnJoinWithCode.addEventListener('click', () => {
@@ -528,30 +690,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Filme Git
   btnGoToMovie.addEventListener('click', () => {
-    if (!db || !currentRoomId) return;
-    db.ref(`rooms/${currentRoomId}/lastState/url`).once('value').then((snapshot) => {
-      const url = snapshot.val();
-      if (url) {
-        chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-          if (tabs[0]) {
-            chrome.tabs.update(tabs[0].id, { url }, () => {
-              window.close();
+    if (!currentRoomId) return;
+    fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${currentRoomId}/lastState/url.json?t=${Date.now()}`, { cache: 'no-store' })
+      .then(r => r.json())
+      .then(url => {
+        if (url) {
+          chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+            if (tabs[0]) {
+              chrome.tabs.update(tabs[0].id, { url }, () => {
+                window.close();
+              });
+            }
+          });
+        }
+      })
+      .catch(() => {
+        if (!db) return;
+        db.ref(`rooms/${currentRoomId}/lastState/url`).once('value').then((snapshot) => {
+          const url = snapshot.val();
+          if (url) {
+            chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+              if (tabs[0]) {
+                chrome.tabs.update(tabs[0].id, { url }, () => {
+                  window.close();
+                });
+              }
             });
           }
         });
-      }
-    });
+      });
   });
 
   // Senkronize Et
   btnRetrySync.addEventListener('click', () => {
     chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
       if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: 'force-sync' }, () => {
-          if (chrome.runtime.lastError) {
-            showGlobalToast('Oynatıcı bulunamadı. Film sayfasını açın!');
-            return;
-          }
+        ensureTabContentScriptAndSync(tabs[0].id, () => {
           showGlobalToast('Senkronizasyon yenilendi ⚡');
         });
       }
@@ -561,13 +735,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // Odadan Ayrıl
   btnLeaveRoom.addEventListener('click', () => {
     chrome.storage.local.get(['roomId', 'userId'], (res) => {
-      if (db && res.roomId && res.userId) {
-        db.ref(`rooms/${res.roomId}/users/${res.userId}`).remove().catch(() => {});
+      if (res.roomId && res.userId) {
+        fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/users/${res.userId}.json`, {
+          method: 'DELETE',
+          cache: 'no-store'
+        }).catch(() => {});
+        if (db) {
+          db.ref(`rooms/${res.roomId}/users/${res.userId}`).remove().catch(() => {});
+        }
       }
       cleanupFirebaseListeners();
-      chrome.storage.local.remove(['roomId', 'password', 'activeTabId'], () => {
+      chrome.storage.local.remove(['roomId', 'password', 'activeTabId', 'hostId'], () => {
         notifyContentScript();
         updateUI();
+        loadPublicRooms();
         showGlobalToast('Odadan ayrıldınız.');
       });
     });
@@ -597,9 +778,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (connStatusLabel) connStatusLabel.textContent = 'Hazır';
   }
 
-  function saveSettings(roomId, username, password, userId, hostOnly, isPublic, activeTabId, callback) {
+  function saveSettings(roomId, username, password, userId, hostOnly, isPublic, activeTabId, hostId, callback) {
     const payload = { roomId, username, password, userId, hostOnly, isPublic, selectedAvatar };
     if (activeTabId) payload.activeTabId = activeTabId;
+    if (hostId) payload.hostId = hostId;
     chrome.storage.local.set(payload, () => {
       notifyContentScript();
       updateUI();
@@ -638,7 +820,76 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function renderActiveRoomUsers(usersData) {
+    if (!activeUsersList) return;
+    activeUsersList.innerHTML = '';
+    let count = 0;
+    if (usersData && typeof usersData === 'object') {
+      Object.entries(usersData).forEach(([, u]) => {
+        if (u && u.username) {
+          count++;
+          const el = document.createElement('div');
+          el.className = 'user-badge';
+          const safeUName = escapeHtml(u.username || 'Katılımcı');
+          const safeAvatar = escapeHtml(u.avatar || '🍿');
+          el.innerHTML = `<span class="user-badge-online-dot"></span><span>${safeAvatar} ${safeUName}</span>`;
+          activeUsersList.appendChild(el);
+        }
+      });
+    }
+    if (userCountTitle) userCountTitle.textContent = `Katılımcılar (${count})`;
+  }
+
+  function renderActiveRoomState(state) {
+    const targetUrl = state && state.url ? state.url : '';
+    const pTitle = state && state.pageTitle ? state.pageTitle : '';
+    const pName = state && state.platformName ? state.platformName : detectPlatformNameFromUrl(targetUrl);
+
+    if (activeMovieTitle) {
+      activeMovieTitle.textContent = pTitle ? `🎬 ${pName} • ${pTitle}` : (targetUrl ? `🎬 ${pName}` : '');
+    }
+
+    if (!targetUrl) {
+      btnGoToMovie.classList.add('hidden');
+      return;
+    }
+
+    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        const currentUrl = tabs[0].url;
+        if (currentUrl !== targetUrl) {
+          btnGoToMovie.classList.remove('hidden');
+        } else {
+          btnGoToMovie.classList.add('hidden');
+        }
+      }
+    });
+  }
+
   function setupFirebaseListeners(roomId) {
+    globalStatusDot.classList.add('active');
+    if (connStatusLabel) connStatusLabel.textContent = `#${roomId}`;
+
+    // 1. Önbelleksiz Anlık REST Sorgusu (Oda silinmişse önbelleği otomatik temizler, aktifse katılımcıları anında gösterir)
+    fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}.json?t=${Date.now()}`, {
+      cache: 'no-store'
+    })
+      .then(r => r.json())
+      .then(roomData => {
+        if (!roomData) {
+          // Önbellekte kalmış eski/silinmiş oda -> Otomatik temizle
+          chrome.storage.local.remove(['roomId', 'password', 'activeTabId', 'hostId'], () => {
+            cleanupFirebaseListeners();
+            updateUI();
+          });
+          return;
+        }
+        renderActiveRoomUsers(roomData.users);
+        renderActiveRoomState(roomData.lastState);
+      })
+      .catch(() => {});
+
+    // 2. Canlı WebSocket Dinleyicileri
     try {
       if (!db && typeof firebase !== 'undefined') {
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -646,59 +897,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (!db) return;
 
-      globalStatusDot.classList.add('active');
-      if (connStatusLabel) connStatusLabel.textContent = `#${roomId}`;
-
       db.ref(`rooms/${roomId}/users`).off();
       db.ref(`rooms/${roomId}/lastState`).off();
 
       db.ref(`rooms/${roomId}/users`).on('value', (snapshot) => {
-        const usersData = snapshot.val();
-        activeUsersList.innerHTML = '';
-
-        let count = 0;
-        if (usersData) {
-          Object.entries(usersData).forEach(([, u]) => {
-            if (u && u.username) {
-              count++;
-              const el = document.createElement('div');
-              el.className = 'user-badge';
-              const safeUName = escapeHtml(u.username || 'Katılımcı');
-              const safeAvatar = escapeHtml(u.avatar || '🍿');
-              el.innerHTML = `<span class="user-badge-online-dot"></span><span>${safeAvatar} ${safeUName}</span>`;
-              activeUsersList.appendChild(el);
-            }
-          });
-        }
-
-        userCountTitle.textContent = `Katılımcılar (${count})`;
+        renderActiveRoomUsers(snapshot.val());
       });
 
       db.ref(`rooms/${roomId}/lastState`).on('value', (snapshot) => {
-        const state = snapshot.val();
-        const targetUrl = state && state.url ? state.url : '';
-        const pTitle = state && state.pageTitle ? state.pageTitle : '';
-        const pName = state && state.platformName ? state.platformName : detectPlatformNameFromUrl(targetUrl);
-
-        if (activeMovieTitle) {
-          activeMovieTitle.textContent = pTitle ? `🎬 ${pName} • ${pTitle}` : (targetUrl ? `🎬 ${pName}` : '');
-        }
-
-        if (!targetUrl) {
-          btnGoToMovie.classList.add('hidden');
-          return;
-        }
-
-        chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-          if (tabs[0]) {
-            const currentUrl = tabs[0].url;
-            if (currentUrl !== targetUrl) {
-              btnGoToMovie.classList.remove('hidden');
-            } else {
-              btnGoToMovie.classList.add('hidden');
-            }
-          }
-        });
+        renderActiveRoomState(snapshot.val());
       });
     } catch (e) {
       console.error(e);

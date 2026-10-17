@@ -74,9 +74,13 @@
     const isArrow = (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown');
 
     if (e.key === 'Escape') return false;
+    if (isArrow) {
+      const msgInput = document.getElementById('filmsyncMsgInput');
+      return !!(isChatOpen && msgInput && msgInput.value && msgInput.value.length > 0);
+    }
     if (isChatOpen) return true;
-    if (isSpace || isArrow) return false;
-    if (e.key === 'Enter' || (e.key && e.key.length === 1)) return true;
+    if (isSpace) return false;
+    if (e.key === 'Enter' || e.key === 'Backspace' || (e.key && e.key.length === 1)) return true;
     return false;
   }
 
@@ -108,12 +112,21 @@
     if (isInsideFilmSync) return;
 
     if (e.type === 'keydown') {
-      window.postMessage({
-        type: 'filmsync-mainworld-keydown',
-        key: e.key,
-        code: e.code,
-        shiftKey: e.shiftKey
-      }, '*');
+      try {
+        (window.top || window).postMessage({
+          type: 'filmsync-mainworld-keydown',
+          key: e.key,
+          code: e.code,
+          shiftKey: e.shiftKey
+        }, '*');
+      } catch (err) {
+        window.postMessage({
+          type: 'filmsync-mainworld-keydown',
+          key: e.key,
+          code: e.code,
+          shiftKey: e.shiftKey
+        }, '*');
+      }
     }
     e.stopPropagation();
   }
@@ -370,6 +383,7 @@
   let lastActionTimestamp = 0;
 
   function notifyNetflixReadyIfAvailable(forceResend = false) {
+    if (!window.location.pathname.includes('/watch')) return false;
     checkSkipSupplemental();
     const player = getNetflixPlayer();
     if (player && isNetflixPlayerReady(player)) {
@@ -386,8 +400,11 @@
 
   if (isNetflix) {
     setInterval(() => {
-      notifyNetflixReadyIfAvailable();
-    }, 500);
+      if (document.hidden || !window.location.pathname.includes('/watch')) return;
+      if (!netflixReadyNotified || netflixCommandQueue.length > 0) {
+        notifyNetflixReadyIfAvailable();
+      }
+    }, 1000);
   }
 
   function enqueueNetflixAction(action, value) {

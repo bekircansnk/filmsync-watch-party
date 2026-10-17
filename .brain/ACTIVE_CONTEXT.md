@@ -1,10 +1,10 @@
 # 🧠 AKTİF BAĞLAM VE PROJE DURUMU (ACTIVE CONTEXT)
 
-* **Son Güncelleme:** 2026-10-17 18:04
-* **Proje:** Film Partisi (FilmSync) — Senkronize Video İzleme & Sohbet Ekosistemi
-* **Uzak Repozituvar:** `git@github.com:bekircansnk/filmsync-watch-party.git` (Private)
-* **Aktif Dal:** Yalnızca tek ve güncel `main` dalı (875 adet eski/bot dal tamamen temizlendi)
-* **Test Durumu:** 63/63 Senaryo Başarılı (`node scripts/verify_filmsync.js`)
+* **Son Güncelleme:** 2026-10-17 21:52
+* **Proje:** Film Partisi (FilmSync) — Senkronize Video İzleme & Sohbet Ekosistemi (v1.4.0)
+* **Uzak Repozituvar:** `git@github.com:bekircansnk/filmsync-watch-party.git` (Private/Public)
+* **Aktif Dal:** Yalnızca tek ve güncel `main` dalı
+* **Test Durumu:** 69/69 Senaryo Başarılı (`node scripts/verify_filmsync.js`)
 
 ---
 

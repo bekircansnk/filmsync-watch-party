@@ -26,6 +26,11 @@ let lastKnownState = null;
 let hasChildFrameVideo = false;
 let isParentIframeFullscreen = false;
 let isRoomActiveInTop = false;
+let lastIframeVideoTime = 0;
+let lastTrackedVideoTime = -1;
+let lastTrackedVideoTimestamp = 0;
+let isReloadPauseGuardActive = false;
+let reloadPauseGuardUntil = 0;
 
 // Zaman, Ses ve Senkronizasyon Korumaları
 let serverTimeOffset = 0;
@@ -49,10 +54,13 @@ let heartbeatInterval = null;
 let lastPingRTT = null;
 let lastEscapeTime = 0;
 
-// Ses Kısma (M Tuşu) Geri Alma Koruması (Hardware/Player Mute Guard)
+// Ses Kısma (M Tuşu) Geri Alma Koruması (Hardware/Player Mute Guard) ve Cross-World Tuş Tekilleştiricisi
 let lastBlockedKeyTimestamp = 0;
 let lastTrustedMuted = false;
 let lastTrustedVolume = 1.0;
+let lastForwardedKeySignature = '';
+let lastForwardedKeyTime = 0;
+let lastForwardedKeyVal = '';
 
 // --- 🔊 WEB AUDIO API SES MOTORU (Sıfır Harici Dosya) ---
 class SoundEffects {
@@ -201,9 +209,38 @@ const firebaseConfig = {
   measurementId: "G-4KR5X5Y4ZS"
 };
 
+// Reklam, analitik, captcha veya boş yan iframe'lerde eklentiyi çalıştırmayıp CPU/RAM tasarrufu sağlar
+function isIgnoredNonPlayerFrame() {
+  if (window === window.top) return false;
+  try {
+    const href = (window.location.href || '').toLowerCase();
+    const host = (window.location.hostname || '').toLowerCase();
+    if (!href || href === 'about:blank' || href.startsWith('about:') || href.startsWith('javascript:') || href.startsWith('data:')) {
+      return true;
+    }
+    const ignoredDomains = [
+      'doubleclick.net', 'googlesyndication.com', 'googleadservices.com',
+      'googletagmanager.com', 'google-analytics.com', 'recaptcha.net',
+      'gstatic.com/recaptcha', 'google.com/recaptcha', 'facebook.com/tr',
+      'connect.facebook.net', 'yandex.ru', 'mc.yandex.ru', 'scorecardsresearch.com',
+      'adnxs.com', 'popads.net', 'popcash.net', 'exoclick.com', 'juicyads.com',
+      'a-ads.com', 'propellerads.com', 'cloudflare.com/cdn-cgi', 'challenges.cloudflare.com',
+      'chatango.com', 'disqus.com'
+    ];
+    for (let i = 0; i < ignoredDomains.length; i++) {
+      if (host.includes(ignoredDomains[i]) || href.includes(ignoredDomains[i])) return true;
+    }
+    if (window.innerWidth > 0 && window.innerHeight > 0 && window.innerWidth < 50 && window.innerHeight < 50) {
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
 // Evrensel inject.js enjeksiyonu (Ana sayfa ve tüm oynatıcı iframeleri için)
 function injectPageHookScript() {
   try {
+    if (isIgnoredNonPlayerFrame()) return;
     if (!window.location.protocol.startsWith('http')) return;
     if (document.getElementById('filmsync-page-inject-script')) return;
     const script = document.createElement('script');
@@ -214,23 +251,26 @@ function injectPageHookScript() {
 }
 injectPageHookScript();
 
-// Sayfadaki ve açık Shadow DOM ağaçlarındaki tüm <video> elementlerini derinlemesine bulan tarayıcı
+// Sayfadaki ve açık Shadow DOM ağaçlarındaki tüm <video> elementlerini CPU dostu O(1) hızda bulan tarayıcı (Apple M4 CPU optimizasyonu)
 function findAllVideosDeep(rootNode = document, depth = 0) {
   const found = [];
-  if (!rootNode || depth > 4) return found;
+  if (!rootNode || depth > 3) return found;
   try {
     const directVideos = rootNode.querySelectorAll ? rootNode.querySelectorAll('video') : [];
-    directVideos.forEach(v => {
+    for (let i = 0; i < directVideos.length; i++) {
+      const v = directVideos[i];
       if (!found.includes(v)) found.push(v);
-    });
-    const allEls = rootNode.querySelectorAll ? rootNode.querySelectorAll('*') : [];
-    for (let i = 0; i < allEls.length; i++) {
-      const el = allEls[i];
+    }
+    // Yalnızca gerçek Shadow DOM video oynatıcı kapsayıcılarını kontrol et (Tam DOM taramasını sıfırla!)
+    const shadowHostSelector = 'disney-web-player, shaka-player, media-player, video-js, vds-media, ytmusic-player, [data-uia="player"], .dv-player-fullscreen';
+    const shadowHosts = rootNode.querySelectorAll ? rootNode.querySelectorAll(shadowHostSelector) : [];
+    for (let i = 0; i < shadowHosts.length; i++) {
+      const el = shadowHosts[i];
       if (el && el.shadowRoot) {
         const shadowVideos = findAllVideosDeep(el.shadowRoot, depth + 1);
-        shadowVideos.forEach(sv => {
-          if (!found.includes(sv)) found.push(sv);
-        });
+        for (let j = 0; j < shadowVideos.length; j++) {
+          if (!found.includes(shadowVideos[j])) found.push(shadowVideos[j]);
+        }
       }
     }
   } catch (e) {}
@@ -442,7 +482,11 @@ function areUrlsSameMovie(url1, url2) {
   try {
     const p1 = new URL(n1);
     const p2 = new URL(n2);
-    if (p1.hostname === p2.hostname && !p1.hostname.includes('netflix.com') && !p1.hostname.includes('youtube.com') && !p1.hostname.includes('disneyplus.com')) {
+    const isBothDizipal = /dizipal\d*\./i.test(p1.hostname) && /dizipal\d*\./i.test(p2.hostname);
+    if (isBothDizipal && p1.pathname.replace(/\/$/, '') === p2.pathname.replace(/\/$/, '') && p1.pathname.length > 1) {
+      return true;
+    }
+    if ((p1.hostname === p2.hostname || isBothDizipal) && !p1.hostname.includes('netflix.com') && !p1.hostname.includes('youtube.com') && !p1.hostname.includes('disneyplus.com')) {
       const base1 = p1.pathname.replace(/\/(\d+|dublaj|altyazi|tr-dublaj|tr-altyazi|part-\d+)$/i, '');
       const base2 = p2.pathname.replace(/\/(\d+|dublaj|altyazi|tr-dublaj|tr-altyazi|part-\d+)$/i, '');
       // Eğer sezon/bölüm numarası (ör. 1-sezon-2-bolum vs 1-sezon-3-bolum) farklıysa FARKLI bölümdür!
@@ -557,10 +601,85 @@ window.addEventListener('message', (event) => {
   }
 });
 
+// Önbellekte kalan eski Firebase WebSocket hata bayraklarını temizle ve WebSocket zorla
+function clearStaleFirebaseCache() {
+  try {
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.includes('previous_websocket_failure') || k.startsWith('firebase:host:'))) {
+        keysToRemove.push(k);
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  } catch (e) {}
+  try {
+    sessionStorage.removeItem('firebase:previous_websocket_failure');
+  } catch (e) {}
+  try {
+    if (typeof firebase !== 'undefined' && firebase.database && typeof firebase.database.forceWebSockets === 'function') {
+      firebase.database.forceWebSockets();
+    }
+  } catch (e) {}
+}
+
+// Dizipal Otomatik Arama Atlama & Güncel Domain Kaydedici (t.ly/dizipalgiris -> Google 1. Sonuç -> Doğrudan Dizipal)
+function handleDizipalSearchBypass() {
+  if (window !== window.top) return false;
+  try {
+    const href = window.location.href;
+    const host = window.location.hostname.replace(/^www\./, '').toLowerCase();
+
+    // 1. Zaten aktif bir dizipalXXXX.com sayfasındaysak güncel adresi kaydet
+    if (/^dizipal\d+\.(com|org|net|tv|link)$/i.test(host)) {
+      const activeOrigin = `${window.location.protocol}//${window.location.hostname}/`;
+      chrome.storage.local.set({ dizipalCurrentUrl: activeOrigin });
+      return false;
+    }
+
+    // 2. t.ly/dizipalgiris veya Google/Bing/DuckDuckGo arama sayfasındaysak en üstteki dizipalXXXX.com sonucuna doğrudan atla
+    const isSearchEngine = host.includes('google.') || host.includes('bing.com') || host.includes('duckduckgo.com') || host.includes('yandex.');
+    if (isSearchEngine && /dizipal/i.test(href)) {
+      const extractAndRedirect = () => {
+        // Önce URL sorgusunda tam domain var mı kontrol et (örn: ?q=dizipal1590.com)
+        const queryMatch = decodeURIComponent(href).match(/dizipal(\d{3,5})\.(com|org|net|tv|link)/i);
+        if (queryMatch) {
+          const directUrl = `https://dizipal${queryMatch[1]}.${queryMatch[2].toLowerCase()}/`;
+          chrome.storage.local.set({ dizipalCurrentUrl: directUrl });
+          window.location.replace(directUrl);
+          return true;
+        }
+        // Arama sonuçlarındaki en üstteki gerçek dizipalXXXX linkini bul
+        const links = Array.from(document.querySelectorAll('a[href]'));
+        for (const a of links) {
+          const rawHref = a.href || '';
+          const m = rawHref.match(/https?:\/\/(?:www\.)?(dizipal\d{3,5}\.(?:com|org|net|tv|link))/i);
+          if (m && !rawHref.includes('google.') && !rawHref.includes('bing.') && !rawHref.includes('webcache')) {
+            const targetOrigin = `https://${m[1].toLowerCase()}/`;
+            chrome.storage.local.set({ dizipalCurrentUrl: targetOrigin });
+            window.location.replace(targetOrigin);
+            return true;
+          }
+        }
+        return false;
+      };
+
+      if (extractAndRedirect()) return true;
+      document.addEventListener('DOMContentLoaded', extractAndRedirect, { once: true });
+      setTimeout(extractAndRedirect, 300);
+    }
+  } catch (e) {}
+  return false;
+}
+
 // Sayfa yüklendiğinde başlat
 init();
 
 function init() {
+  if (isIgnoredNonPlayerFrame()) return;
+  clearStaleFirebaseCache();
+  if (handleDizipalSearchBypass()) return;
+
   // GİTHUB VE WEB LANDİNG DAVET LİNKİ KONTROLÜ (İsim Giriş Modal Destekli)
   const isLandingOrGithub = window.location.href.includes('github.com/bekircansnk/filmsync-watch-party') || 
                             window.location.href.includes('bekircansnk.github.io/filmsync-watch-party') ||
@@ -619,7 +738,7 @@ function init() {
         const isWatch = isMovieWatchUrl(window.location.href) || hasVideoOrPlayerFrame();
         // Aktif Sekme İzolasyonu: Farklı sekmelerde mükerrer çalışmayı önle
         if (result.activeTabId && myTabId !== null && myTabId !== result.activeTabId) {
-          if (isWatch) {
+          if (isWatch && document.visibilityState === 'visible') {
             console.log(`[FilmSync Kurtarma] Film sekmesi aktif sekme olarak üstleniliyor: ${myTabId}`);
             chrome.storage.local.set({ activeTabId: myTabId });
           } else {
@@ -648,12 +767,17 @@ function init() {
         }
 
         document.documentElement.setAttribute('data-filmsync-room-active', 'true');
+        syncRoomAttributeToDOM();
         console.log(`[FilmSync] Canlı odaya bağlanılıyor: ${roomId}, Kullanıcı: ${username}`);
         
         if (window === window.top) {
           initializeFirebase(firebaseConfig);
-          createChatUI();
-          startUIKeeper();
+          if (isWatch || isMovieWatchUrl(window.location.href)) {
+            createChatUI();
+            startUIKeeper();
+          } else {
+            removeChatUI();
+          }
         }
         
         startVideoTracking();
@@ -663,6 +787,7 @@ function init() {
         startIframeFullscreenKeeper();
       } else {
         document.documentElement.setAttribute('data-filmsync-room-active', 'false');
+        syncRoomAttributeToDOM();
         removeChatUI();
       }
       
@@ -694,9 +819,18 @@ window.addEventListener('beforeunload', () => {
                               window.location.href.includes('netflix.com/title') || 
                               window.location.href.includes('youtube.com/feed');
     const isWatchPage = !isBrowseExclusion && (isMovieWatchUrl(window.location.href) || hasActiveVideo || hasChildFrameVideo);
-    const currentT = (isWatchPage && videoElement && typeof videoElement.currentTime === 'number' && videoElement.currentTime > 1.0)
+    const knownTime = (videoElement && typeof videoElement.currentTime === 'number' && videoElement.currentTime > 0)
       ? videoElement.currentTime
-      : -1;
+      : (lastIframeVideoTime > 0 ? lastIframeVideoTime : (lastKnownState && typeof lastKnownState.currentTime === 'number' ? lastKnownState.currentTime : -1));
+    const currentT = isWatchPage ? knownTime : -1;
+
+    try {
+      sessionStorage.setItem(`filmsync_reloading_${roomId}`, JSON.stringify({
+        timestamp: Date.now(),
+        currentTime: currentT > 0 ? currentT : 0,
+        isWatchPage: !!isWatchPage
+      }));
+    } catch (e) {}
 
     chrome.runtime.sendMessage({
       type: 'page-unload',
@@ -704,6 +838,7 @@ window.addEventListener('beforeunload', () => {
       username: username,
       userId: userId,
       currentTime: currentT,
+      isWatchPage: !!isWatchPage,
       isHost: (!hostOnly || userId === hostId)
     });
   }
@@ -711,9 +846,12 @@ window.addEventListener('beforeunload', () => {
 
 // Storage ve Popup Mesaj Dinleyicileri
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'settings-updated') {
+  if (message.type === 'ping-content') {
+    sendResponse({ alive: true, roomId: roomId });
+    return false;
+  } else if (message.type === 'settings-updated') {
     chrome.storage.local.get(['roomId'], (res) => {
-      if (res.roomId && res.roomId !== roomId) {
+      if (res.roomId && (res.roomId !== roomId || !isFirebaseInitialized || (window === window.top && !document.getElementById('filmsync-root')))) {
         init();
       } else if (!res.roomId && roomId) {
         roomId = null;
@@ -724,6 +862,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     sendResponse({ status: 'success' });
   } else if (message.type === 'force-sync') {
+    if (!roomId || (window === window.top && !document.getElementById('filmsync-root'))) {
+      init();
+    }
     forceSync();
     sendResponse({ status: 'success' });
   } else if (message.type === 'leave-room') {
@@ -738,6 +879,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Canlı Depolama Değişikliği Dinleyicisi (Iframe'ler ve Üst Sayfa Eşleşmesi İçin)
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'local') {
+    if (isIgnoredNonPlayerFrame()) return;
     const roomChanged = changes.roomId && (changes.roomId.oldValue !== changes.roomId.newValue);
     const userChanged = changes.userId && (changes.userId.oldValue !== changes.userId.newValue);
     const activeTabChanged = changes.activeTabId && (changes.activeTabId.oldValue !== changes.activeTabId.newValue);
@@ -754,12 +896,13 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         chrome.storage.local.get(['roomId', 'username', 'password', 'userId', 'selectedAvatar', 'activeTabId', 'hostId', 'hostOnly'], (result) => {
           if (result.activeTabId && myTabId !== null && myTabId !== result.activeTabId) {
             const isWatch = isMovieWatchUrl(window.location.href) || hasVideoOrPlayerFrame();
-            if (isWatch) {
+            if (isWatch && document.visibilityState === 'visible') {
               console.log(`[FilmSync Kurtarma Storage] Film sekmesi aktif sekme olarak üstleniliyor: ${myTabId}`);
               chrome.storage.local.set({ activeTabId: myTabId });
             } else {
               console.log(`[FilmSync İzolasyon Storage] Eklenti bu sekmede pasif hale getiriliyor.`);
               removeChatUI();
+              cleanupFirebase(false);
               return;
             }
           }
@@ -777,11 +920,17 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 
           if (roomId) {
             document.documentElement.setAttribute('data-filmsync-room-active', 'true');
+            syncRoomAttributeToDOM();
             console.log(`[FilmSync Storage] Yeni oda bağlantısı tetikleniyor: ${roomId}`);
+            const isWatch = isMovieWatchUrl(window.location.href) || hasVideoOrPlayerFrame();
             if (window === window.top) {
               initializeFirebase(firebaseConfig);
-              createChatUI();
-              startUIKeeper();
+              if (isWatch) {
+                createChatUI();
+                startUIKeeper();
+              } else {
+                removeChatUI();
+              }
             }
             startVideoTracking();
             startDriftCorrection();
@@ -794,6 +943,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
             }
           } else {
             document.documentElement.setAttribute('data-filmsync-room-active', 'false');
+            syncRoomAttributeToDOM();
             removeChatUI();
           }
         });
@@ -814,10 +964,25 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   }
 });
 
+// Sayfa Yenileme (F5 / Cmd+R) Tespit Yardımcıları
+function isPageReloadNavigation() {
+  try {
+    const navEntries = performance.getEntriesByType && performance.getEntriesByType('navigation');
+    if (navEntries && navEntries.length > 0 && navEntries[0].type === 'reload') {
+      return true;
+    }
+    if (performance.navigation && performance.navigation.type === 1) {
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
 // Firebase SDK Başlatma
 function initializeFirebase(config) {
   if (isFirebaseInitialized) return;
   isFirebaseInitialized = true;
+  clearStaleFirebaseCache();
 
   try {
     if (!firebase.apps.length) {
@@ -840,6 +1005,26 @@ function initializeFirebase(config) {
                                 window.location.href.includes('youtube.com/feed');
       const isWatchPage = !isBrowseExclusion && (isMovieWatchUrl(window.location.href) || hasActiveVideo);
       const hasVideo = hasActiveVideo || isWatchPage;
+      const sessionKey = `joined_${roomId}`;
+      const wasAlreadyInRoom = (window === window.top) && !!sessionStorage.getItem(sessionKey);
+      let reloadMeta = null;
+      try {
+        const rawReload = sessionStorage.getItem(`filmsync_reloading_${roomId}`);
+        if (rawReload) {
+          sessionStorage.removeItem(`filmsync_reloading_${roomId}`);
+          reloadMeta = JSON.parse(rawReload);
+        }
+      } catch (e) {}
+      const isReloadedInRoom = (window === window.top) && isWatchPage && (
+        (reloadMeta && (Date.now() - reloadMeta.timestamp < 25000)) ||
+        (wasAlreadyInRoom && isPageReloadNavigation())
+      );
+
+      if (isReloadedInRoom) {
+        isReloadPauseGuardActive = true;
+        reloadPauseGuardUntil = Date.now() + 8000;
+        broadcastToAllFrames({ type: 'filmsync-reload-pause-guard', until: reloadPauseGuardUntil });
+      }
       
       if (roomData) {
         if (roomData.password && roomData.password !== password) {
@@ -852,9 +1037,31 @@ function initializeFirebase(config) {
         if ((roomData.hostId === userId || !roomData.hostOnly) && window === window.top && isWatchPage && hasVideo) {
           db.ref(`rooms/${roomId}/lastState`).once('value').then((stateSnap) => {
             const currentState = stateSnap.val();
-            if (currentState && currentState.url && areUrlsSameMovie(currentState.url, window.location.href)) {
+            if (isReloadedInRoom) {
+              const preservedTime = (currentState && typeof currentState.currentTime === 'number' && currentState.currentTime > 0)
+                ? currentState.currentTime
+                : ((reloadMeta && reloadMeta.currentTime > 0) ? reloadMeta.currentTime : 0);
+              db.ref(`rooms/${roomId}/lastState`).update({
+                action: 'pause',
+                isPlaying: false,
+                currentTime: preservedTime,
+                lastUpdated: firebase.database.ServerValue.TIMESTAMP,
+                senderId: userId
+              });
+              // Background service worker beforeunload mesajını henüz yazmadıysa veya kaçırdıysa kontrol et ve tamamla
+              db.ref(`rooms/${roomId}/messages`).limitToLast(5).once('value').then((msgSnap) => {
+                const msgs = msgSnap.val() || {};
+                const recentReloadMsg = Object.values(msgs).some(m =>
+                  m && m.isSystem && typeof m.message === 'string' &&
+                  m.message.includes(username) && m.message.includes('sayfayı yeniledi') &&
+                  (Date.now() - (m.timestamp || 0) < 12000)
+                );
+                if (!recentReloadMsg) {
+                  sendSystemMessage(`${username} sayfayı yeniledi, film duraklatıldı.`);
+                }
+              });
+            } else if (currentState && currentState.url && areUrlsSameMovie(currentState.url, window.location.href)) {
               console.log('[FilmSync] Mevcut oda film durumu korunuyor:', currentState);
-              // Sadece sayfa başlığı ve platform adı eksikse tamamla
               if (!currentState.pageTitle && getCleanPageTitle()) {
                 db.ref(`rooms/${roomId}/lastState`).update({
                   pageTitle: getCleanPageTitle(),
@@ -926,6 +1133,14 @@ function initializeFirebase(config) {
 // Firebase Olay Dinleyicileri
 function setupFirebaseListeners() {
   if (!db) return;
+
+  // Mükerrer WebSocket dinleyicilerini ve bellek/CPU sızıntısını önlemek için mevcut dinleyicileri temizle
+  db.ref(`rooms/${roomId}/hostId`).off();
+  db.ref(`rooms/${roomId}/hostOnly`).off();
+  db.ref(`rooms/${roomId}/lastState`).off();
+  db.ref(`rooms/${roomId}/messages`).off();
+  db.ref(`rooms/${roomId}/users`).off();
+  db.ref(`rooms/${roomId}/reactions`).off();
 
   db.ref(`rooms/${roomId}/hostId`).on('value', (snap) => {
     hostId = snap.val();
@@ -1321,7 +1536,22 @@ let lastSentPlayPauseAction = '';
 let lastSentPlayPauseTimestamp = 0;
 
 function sendMediaEvent(isPlaying, currentTime, action = 'event') {
-  if (!db || !roomId || isSyncing) return;
+  if (isSyncing) return;
+
+  // Eğer alt iframe içindeysek ve CSP / üçüncü parti çerez kısıtlaması nedeniyle db veya roomId henüz hazır değilse,
+  // medya olayını (seek, play, pause) doğrudan üst pencereye (window.top) röle et!
+  if ((!db || !roomId) && window !== window.top) {
+    try {
+      window.top.postMessage({
+        type: 'filmsync-iframe-media-event',
+        isPlaying,
+        currentTime,
+        action
+      }, '*');
+    } catch (e) {}
+    return;
+  }
+  if (!db || !roomId) return;
   
   // Sadece host kontrolü aktifse ve ben host değilsem engelle
   if (hostOnly && userId !== hostId) {
@@ -1333,7 +1563,7 @@ function sendMediaEvent(isPlaying, currentTime, action = 'event') {
     return;
   }
 
-  const hasActiveVideo = !!findBestVideoElement();
+  const hasActiveVideo = !!findBestVideoElement() || hasChildFrameVideo;
   const isBrowseExclusion = window.location.href.includes('netflix.com/browse') || 
                             window.location.href.includes('netflix.com/title') || 
                             window.location.href.includes('youtube.com/feed');
@@ -1343,7 +1573,8 @@ function sendMediaEvent(isPlaying, currentTime, action = 'event') {
   }
 
   const activeVideo = videoElement || findBestVideoElement();
-  if (activeVideo && (activeVideo.readyState < 1 || isNaN(activeVideo.duration) || activeVideo.duration === 0)) {
+  // Seek eyleminde readyState < 1 olsa bile (kullanıcı henüz yüklenen noktanın ilerisine sardığında) olayı engelleme!
+  if (action !== 'seek' && activeVideo && (activeVideo.readyState < 1 || isNaN(activeVideo.duration) || activeVideo.duration === 0)) {
     console.log('[FilmSync] Video henüz hazır değil, medya olayı atlanıyor.');
     return;
   }
@@ -1402,7 +1633,7 @@ function sendMediaEvent(isPlaying, currentTime, action = 'event') {
     }
   } else if (action === 'seek') {
     const timeDiff = Math.abs(currentTime - lastSentSeekTime);
-    if (timeDiff >= 1.0 || (now - lastSentSeekTimestamp > 2000)) {
+    if (timeDiff >= 1.0 || (now - lastSentSeekTimestamp > 1500)) {
       msgText = `${username} ${formattedTime} süresine atladı.`;
       lastSentSeekTime = currentTime;
       lastSentSeekTimestamp = now;
@@ -1422,7 +1653,22 @@ let lastTrackedLocationHref = window.location.href;
 function startVideoTracking() {
   if (videoTrackingInterval) clearInterval(videoTrackingInterval);
 
+  let iframeEmptyScanCount = 0;
+
   videoTrackingInterval = setInterval(() => {
+    // Arka plandaki gizli sekmelerde gereksiz DOM taraması yapıp MacBook M4 işlemcisini yorma
+    if (document.hidden && videoElement) return;
+
+    // Alt iframelerde (reklam, analitik, boş çerçeveler) 8 deneme sonunda video yoksa ve embed URL değilse döngüyü sonlandır
+    if (window !== window.top && !videoElement) {
+      iframeEmptyScanCount++;
+      if (iframeEmptyScanCount > 8 && !isEmbedUrl(window.location.href) && !isMovieWatchUrl(window.location.href)) {
+        clearInterval(videoTrackingInterval);
+        videoTrackingInterval = null;
+        return;
+      }
+    }
+
     // SPA URL Değişimi Kontrolü (YouTube, Netflix, Prime Video, Dizipal bölüm geçişleri vb.)
     if (window.location.href !== lastTrackedLocationHref) {
       const oldHref = lastTrackedLocationHref;
@@ -1459,17 +1705,29 @@ function startVideoTracking() {
       }
     }
 
-    const bestVideo = findBestVideoElement();
+    // Eğer videoElement zaten bulunduysa ve DOM içinde hala aktif/geçerliyse, her saniye tüm DOM/ShadowDOM ağacını yeniden tarama! (M4 CPU Optimizasyonu)
+    let bestVideo = null;
+    if (videoElement && videoElement.isConnected && (videoElement.readyState >= 1 || videoElement.src || videoElement.currentSrc)) {
+      bestVideo = videoElement;
+    } else {
+      bestVideo = findBestVideoElement();
+    }
+
     const hasActiveVideo = !!bestVideo;
     const isBrowseExclusion = window.location.href.includes('netflix.com/browse') || 
                               window.location.href.includes('netflix.com/title') || 
                               window.location.href.includes('youtube.com/feed');
     const isWatchPage = !isBrowseExclusion && (isMovieWatchUrl(window.location.href) || hasActiveVideo || hasChildFrameVideo);
 
-    // Ana pencerede oda aktifse sohbet baloncuğu her zaman hazır olmalı (tam ekran değilken kaybolma sorununu önler)
-    if (window === window.top && roomId && !document.getElementById('filmsync-root')) {
-      createChatUI();
-      startUIKeeper();
+    // Ana pencerede oda aktifse ve film sayfasındaysak sohbet baloncuğu her zaman hazır olmalı;
+    // Film sayfası dışındaysak (browse, google, ayarlar vb.) baloncuğu ve emojileri temizle!
+    if (window === window.top && roomId) {
+      if (isWatchPage && !document.getElementById('filmsync-root')) {
+        createChatUI();
+        startUIKeeper();
+      } else if (!isWatchPage && document.getElementById('filmsync-root')) {
+        removeChatUI();
+      }
     }
 
     if (!isWatchPage) {
@@ -1485,16 +1743,24 @@ function startVideoTracking() {
       videoElement = bestVideo;
       lastTrustedMuted = videoElement.muted;
       lastTrustedVolume = videoElement.volume;
+      lastTrackedVideoTime = typeof videoElement.currentTime === 'number' ? videoElement.currentTime : -1;
+      lastTrackedVideoTimestamp = Date.now();
       setupVideoListeners();
       
       console.log('[FilmSync] Yeni video elementi tespit edildi.');
+
+      // Sayfa yenilendiyse ve otomatik oynatma koruması aktifse videoyu anında duraklat
+      if (isReloadPauseGuardActive && Date.now() < reloadPauseGuardUntil) {
+        PlayerAdapter.pause();
+      }
 
       // Eğer iframe içindeysek ana pencereye "bu sayfada aktif video var" sinyali gönder
       if (window !== window.top) {
         try {
           window.top.postMessage({
             type: 'filmsync-iframe-has-video',
-            frameUrl: window.location.href
+            frameUrl: window.location.href,
+            currentTime: videoElement.currentTime || 0
           }, '*');
         } catch (e) {}
       }
@@ -1512,7 +1778,7 @@ function startVideoTracking() {
         initializeFirebase(firebaseConfig);
       }
     }
-  }, 1000);
+  }, 1500);
 }
 
 // Akıllı Eşitleme ve Sağlık Denetleyicisi (Heartbeat & Soft Auto-Sync)
@@ -1547,6 +1813,7 @@ function setupVideoListeners() {
   videoElement.addEventListener('pause', handlePauseEvent);
   videoElement.addEventListener('seeking', handleSeekingEvent);
   videoElement.addEventListener('seeked', handleSeekEvent);
+  videoElement.addEventListener('timeupdate', handleTimeUpdateEvent);
   videoElement.addEventListener('waiting', handleWaitingEvent);
   videoElement.addEventListener('playing', handlePlayingEvent);
   videoElement.addEventListener('volumechange', handleVolumeChangeGuard);
@@ -1558,6 +1825,7 @@ function removeVideoListeners() {
   videoElement.removeEventListener('pause', handlePauseEvent);
   videoElement.removeEventListener('seeking', handleSeekingEvent);
   videoElement.removeEventListener('seeked', handleSeekEvent);
+  videoElement.removeEventListener('timeupdate', handleTimeUpdateEvent);
   videoElement.removeEventListener('waiting', handleWaitingEvent);
   videoElement.removeEventListener('playing', handlePlayingEvent);
   videoElement.removeEventListener('volumechange', handleVolumeChangeGuard);
@@ -1583,12 +1851,35 @@ function handleVolumeChangeGuard() {
   lastTrustedVolume = videoElement.volume;
 }
 
+function scheduleUserSeekEvent(targetSeconds, delayMs = 220) {
+  if (userSeekDebounceTimer) clearTimeout(userSeekDebounceTimer);
+  userSeekDebounceTimer = setTimeout(() => {
+    if (!videoElement) return;
+    const finalTime = typeof videoElement.currentTime === 'number' ? videoElement.currentTime : targetSeconds;
+    lastTrackedVideoTime = finalTime;
+    lastTrackedVideoTimestamp = Date.now();
+    sendMediaEvent(!videoElement.paused, finalTime, 'seek');
+  }, delayMs);
+}
+
 function handleSeekingEvent() {
-  if (isSyncing || isProgrammaticSeeking) return;
+  if (!videoElement) return;
+  const timeSinceProgrammatic = Date.now() - lastProgrammaticSeekTimestamp;
+  const isCloseToTarget = Math.abs(videoElement.currentTime - lastProgrammaticSeekTime) < 1.8;
+  if (isSyncing || isProgrammaticSeeking || (timeSinceProgrammatic < 1600 && isCloseToTarget)) {
+    return;
+  }
   lastSeekActivityTimestamp = Date.now();
+  scheduleUserSeekEvent(videoElement.currentTime, 300);
 }
 
 function handlePlayEvent(e) {
+  if (isReloadPauseGuardActive && Date.now() < reloadPauseGuardUntil) {
+    console.log('[FilmSync] Sayfa yenileme sonrası otomatik oynatma (autoplay) engellendi, film duraklatıldı.');
+    isReloadPauseGuardActive = false;
+    PlayerAdapter.pause();
+    return;
+  }
   if (isSyncing || isProgrammaticSeeking) return;
   if (videoElement && videoElement.seeking) return;
   if (Date.now() - lastSeekActivityTimestamp < 800) return;
@@ -1605,11 +1896,14 @@ function handlePauseEvent(e) {
 }
 
 function handleSeekEvent(e) {
+  if (!videoElement) return;
   const timeSinceProgrammatic = Date.now() - lastProgrammaticSeekTimestamp;
-  const isCloseToTarget = Math.abs(videoElement.currentTime - lastProgrammaticSeekTime) < 1.5;
+  const isCloseToTarget = Math.abs(videoElement.currentTime - lastProgrammaticSeekTime) < 1.8;
 
-  if (isSyncing || isProgrammaticSeeking || (timeSinceProgrammatic < 1500 && isCloseToTarget)) {
+  if (isSyncing || isProgrammaticSeeking || (timeSinceProgrammatic < 1600 && isCloseToTarget)) {
     console.log('[FilmSync] Programatik seek olayı yutuldu, döngü engellendi.');
+    lastTrackedVideoTime = videoElement.currentTime;
+    lastTrackedVideoTimestamp = Date.now();
     if (isProgrammaticSeeking) {
       setTimeout(() => {
         finishProgrammaticSync();
@@ -1619,12 +1913,51 @@ function handleSeekEvent(e) {
   }
 
   lastSeekActivityTimestamp = Date.now();
+  scheduleUserSeekEvent(videoElement.currentTime, 180);
+}
 
-  if (userSeekDebounceTimer) clearTimeout(userSeekDebounceTimer);
-  userSeekDebounceTimer = setTimeout(() => {
-    if (!videoElement) return;
-    sendMediaEvent(!videoElement.paused, videoElement.currentTime, 'seek');
-  }, 200);
+// Özel oynatıcılarda (Netflix, YouTube, JWPlayer, Vidmoly vb.) seeked olayı yutulsa bile
+// ani süre sıçramalarını (> 3.5 sn) yakalayan ve iframe süresini üst pencereye bildiren dinleyici
+let lastIframeTimePostTimestamp = 0;
+function handleTimeUpdateEvent() {
+  if (!videoElement) return;
+  const now = Date.now();
+  const cur = videoElement.currentTime;
+  if (typeof cur !== 'number' || isNaN(cur)) return;
+
+  // Iframe içindeysek her 2 saniyede bir üst pencereye güncel süreyi bildir (Sayfa yenilenirse son süre bilinsin)
+  if (window !== window.top && (now - lastIframeTimePostTimestamp > 2000)) {
+    lastIframeTimePostTimestamp = now;
+    try {
+      window.top.postMessage({
+        type: 'filmsync-iframe-time-sync',
+        currentTime: cur
+      }, '*');
+    } catch (e) {}
+  }
+
+  if (lastTrackedVideoTime >= 0 && lastTrackedVideoTimestamp > 0) {
+    const wallElapsed = Math.max(0, (now - lastTrackedVideoTimestamp) / 1000);
+    const mediaDelta = Math.abs(cur - lastTrackedVideoTime);
+    const unexpectedJump = Math.abs(mediaDelta - wallElapsed);
+    const timeSinceProgrammatic = now - lastProgrammaticSeekTimestamp;
+    const isCloseToProgrammatic = Math.abs(cur - lastProgrammaticSeekTime) < 2.2;
+
+    if (
+      unexpectedJump > 3.5 &&
+      !isSyncing &&
+      !isProgrammaticSeeking &&
+      ! isFirstSync &&
+      !(timeSinceProgrammatic < 2200 && isCloseToProgrammatic) &&
+      (now - lastSeekActivityTimestamp > 900)
+    ) {
+      lastSeekActivityTimestamp = now;
+      scheduleUserSeekEvent(cur, 200);
+    }
+  }
+
+  lastTrackedVideoTime = cur;
+  lastTrackedVideoTimestamp = now;
 }
 
 function handleWaitingEvent() {
@@ -1836,6 +2169,16 @@ function createChatUI() {
       pointer-events: none !important;
       opacity: 0 !important;
       font-size: 15px !important;
+    }
+    /* Sohbet podu gizliyken (kapalıyken) GPU katmanlarını ve 20px bulanıklaştırma filtrelerini uyut (Apple Silicon M4 GPU/CPU Optimizasyonu) */
+    #filmsync-chat-panel:not(.active),
+    #filmsync-chat-panel:not(.active) * {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      will-change: auto !important;
+    }
+    #filmsync-chat-panel:not(.active) .filmsync-spinner {
+      animation: none !important;
     }
     #filmsync-chat-panel.active {
       transform: translateY(-50%) translateX(0) scale(1) !important;
@@ -2158,7 +2501,7 @@ function createChatUI() {
       margin-left: 2px !important;
     }
 
-    /* Uçan Emojiler Animasyon Alanı */
+    /* 3D Uçan Emojiler Animasyon Alanı (GPU Hızlandırmalı Derinlikli Küre & Süzülme) */
     #filmsync-reaction-layer {
       position: fixed !important;
       top: 0 !important;
@@ -2168,13 +2511,39 @@ function createChatUI() {
       pointer-events: none !important;
       z-index: 2147483645 !important;
       overflow: hidden !important;
+      perspective: 900px !important;
     }
     .flying-emoji {
       position: absolute !important;
-      bottom: -50px !important;
+      bottom: -60px !important;
+      width: 54px !important;
+      height: 54px !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
       font-size: 32px !important;
-      animation: flyUp 3.5s cubic-bezier(0.075, 0.82, 0.165, 1) forwards !important;
-      opacity: 0.9 !important;
+      line-height: 1 !important;
+      background: radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.10) 45%, rgba(15, 20, 35, 0.28) 100%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.28) !important;
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45), inset 0 3px 6px rgba(255, 255, 255, 0.42), inset 0 -4px 8px rgba(0, 0, 0, 0.35) !important;
+      text-shadow: 0 6px 12px rgba(0, 0, 0, 0.45) !important;
+      transform-style: preserve-3d !important;
+      will-change: transform, opacity !important;
+      animation: flyUp 3.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+      opacity: 0 !important;
+    }
+    .flying-emoji::after {
+      content: '' !important;
+      position: absolute !important;
+      top: 6px !important;
+      left: 10px !important;
+      width: 16px !important;
+      height: 8px !important;
+      border-radius: 50% !important;
+      background: rgba(255, 255, 255, 0.48) !important;
+      transform: rotate(-28deg) !important;
+      pointer-events: none !important;
     }
 
     /* Toast Bildirimleri Konteyneri & Şık Cam Kartlar */
@@ -2261,18 +2630,23 @@ function createChatUI() {
     }
     @keyframes flyUp {
       0% {
-        transform: translateY(0) rotate(0deg) scale(0.5);
+        transform: translate3d(0, 0, 0) scale(0.35) rotateX(25deg) rotateY(-20deg) rotateZ(-10deg);
         opacity: 0;
       }
-      10% {
+      14% {
         opacity: 1;
-        transform: translateY(-100px) rotate(15deg) scale(1.1);
+        transform: translate3d(var(--fs-sway-1, 18px), -14vh, 40px) scale(1.18) rotateX(-12deg) rotateY(18deg) rotateZ(8deg);
       }
-      90% {
-        opacity: 0.8;
+      45% {
+        opacity: 1;
+        transform: translate3d(var(--fs-sway-2, -22px), -45vh, 65px) scale(1.08) rotateX(10deg) rotateY(-16deg) rotateZ(-6deg);
+      }
+      78% {
+        opacity: 0.92;
+        transform: translate3d(var(--fs-sway-1, 14px), -76vh, 30px) scale(1.0) rotateX(-8deg) rotateY(14deg) rotateZ(5deg);
       }
       100% {
-        transform: translateY(-100vh) rotate(-15deg) scale(0.9);
+        transform: translate3d(var(--fs-sway-2, -12px), -104vh, 0) scale(0.75) rotateX(15deg) rotateY(-10deg) rotateZ(-8deg);
         opacity: 0;
       }
     }
@@ -2292,7 +2666,7 @@ function createChatUI() {
     <!-- Yüzen Cam Sohbet Podu (Floating Glass Chat Pod) -->
     <div id="filmsync-chat-panel" class="active">
       <div class="filmsync-header">
-        <div class="filmsync-room-meta" id="filmsyncRoomMeta" title="Aktif Oda ve Katılımcılar">🍿 ${roomId || 'Oda'}</div>
+        <div class="filmsync-room-meta" id="filmsyncRoomMeta" title="Katılımcılar">🍿 1 Kişi · ${username || 'Anonim'}</div>
         <button class="filmsync-close-btn" id="filmsyncCloseBtn" title="Kapat (Escape)">✕</button>
       </div>
 
@@ -2459,11 +2833,9 @@ function createChatUI() {
   }
 
   if (db && roomId) {
-    renderedMessageKeys.clear();
     db.ref(`rooms/${roomId}/messages`).limitToLast(50).once('value').then((snapshot) => {
       const messages = snapshot.val();
       if (messages) {
-        if (messageList) messageList.innerHTML = '';
         Object.entries(messages).forEach(([key, msg]) => {
           if (!renderedMessageKeys.has(key)) {
             renderedMessageKeys.add(key);
@@ -2475,7 +2847,7 @@ function createChatUI() {
   }
 }
 
-// Sohbet Podu Üst Bilgi Barını Güncelle (Oda Kodu, Katılımcı Sayısı ve İsimleri)
+// Sohbet Podu Üst Bilgi Barını Güncelle (Oda Kodu ve Parantez Olmadan Sadece Kişi Sayısı ve İsimler)
 let cachedUsersList = [];
 function updateRoomInfoBar(usersList, state) {
   if (Array.isArray(usersList)) {
@@ -2485,10 +2857,10 @@ function updateRoomInfoBar(usersList, state) {
   if (!metaEl) return;
 
   const count = cachedUsersList.length || 1;
-  const names = cachedUsersList.map(u => u.username).filter(Boolean).join(', ');
+  const names = cachedUsersList.map(u => u.username).filter(Boolean).join(', ') || username || 'Anonim';
   const platform = (state && state.platformName) ? state.platformName : detectPlatformName(window.location.href);
-  metaEl.textContent = `🍿 ${roomId || ''} · ${count} Kişi${names ? ' (' + names + ')' : ''}`;
-  metaEl.title = `${platform} | Oda: ${roomId || ''} | Katılımcılar (${count}): ${names || username}`;
+  metaEl.textContent = `🍿 ${count} Kişi${names ? ' · ' + names : ''}`;
+  metaEl.title = `${platform} · ${count} Kişi: ${names}`;
 }
 
 // Reaksiyon Gönderme (Firebase)
@@ -2502,25 +2874,44 @@ function sendEmojiReaction(emoji) {
   });
 }
 
-// Uçan Emoji Animasyonu Tetikleme
+// 3D Uçan Emoji Animasyonu Tetikleme (GPU Hızlandırmalı & Maksimum 12 Eşzamanlı Element Limiti)
 function spawnFlyingEmoji(emoji) {
+  if (!reactionContainer) {
+    reactionContainer = document.getElementById('filmsync-reaction-layer');
+  }
   if (!reactionContainer) return;
+
+  while (reactionContainer.children.length >= 12) {
+    reactionContainer.firstElementChild.remove();
+  }
   
   const el = document.createElement('div');
   el.className = 'flying-emoji';
   el.textContent = emoji;
   
-  const randomLeft = Math.random() * 80 + 10;
+  const randomLeft = Math.random() * 22 + 70; // Sağ sohbet podu hizasında (70% - 92%) 3 boyutlu süzülme
+  const sway1 = Math.round((Math.random() - 0.5) * 48);
+  const sway2 = Math.round((Math.random() - 0.5) * 48);
   el.style.left = `${randomLeft}%`;
+  el.style.setProperty('--fs-sway-1', `${sway1}px`);
+  el.style.setProperty('--fs-sway-2', `${sway2}px`);
   
   reactionContainer.appendChild(el);
-  setTimeout(() => el.remove(), 4000);
+  setTimeout(() => el.remove(), 3300);
 }
 
 function startUIKeeper() {
   if (uiKeeperInterval) clearInterval(uiKeeperInterval);
   uiKeeperInterval = setInterval(() => {
+    if (document.hidden) return;
     if (roomId && window === window.top) {
+      const hasKnownVideo = !!(videoElement && videoElement.isConnected) || hasChildFrameVideo;
+      const isBrowseExclusion = window.location.href.includes('netflix.com/browse') || 
+                                window.location.href.includes('netflix.com/title') || 
+                                window.location.href.includes('youtube.com/feed');
+      const isWatchPage = !isBrowseExclusion && (isMovieWatchUrl(window.location.href) || hasKnownVideo || !!findBestVideoElement());
+      if (!isWatchPage) return;
+
       if (!document.getElementById('filmsync-root')) {
         console.log('[FilmSync UI Keeper] Arayüz yenileniyor.');
         createChatUI();
@@ -2536,7 +2927,7 @@ function startUIKeeper() {
         }
       }
     }
-  }, 1500);
+  }, 2500);
 }
 
 function broadcastToAllFrames(msg) {
@@ -2663,9 +3054,14 @@ function removeChatUI() {
   }
   const root = document.getElementById('filmsync-root');
   if (root) root.remove();
+  chatPanel = null;
+  messageInput = null;
+  messageList = null;
+  reactionContainer = null;
   document.getElementById('filmsync-injected-styles')?.remove();
   document.body?.classList.remove('filmsync-sidebar-open');
   broadcastChatState(false);
+  isGlobalKeyListenersAttached = false;
   window.removeEventListener('keydown', handleGlobalEnterKey, true);
   document.removeEventListener('keydown', handleGlobalEnterKey, true);
   window.removeEventListener('keyup', handleGlobalKeySuppression, true);
@@ -2731,8 +3127,6 @@ function toggleChatPanel() {
     }
     broadcastChatState(false);
   }
-  
-  window.dispatchEvent(new Event('resize'));
 }
 
 function handleGlobalEnterKey(e) {
@@ -2840,6 +3234,9 @@ function handleGlobalEnterKey(e) {
   // 2. FilmSync mesaj inputu odaktayken (kullanıcı mesaj yazarken):
   // Tüm video oynatıcı kısayollarını (F=fullscreen, M=mute, Space=pause, Ok tuşları ses/sarma, 0-9) KESİNLİKLE bloke et!
   if (isMessageInput) {
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') && (!messageInput.value || messageInput.value.trim().length === 0)) {
+      return;
+    }
     e._filmsyncHandled = true;
     lastBlockedKeyTimestamp = Date.now();
     e.stopPropagation();
@@ -2908,6 +3305,9 @@ function handleGlobalEnterKey(e) {
 
   // 3. FilmSync Sohbet Paneli Açıkken (Oynatıcı Kısayollarının Tamamını Devre Dışı Bırakma):
   if (isChatOpen) {
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') && (!messageInput.value || messageInput.value.trim().length === 0)) {
+      return;
+    }
     e._filmsyncHandled = true;
     lastBlockedKeyTimestamp = Date.now();
     e.stopPropagation();
@@ -3039,14 +3439,16 @@ function handleGlobalEnterKey(e) {
     return;
   }
 
-  // 8. ALFANÜMERİK TUŞLAR (Sohbet Kapalıyken Chat-First Açılış ve İlk Harfi Yazma):
+  // 8. HERHANGİ BİR YAZILABİLİR KARAKTER VEYA BACKSPACE TUŞU (Sohbet Kapalıyken Anında Açılış ve Yazma):
   const isAlphanumericKey = (e.key && e.key.length === 1 && !isSpace) &&
                             !e.ctrlKey && !e.metaKey && !e.altKey;
   const isAlphanumericOrSpace = isAlphanumericKey;
+  const isBackspaceKey = (e.key === 'Backspace' && !e.ctrlKey && !e.metaKey && !e.altKey);
 
-  if (isAlphanumericKey) {
+  if (isAlphanumericKey || isBackspaceKey) {
     e._filmsyncHandled = true;
     lastBlockedKeyTimestamp = Date.now();
+    lastForwardedKeySignature = `${e.key}_${Date.now()}`;
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
@@ -3069,9 +3471,13 @@ function handleGlobalEnterKey(e) {
 
     if (messageInput) {
       messageInput.focus();
-      messageInput.value += e.key;
-      messageInput.selectionStart = messageInput.selectionEnd = messageInput.value.length;
-      messageInput.dispatchEvent(new Event('input', { bubbles: true }));
+      if (isBackspaceKey) {
+        handleBackspaceInInput(messageInput);
+      } else {
+        messageInput.value += e.key;
+        messageInput.selectionStart = messageInput.selectionEnd = messageInput.value.length;
+        messageInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
     }
     return;
   }
@@ -3814,7 +4220,6 @@ function hideChatPanel() {
       logoToggleBtn.setAttribute('data-tooltip', 'Sohbet');
       logoToggleBtn.title = 'Sohbet (Enter)';
     }
-    window.dispatchEvent(new Event('resize'));
   }
 }
 
@@ -3844,7 +4249,7 @@ function startIframeFullscreenKeeper() {
                       document.msFullscreenElement;
                       
     const root = document.getElementById('filmsync-root');
-    const isEffectivelyFullscreen = !!(fsElement || (isParentIframeFullscreen && findBestVideoElement()));
+    const isEffectivelyFullscreen = !!(fsElement || (isParentIframeFullscreen && (videoElement || findBestVideoElement())));
     
     if (isEffectivelyFullscreen) {
       if (!root) {
@@ -3868,7 +4273,7 @@ function startIframeFullscreenKeeper() {
         removeChatUI();
       }
     }
-  }, 800);
+  }, 1500);
 }
 
 function formatTime(seconds) {
@@ -3968,6 +4373,12 @@ window.addEventListener('message', (event) => {
     isParentIframeFullscreen = !!event.data.isFullscreen;
   } else if (event.data.type === 'filmsync-iframe-fullscreen-request') {
     ensureRootInFullscreenElement();
+  } else if (event.data.type === 'filmsync-reload-pause-guard') {
+    isReloadPauseGuardActive = true;
+    reloadPauseGuardUntil = event.data.until || (Date.now() + 8000);
+    if (videoElement) {
+      PlayerAdapter.pause();
+    }
   } else if (event.data.type === 'filmsync-iframe-mousemove') {
     if (window === window.top) {
       showPanelAndToolbar();
@@ -3978,9 +4389,23 @@ window.addEventListener('message', (event) => {
       if (videoElement.paused) PlayerAdapter.play();
       else PlayerAdapter.pause();
     }
+  } else if (event.data.type === 'filmsync-iframe-time-sync') {
+    if (typeof event.data.currentTime === 'number') {
+      lastIframeVideoTime = event.data.currentTime;
+    }
+  } else if (event.data.type === 'filmsync-iframe-media-event') {
+    if (window === window.top) {
+      if (typeof event.data.currentTime === 'number') {
+        lastIframeVideoTime = event.data.currentTime;
+      }
+      sendMediaEvent(event.data.isPlaying, event.data.currentTime, event.data.action);
+    }
   } else if (event.data.type === 'filmsync-iframe-has-video') {
     if (window === window.top) {
       hasChildFrameVideo = true;
+      if (typeof event.data.currentTime === 'number') {
+        lastIframeVideoTime = event.data.currentTime;
+      }
       // Eğer ana pencerede oda aktifse ve odaya henüz bu sayfanın URL'si veya başlığı yazılmadıysa hemen güncelle
       if (db && roomId && (userId === hostId || !hostOnly) && !isEmbedUrl(window.location.href)) {
         const cleanTopUrl = normalizeMovieUrl(window.location.href);
@@ -4004,14 +4429,24 @@ window.addEventListener('message', (event) => {
         });
       }
     }
-  } else if (event.data.type === 'filmsync-mainworld-keydown') {
+  } else if (event.data.type === 'filmsync-mainworld-keydown' || event.data.type === 'filmsync-iframe-keydown') {
     if (window !== window.top) return;
     syncRoomAttributeToDOM();
-  } else if (event.data.type === 'filmsync-iframe-keydown') {
-    if (window !== window.top) return;
+    const now = Date.now();
+    if (lastForwardedKeySignature === `${event.data.key}_${now}` || (now - lastForwardedKeyTime < 25 && lastForwardedKeyVal === event.data.key)) {
+      return;
+    }
+    lastForwardedKeyTime = now;
+    lastForwardedKeyVal = event.data.key;
+
     try { window.focus(); } catch (e) {}
     if (!chatPanel) chatPanel = document.getElementById('filmsync-chat-panel');
     if (!messageInput) messageInput = document.getElementById('filmsyncMsgInput');
+    if ((!chatPanel || !messageInput) && roomId) {
+      createChatUI();
+      chatPanel = document.getElementById('filmsync-chat-panel');
+      messageInput = document.getElementById('filmsyncMsgInput');
+    }
     if (!chatPanel || !messageInput) return;
 
     // handleGlobalEnterKey doğrudan hem kapalı panel açılışını hem de karakter yazımını tek seferde yönetir

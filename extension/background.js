@@ -1,18 +1,161 @@
 // Film Partisi Background Service Worker
+const DEFAULT_DIZIPAL_URL = 'https://dizipal1590.com/';
+const DIZIPAL_SHORTLINK_URL = 'https://t.ly/dizipalgiris';
+
+// Eklenti kurulduğunda, güncellendiğinde veya yeniden başlatıldığında açık sekmeleri otomatik kurtar
+function reinjectContentScriptsIntoOpenTabs() {
+  try {
+    chrome.tabs.query({ url: ['http://*/*', 'https://*/*'] }, (tabs) => {
+      if (!tabs || !tabs.length) return;
+      tabs.forEach((tab) => {
+        if (!tab || !tab.id || !tab.url) return;
+        if (tab.url.startsWith('chrome://') || tab.url.startsWith('https://chrome.google.com/webstore')) return;
+        chrome.tabs.sendMessage(tab.id, { type: 'ping-content' }, (resp) => {
+          if (chrome.runtime.lastError || !resp || !resp.alive) {
+            if (chrome.scripting && chrome.scripting.executeScript) {
+              chrome.scripting.executeScript({
+                target: { tabId: tab.id, allFrames: true },
+                files: ['libs/firebase-app.js', 'libs/firebase-database.js', 'content.js']
+              }, () => {
+                if (chrome.runtime.lastError) {}
+              });
+            }
+          }
+        });
+      });
+    });
+  } catch (e) {}
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Film Partisi eklentisi hazır.');
+  chrome.storage.local.get(['dizipalCurrentUrl'], (res) => {
+    if (!res || !res.dizipalCurrentUrl) {
+      chrome.storage.local.set({ dizipalCurrentUrl: DEFAULT_DIZIPAL_URL });
+    }
+  });
+  reinjectContentScriptsIntoOpenTabs();
 });
+
+if (chrome.runtime.onStartup) {
+  chrome.runtime.onStartup.addListener(() => {
+    reinjectContentScriptsIntoOpenTabs();
+  });
+}
+
+// Metin/HTML içerisinden en güncel dizipalXXXX.com adresini ayıklayan yardımcı
+function extractDizipalDomainFromText(text) {
+  if (!text || typeof text !== 'string') return null;
+  const regex = /dizipal(\d{3,5})\.(com|org|net|tv|link)/gi;
+  let match;
+  let bestDomain = null;
+  let bestNum = 0;
+  while ((match = regex.exec(text)) !== null) {
+    const num = parseInt(match[1], 10);
+    const tld = match[2].toLowerCase();
+    // İlk karşılaşılan (arama sonucunda en üstte çıkan) veya geçerli aralıktaki domaini seç
+    if (!bestDomain && num >= 500 && num <= 9999) {
+      bestDomain = `https://dizipal${num}.${tld}/`;
+      bestNum = num;
+    }
+  }
+  return bestDomain;
+}
+
+// Güncel Dizipal Adresini Arama Motorları ve Yönlendirme Zincirinden Otomatik Çözümleyen Motor
+async function resolveLatestDizipalUrl(fallbackUrl = DEFAULT_DIZIPAL_URL) {
+  // 1. Önce mevcut/bilinen adrese erişilebiliyor mu hızlıca kontrol et (2.2s timeout)
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 2200);
+    const probeResp = await fetch(fallbackUrl, { method: 'GET', cache: 'no-store', signal: ctrl.signal });
+    clearTimeout(timer);
+    if (probeResp && (probeResp.ok || probeResp.status === 403 || probeResp.status === 503)) {
+      const finalUrl = probeResp.url || fallbackUrl;
+      const extracted = extractDizipalDomainFromText(finalUrl);
+      if (extracted) {
+        chrome.storage.local.set({ dizipalCurrentUrl: extracted });
+        return extracted;
+      }
+      return fallbackUrl;
+    }
+  } catch (e) {
+    // Mevcut domain engellenmiş veya düşmüş olabilir -> Arama ve kısa link çözümleyiciye geç
+  }
+
+  // 2. t.ly/dizipalgiris ve Arama Motorlarından En Üstteki Güncel Dizipal Adresini Bul
+  const searchEndpoints = [
+    DIZIPAL_SHORTLINK_URL,
+    'https://html.duckduckgo.com/html/?q=dizipal+guncel+giris+adresi',
+    'https://www.bing.com/search?q=dizipal+guncel+giris'
+  ];
+
+  for (const endpoint of searchEndpoints) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 3000);
+      const res = await fetch(endpoint, { cache: 'no-store', signal: ctrl.signal });
+      clearTimeout(timer);
+
+      const fromFinalUrl = extractDizipalDomainFromText(res.url || '');
+      if (fromFinalUrl) {
+        chrome.storage.local.set({ dizipalCurrentUrl: fromFinalUrl });
+        return fromFinalUrl;
+      }
+
+      const bodyText = await res.text();
+      const fromBody = extractDizipalDomainFromText(bodyText);
+      if (fromBody) {
+        chrome.storage.local.set({ dizipalCurrentUrl: fromBody });
+        return fromBody;
+      }
+    } catch (e) {}
+  }
+
+  // 3. Ardışık Numara Tarama (Örn: 1590 kapandıysa 1591..1595 arasını paralel yokla)
+  const currentMatch = (fallbackUrl || '').match(/dizipal(\d+)/i);
+  const baseNum = currentMatch ? parseInt(currentMatch[1], 10) : 1590;
+  for (let offset = 1; offset <= 4; offset++) {
+    const candidate = `https://dizipal${baseNum + offset}.com/`;
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 1500);
+      const res = await fetch(candidate, { method: 'HEAD', cache: 'no-store', signal: ctrl.signal });
+      clearTimeout(timer);
+      if (res && (res.ok || res.status === 403)) {
+        chrome.storage.local.set({ dizipalCurrentUrl: candidate });
+        return candidate;
+      }
+    } catch (e) {}
+  }
+
+  return fallbackUrl || DEFAULT_DIZIPAL_URL;
+}
 
 // Sekme Yönlendirme ve Bilgi Dinleyicisi
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'redirect-tab' && message.url) {
+  if (message.type === 'open-dizipal-direct') {
+    chrome.storage.local.get(['dizipalCurrentUrl'], (st) => {
+      const initialUrl = (st && st.dizipalCurrentUrl) ? st.dizipalCurrentUrl : (message.fallbackUrl || DEFAULT_DIZIPAL_URL);
+      chrome.tabs.create({ url: initialUrl }, (createdTab) => {
+        sendResponse({ status: 'success', opened: true, url: initialUrl });
+        // Arka planda güncel adresi doğrula; adres değişmişse sekmeyi otomatik yeni adrese geçir
+        resolveLatestDizipalUrl(initialUrl).then((resolvedUrl) => {
+          if (resolvedUrl && resolvedUrl !== initialUrl && createdTab && createdTab.id) {
+            chrome.tabs.update(createdTab.id, { url: resolvedUrl });
+          }
+        }).catch(() => {});
+      });
+    });
+    return true;
+  } else if (message.type === 'redirect-tab' && message.url) {
     const tabId = sender.tab ? sender.tab.id : null;
     if (tabId) {
       console.log(`[FilmSync Background] Sekme ${tabId} yeni adrese yönlendiriliyor: ${message.url}`);
       chrome.tabs.update(tabId, { url: message.url }, () => {
         sendResponse({ status: 'success' });
       });
-      return true; // Asenkron yanıt için true dön
+      return true;
     }
   } else if (message.type === 'get-tab-id') {
     const tabId = sender.tab ? sender.tab.id : null;
@@ -21,17 +164,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ tabId: tabId, topUrl: topUrl, topTitle: topTitle });
     return false;
   } else if (message.type === 'page-unload') {
-    const { roomId, username, userId, currentTime, isHost } = message;
+    const { roomId, username, userId, currentTime, isHost, isWatchPage } = message;
     if (roomId && username) {
-      // Yalnızca video gerçekten oynatılıyorsa (> 1s) ve oda sahibi veya serbest moddaysa duraklat
-      if (typeof currentTime === 'number' && currentTime > 1.0) {
+      // Video oynatılıyorsa (> 1s) veya aktif izleme sayfasında yetkili kullanıcı sayfayı yenilediyse filmi duraklat
+      if ((typeof currentTime === 'number' && currentTime > 1.0) || (isWatchPage && isHost !== false)) {
         if (isHost !== false) {
           const patchBody = {
+            action: 'pause',
             isPlaying: false,
-            currentTime: currentTime,
             lastUpdated: Date.now(),
-            senderId: userId || 'unloaded_user'
+            senderId: (userId || 'unloaded_user') + '_reload'
           };
+          if (typeof currentTime === 'number' && currentTime > 1.0) {
+            patchBody.currentTime = currentTime;
+          }
 
           fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${roomId}/lastState.json`, {
             method: 'PATCH',
@@ -80,7 +226,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ status: 'success' });
     return true;
   } else if (message.type === 'create-room') {
-    const { roomId, hostId, username, avatar, hostOnly, url, pageTitle, platformName } = message;
+    const { roomId, hostId, username, avatar, hostOnly, isPublic, url, pageTitle, platformName } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
     const nowTs = Date.now();
 
@@ -89,11 +235,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       createdAt: nowTs,
       hostId: hostId,
       hostOnly: hostOnly || false,
+      isPublic: isPublic !== false,
       users: {
         [hostId]: {
           username: username || 'Anonim',
           avatar: avatar || '🍿',
-          lastActive: nowTs
+          lastActive: nowTs,
+          lastSeen: nowTs
         }
       },
       lastState: {
@@ -109,6 +257,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${cleanRoomId}.json`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
       body: JSON.stringify(roomData)
     })
       .then(res => res.json())
@@ -317,7 +466,18 @@ function areUrlsSameMovie(url1, url2) {
   if (url1 === url2) return true;
   const n1 = normalizeMovieUrl(url1);
   const n2 = normalizeMovieUrl(url2);
-  return !!(n1 && n2 && n1 === n2);
+  if (n1 && n2 && n1 === n2) return true;
+  // Dizipal numara değişse bile (örn. dizipal1590.com vs dizipal1591.com) aynı dizi/bölüm yolunu eşleştir
+  try {
+    const p1 = new URL(url1);
+    const p2 = new URL(url2);
+    if (/dizipal\d*\./i.test(p1.hostname) && /dizipal\d*\./i.test(p2.hostname)) {
+      const path1 = p1.pathname.replace(/\/$/, '');
+      const path2 = p2.pathname.replace(/\/$/, '');
+      if (path1 && path1.length > 1 && path1 === path2) return true;
+    }
+  } catch (e) {}
+  return false;
 }
 
 let lastSyncedMovieUrl = '';
@@ -361,27 +521,35 @@ function syncCurrentTabMovieUrl(tabId, url, tabTitle = '') {
         body: JSON.stringify(payload)
       }).then(() => {
         if (previousUrl && !areUrlsSameMovie(previousUrl, cleanUrl)) {
-          const actorName = res.username || 'Katılımcı';
-          const sysMsg = {
-            userId: 'system',
-            username: 'Sistem',
-            message: `🎬 ${actorName} yeni bölüme/filme geçti.`,
-            timestamp: { '.sv': 'timestamp' }
-          };
-          fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/messages.json`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(sysMsg)
-          }).catch(() => {});
+          console.log(`[FilmSync Background] ${res.username || 'Katılımcı'} yeni bölüme/filme geçti: ${cleanUrl}`);
         }
       }).catch(err => console.error('[FilmSync URL Sync Hatası]', err));
     }, 800);
   });
 }
 
-// Tab Olay Dinleyicileri (SPA içi URL değişiminde ve sayfa tamamlanmasında tetikle)
+// Tab Olay Dinleyicileri (SPA içi URL değişiminde, Dizipal güncel domain takibinde ve sayfa tamamlanmasında tetikle)
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if ((changeInfo.status === 'complete' || changeInfo.url) && tab && tab.url) {
+    try {
+      const parsed = new URL(tab.url);
+      // 1. Kullanıcı güncel bir dizipalXXXX.com adresine girdiğinde otomatik öğren ve kaydet
+      if (/^dizipal\d+\.(com|org|net|tv|link)$/i.test(parsed.hostname.replace(/^www\./, ''))) {
+        const latestOrigin = `${parsed.protocol}//${parsed.hostname}/`;
+        chrome.storage.local.set({ dizipalCurrentUrl: latestOrigin });
+      }
+      // 2. t.ly/dizipalgiris sonrası Google aramasına düşüldüğünde sorguda dizipalXXXX.com varsa anında yönlendir
+      if (parsed.hostname.includes('google.') && parsed.pathname === '/search') {
+        const q = parsed.searchParams.get('q') || '';
+        const directFromQuery = extractDizipalDomainFromText(q);
+        if (directFromQuery) {
+          chrome.storage.local.set({ dizipalCurrentUrl: directFromQuery });
+          chrome.tabs.update(tabId, { url: directFromQuery });
+          return;
+        }
+      }
+    } catch (e) {}
+
     syncCurrentTabMovieUrl(tabId, tab.url, tab.title || '');
   }
 });

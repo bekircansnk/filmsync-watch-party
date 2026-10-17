@@ -20,6 +20,9 @@
         "hostOnly": {
           ".validate": "newData.isBoolean()"
         },
+        "isPublic": {
+          ".validate": "!newData.exists() || newData.isBoolean()"
+        },
         "password": {
           ".validate": "newData.isString() && newData.val().length <= 100"
         },
@@ -46,6 +49,12 @@
           "action": {
             ".validate": "!newData.exists() || newData.isString()"
           },
+          "status": {
+            ".validate": "!newData.exists() || newData.isString()"
+          },
+          "updatedBy": {
+            ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 100)"
+          },
           "senderId": {
             ".validate": "!newData.exists() || newData.isString()"
           }
@@ -61,6 +70,15 @@
             },
             "lastActive": {
               ".validate": "!newData.exists() || newData.isNumber()"
+            },
+            "lastSeen": {
+              ".validate": "!newData.exists() || newData.isNumber()"
+            },
+            "isHost": {
+              ".validate": "!newData.exists() || newData.isBoolean()"
+            },
+            "online": {
+              ".validate": "!newData.exists() || newData.isBoolean()"
             },
             "isBuffering": {
               ".validate": "!newData.exists() || newData.isBoolean()"

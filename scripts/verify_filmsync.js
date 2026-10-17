@@ -2398,7 +2398,7 @@ console.log('--- FilmSync Test Suite Başlatılıyor ---');
 
   // 2. content.js içinde data-filmsync-room senkronizasyonu ve mainworld köprüsü
   assert(contentJs.includes('syncRoomAttributeToDOM'), 'Aktif oda durumu documentElement üzerinde data-filmsync-room özniteliği ile senkronize edilmeli');
-  assert(contentJs.includes("event.data.type === 'filmsync-mainworld-keydown'"), 'content.js main-world üzerinden gelen tuşları sohbet kutusuna yazmalı');
+  assert(contentJs.includes("'filmsync-mainworld-keydown'"), 'content.js main-world üzerinden gelen tuşları sohbet kutusuna yazmalı');
 
   console.log('✅ Test 65: 3-Katmanlı Main-World Klavye Kalkanı & Sıfır Sessize Alma (Anti-Mute) Garantisi Başarılı.');
 }
@@ -2409,12 +2409,13 @@ console.log('--- FilmSync Test Suite Başlatılıyor ---');
   const path = require('path');
 
   const bgJs = fs.readFileSync(path.join(__dirname, '../extension/background.js'), 'utf8');
+  const contentJs = fs.readFileSync(path.join(__dirname, '../extension/content.js'), 'utf8');
   const popupJs = fs.readFileSync(path.join(__dirname, '../extension/popup.js'), 'utf8');
   const rules = JSON.parse(fs.readFileSync(path.join(__dirname, '../database.rules.json'), 'utf8'));
 
   // 1. Herkese açık odalarda (hostOnly === false) odaya bağlı herkesin yeni bölüme geçişi tetikleyebilmesi
   assert(bgJs.includes('const canControlUrl = isHost || !res.hostOnly;'), 'Herkese açık odalarda her katılımcı yeni bölüme geçişi senkronize edebilmeli');
-  assert(bgJs.includes('yeni bölüme/filme geçti'), 'Yeni bölüme geçildiğinde sohbet odasına otomatik sistem bildirimi gönderilmeli');
+  assert(contentJs.includes('yeni bölüme/videoya geçti'), 'Yeni bölüme geçildiğinde sohbet odasına tekil ve net sistem bildirimi gönderilmeli');
   assert(bgJs.includes('detectPlatformName'), 'Background servisi platform adını otomatik algılamalı');
 
   // 2. Popup açık odalar listesinde katılımcı sayısı, katılımcı isimleri ve sayfa başlığı gösterimi
@@ -2429,4 +2430,101 @@ console.log('--- FilmSync Test Suite Başlatılıyor ---');
   console.log('✅ Test 66: Co-Controller Bölüm Geçişi, Canlı Katılımcı İsimleri ve Sayfa Başlığı Senkronizasyonu Başarılı.');
 }
 
-console.log('\n🎉 TÜM TESTLER (66/66) EKSİKSİZ VE BAŞARIYLA GEÇTİ! ALTYAPI KUSURSUZ, STABİL VE YÜKSEK PERFORMANSLI.');
+// TEST 67: Çökmeyi Önleyen Doğrudan Eklenti ZIP Paketi, İndirme Portalı & GitHub Pages Dağıtım Hazırlığı
+{
+  const fs = require('fs');
+  const path = require('path');
+
+  const zipPath = path.join(__dirname, '../docs/film-partisi-extension.zip');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '../docs/index.html'), 'utf8');
+  const workflowPath = path.join(__dirname, '../.github/workflows/deploy-pages.yml');
+  const serverJs = fs.readFileSync(path.join(__dirname, '../server.js'), 'utf8');
+
+  // 1. Hazır ZIP paketinin docs/ altında mevcut ve geçerli ZIP imzasına (PK\x03\x04) sahip olması
+  assert(fs.existsSync(zipPath), 'docs/film-partisi-extension.zip dağıtım paketi mevcut olmalı');
+  const zipBuf = fs.readFileSync(zipPath);
+  assert(zipBuf.length > 50000, 'ZIP paketi tüm eklenti dosyalarını içermeli (>50KB)');
+  assert.strictEqual(zipBuf.readUInt32LE(0), 0x04034b50, 'ZIP paketi standart PK\\x03\\x04 (0x04034b50) başlığına sahip olmalı');
+
+  // 2. docs/index.html içinde iframe çökmesine yol açan eski archive/refs/heads/main.zip veya window.open bulunmaması
+  assert(!indexHtml.includes('archive/refs/heads/main.zip'), 'İndirme butonu iframe çökmesine yol açan harici GitHub archive linkine gitmemeli');
+  assert(!indexHtml.includes('window.open('), 'Iframe uyumluluğu için window.open kullanılmamalı');
+  assert(indexHtml.includes('download="film-partisi-extension.zip"'), 'İndirme butonu doğrudan film-partisi-extension.zip paketini indirmeli');
+  assert(indexHtml.includes('btnCopyExtensionsUrl'), 'chrome://extensions adresini tek tıkla kopyalama butonu bulunmalı');
+
+  // 3. GitHub Pages otomatik dağıtım iş akışı ve Express ZIP rotası kontrolü
+  assert(fs.existsSync(workflowPath), 'GitHub Pages otomatik yayın iş akışı (.github/workflows/deploy-pages.yml) mevcut olmalı');
+  assert(serverJs.includes("'/film-partisi-extension.zip'"), 'Sunucu doğrudan ZIP indirme rotasına sahip olmalı');
+
+  console.log('✅ Test 67: Çökmeyi Önleyen Doğrudan Eklenti ZIP Paketi, İndirme Portalı & GitHub Pages Dağıtım Hazırlığı Başarılı.');
+}
+
+// TEST 68: Disney+ Yerine Otomatik Güncel Dizipal Domain Çözümleyici (1590+) & MV3 Önbellek/Bağlanıyor Kilitlenme Koruması
+{
+  const fs = require('fs');
+  const path = require('path');
+
+  const popupHtml = fs.readFileSync(path.join(__dirname, '../extension/popup.html'), 'utf8');
+  const popupJs = fs.readFileSync(path.join(__dirname, '../extension/popup.js'), 'utf8');
+  const bgJs = fs.readFileSync(path.join(__dirname, '../extension/background.js'), 'utf8');
+  const contentJs = fs.readFileSync(path.join(__dirname, '../extension/content.js'), 'utf8');
+  const docsHtml = fs.readFileSync(path.join(__dirname, '../docs/index.html'), 'utf8');
+  const serverJs = fs.readFileSync(path.join(__dirname, '../server.js'), 'utf8');
+
+  // 1. Disney+ kısayolunun kaldırılıp yerine Dizipal kısayolunun eklenmesi
+  assert(!popupHtml.includes('disneyplus.com'), 'Popup arayüzünden Disney+ kısayol kartı kaldırılmış olmalı');
+  assert(popupHtml.includes('id="dizipalLauncherCard"'), 'Popup arayüzünde Dizipal kısayol kartı bulunmalı');
+  assert(!docsHtml.includes('disneyplus.com'), 'Web portalı platform kartlarından Disney+ kaldırılmış olmalı');
+  assert(docsHtml.includes('id="portalDizipalLink"'), 'Web portalında dinamik Dizipal kısayolu bulunmalı');
+
+  // 2. Dizipal dinamik adres çözümleyici (Google'a atmadan doğrudan güncel dizipalXXXX.com adresini bulma)
+  assert(bgJs.includes('resolveLatestDizipalUrl'), 'Background servisi otomatik Dizipal güncel domain çözümleyici içermeli');
+  assert(bgJs.includes('https://t.ly/dizipalgiris'), 'Dizipal çözümleyici t.ly/dizipalgiris kaynağını kontrol etmeli');
+  assert(bgJs.includes('https://dizipal1590.com/'), 'Dizipal çözümleyici en güncel 1590 baz adresini içermeli');
+  assert(bgJs.includes("message.type === 'open-dizipal-direct'"), 'Background servisi doğrudan güncel Dizipal sekmesi açabilmeli');
+  assert(contentJs.includes('handleDizipalSearchBypass'), 'Content script Google/t.ly üzerinden en üstteki güncel Dizipal sonucuna doğrudan atlamalı');
+
+  // 3. MV3 "Bağlanıyor" kilitlenmesini ve önbellek (previous_websocket_failure) sorununu çözen WebSocket + REST Hibrit Motoru
+  assert(popupJs.includes('clearStaleFirebaseCache'), 'Popup bozuk Firebase WebSocket önbelleğini otomatik temizlemeli');
+  assert(popupJs.includes('forceWebSockets'), 'Popup MV3 CSP long-polling engeline takılmamak için WebSocket zorlamalı');
+  assert(popupJs.includes('finalizePartyCreation'), 'Popup anlık bağlantı ve oda kurma için doğrudan REST + WebSocket hibrit desteğine sahip olmalı');
+  assert(contentJs.includes('clearStaleFirebaseCache'), 'Content script bozuk Firebase önbelleğini temizleyip WebSocket zorlamalı');
+  assert(serverJs.includes('no-store, no-cache'), 'Sunucu eski önbellek (stale cache) tutulmasını HTTP başlıklarıyla engellemeli');
+
+  console.log('✅ Test 68: Disney+ Yerine Otomatik Güncel Dizipal Domain Çözümleyici (1590+) & MV3 Önbellek/Bağlanıyor Koruması Başarılı.');
+}
+
+// TEST 69: Sohbet Kapalıyken Anında Klavye Yakalama, Oda Kodsuz/Parantezsiz Başlık, 3D Uçan Emojiler & Apple M4 CPU Optimizasyonu
+{
+  const fs = require('fs');
+  const path = require('path');
+
+  const contentJs = fs.readFileSync(path.join(__dirname, '../extension/content.js'), 'utf8');
+  const injectJs = fs.readFileSync(path.join(__dirname, '../extension/inject.js'), 'utf8');
+
+  // 1. Sohbet kapalıyken klavyede herhangi bir tuşa basıldığında anında sohbet açılması (DOM & Main-World Senkronizasyonu)
+  assert(contentJs.includes('isGlobalKeyListenersAttached = false;'), 'removeChatUI sonrasında tekrar oluşturulan UI için klavye dinleyicisi bayrağı sıfırlanmalı');
+  assert(contentJs.includes("event.data.type === 'filmsync-mainworld-keydown' || event.data.type === 'filmsync-iframe-keydown'"), 'Main-world ve iframe üzerinden gelen tüm tuşlar kapalı sohbeti anında açıp inputa yazmalı');
+  assert(injectJs.includes('(window.top || window).postMessage'), 'inject.js yakaladığı tuşları doğrudan üst pencereye iletmeli');
+
+  // 2. Sohbet başlığında oda kodu ve parantez olmadan sade kişi sayısı ve isim gösterimi ("🍿 1 Kişi · Bekir")
+  const infoBarBlock = contentJs.slice(contentJs.indexOf('function updateRoomInfoBar')).split('function sendEmojiReaction')[0];
+  assert(!infoBarBlock.includes('${roomId'), 'Sohbet üst barında oda kodu gösterilmemeli');
+  assert(!infoBarBlock.includes("' (' + names + ')'"), 'Sohbet üst barında parantez kullanılmamalı');
+  assert(infoBarBlock.includes("`🍿 ${count} Kişi${names ? ' · ' + names : ''}`"), 'Sohbet üst barında sade kişi sayısı ve isimler gösterilmeli');
+
+  // 3. 3 Boyutlu (3D) Uçan Emojiler (perspective, preserve-3d, radial-gradient küre ve translate3d rotasyonları)
+  assert(contentJs.includes('perspective: 900px !important;'), 'Reaksiyon katmanı 3D perspektife sahip olmalı');
+  assert(contentJs.includes('transform-style: preserve-3d !important;'), 'Uçan emojiler 3D transform-style içermeli');
+  assert(contentJs.includes('rotateX(') && contentJs.includes('rotateY(') && contentJs.includes('translate3d('), 'Uçan emojiler 3 eksende (X/Y/Z) süzülerek yükselme animasyonuna sahip olmalı');
+
+  // 4. Apple M4 CPU Optimizasyonu: querySelectorAll('*') tam DOM taramasının kaldırılması ve O(1) hedefli tarama
+  const findAllBlock = contentJs.slice(contentJs.indexOf('function findAllVideosDeep')).split('function findBestVideoElement')[0];
+  assert(!findAllBlock.includes("querySelectorAll('*')"), 'Yüksek CPU tüketimine yol açan querySelectorAll("*") tam DOM taraması kaldırılmış olmalı');
+  assert(findAllBlock.includes('const shadowHostSelector ='), 'Yalnızca gerçek video oynatıcı Shadow DOM bileşenleri hedeflenmeli');
+  assert(contentJs.includes('if (document.hidden && videoElement) return;'), 'Arka plan sekmelerinde gereksiz DOM taraması durdurulmalı');
+
+  console.log('✅ Test 69: Sohbet Kapalıyken Anında Klavye Yakalama, Oda Kodsuz/Parantezsiz Başlık, 3D Uçan Emojiler & Apple M4 CPU Optimizasyonu Başarılı.');
+}
+
+console.log('\n🎉 TÜM TESTLER (69/69) EKSİKSİZ VE BAŞARIYLA GEÇTİ! ALTYAPI KUSURSUZ, STABİL VE YÜKSEK PERFORMANSLI.');
