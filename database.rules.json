@@ -34,6 +34,12 @@
           "url": {
             ".validate": "!newData.exists() || newData.isString()"
           },
+          "pageTitle": {
+            ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 300)"
+          },
+          "platformName": {
+            ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 100)"
+          },
           "lastUpdated": {
             ".validate": "!newData.exists() || newData.isNumber()"
           },
@@ -96,4 +102,3 @@
     }
   }
 }
-

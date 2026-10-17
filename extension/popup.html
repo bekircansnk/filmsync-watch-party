@@ -5,23 +5,18 @@
   <title>Film Partisi</title>
   <style>
     :root {
-      --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      --bg-ambient: #090b12;
-      --glass-panel: rgba(18, 21, 33, 0.78);
+      --glass-bg: rgba(14, 18, 28, 0.78);
       --glass-panel-border: rgba(255, 255, 255, 0.14);
-      --glass-surface: rgba(255, 255, 255, 0.06);
-      --glass-surface-hover: rgba(255, 255, 255, 0.10);
-      --glass-border: rgba(255, 255, 255, 0.12);
-      --glass-border-hover: rgba(255, 255, 255, 0.24);
-      --primary-red: #e50914;
-      --primary-gradient: linear-gradient(135deg, #e50914 0%, #ff3838 100%);
-      --accent-green: #2ed573;
-      --accent-green-gradient: linear-gradient(135deg, #2ed573 0%, #20bf6b 100%);
+      --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+      --primary: #e50914;
+      --primary-hover: #ff2d38;
+      --primary-gradient: linear-gradient(135deg, #e50914 0%, #ff3d47 100%);
+      --accent-cyan: #45f3ff;
+      --emerald: #2ed573;
+      --text: rgba(255, 255, 255, 0.85);
       --text-bright: #ffffff;
-      --text-primary: #e6e8ee;
-      --text-secondary: rgba(255, 255, 255, 0.65);
-      --text-muted: rgba(255, 255, 255, 0.45);
-      --shadow-elevation: 0 20px 48px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+      --text-muted: rgba(255, 255, 255, 0.62);
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
     }
 
     * {
@@ -30,48 +25,41 @@
       padding: 0;
     }
 
-    html, body {
-      width: 320px;
-      margin: 0;
-      padding: 0;
+    body {
+      width: 375px;
+      min-height: 520px;
       font-family: var(--font);
-      background: #090b12;
-      color: var(--text-primary);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(229, 9, 20, 0.28) 0%, transparent 50%),
+        radial-gradient(circle at 85% 90%, rgba(69, 243, 255, 0.16) 0%, transparent 55%),
+        radial-gradient(circle at 50% 50%, rgba(18, 24, 38, 0.98) 0%, #090c14 100%);
+      color: var(--text);
+      padding: 14px;
       overflow-x: hidden;
-      user-select: none;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
     }
 
-    body::before {
-      content: '';
-      position: fixed;
-      top: -30px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 260px;
-      height: 150px;
-      background: radial-gradient(ellipse, rgba(229, 9, 20, 0.25) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-      filter: blur(28px);
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
     }
 
     .container {
-      position: relative;
-      z-index: 1;
-      background: rgba(18, 21, 33, 0.78);
+      background: var(--glass-bg);
       backdrop-filter: blur(24px) saturate(180%);
       -webkit-backdrop-filter: blur(24px) saturate(180%);
       border: 1px solid var(--glass-panel-border);
       border-radius: 18px;
-      padding: 14px;
-      box-shadow: var(--shadow-elevation);
-      display: flex;
-      flex-direction: column;
-      gap: 11px;
-      min-height: 100vh;
-      box-sizing: border-box;
+      padding: 18px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65), var(--glass-highlight);
+      position: relative;
+      overflow: hidden;
     }
 
     /* Header */
@@ -79,8 +67,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-bottom: 11px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.10);
     }
 
     .logo-brand {
@@ -90,808 +79,755 @@
     }
 
     .logo-img {
-      width: 38px;
-      height: 38px;
-      border-radius: 11px;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      box-shadow: 0 4px 14px rgba(229, 9, 20, 0.45);
       border: 1px solid rgba(255, 255, 255, 0.18);
-      box-shadow: 0 4px 14px rgba(229, 9, 20, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-      object-fit: cover;
     }
 
-    .logo-title-group {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    h1 {
-      font-size: 16px;
+    .brand-titles h1 {
+      font-size: 1.12rem;
       font-weight: 800;
       color: var(--text-bright);
       letter-spacing: -0.4px;
-      line-height: 1;
+      line-height: 1.15;
+    }
+
+    .brand-titles h1 span {
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-sub {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    .status-dot-wrap {
       display: flex;
       align-items: center;
-      gap: 3px;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-    }
-
-    h1 span.logo-dot {
-      color: var(--primary-red);
-      text-shadow: 0 0 8px rgba(229, 9, 20, 0.6);
-    }
-
-    .version-tag {
-      font-size: 9.5px;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 0.68rem;
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      color: var(--text-secondary);
-      padding: 2px 5px;
-      border-radius: 6px;
-      letter-spacing: 0.2px;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-
-    .status-badge {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px;
+      color: var(--text-bright);
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background-color: rgba(255, 255, 255, 0.25);
-      box-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      background-color: #ff4757;
+      box-shadow: 0 0 8px rgba(255, 71, 87, 0.6);
+      transition: all 0.25s ease;
     }
 
     .status-dot.active {
-      background-color: var(--accent-green);
-      box-shadow: 0 0 10px var(--accent-green), 0 0 20px rgba(46, 213, 115, 0.4);
-      animation: fsStatusPulse 2s infinite ease-in-out;
+      background-color: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
     }
 
-    @keyframes fsStatusPulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.75; transform: scale(1.15); }
+    /* Active Page Detection Bar */
+    .current-page-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 11px;
+      margin-bottom: 14px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(14px) saturate(180%);
+      -webkit-backdrop-filter: blur(14px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
 
-    /* Kullanıcı Bilgisi - 2026 Frosted Glass */
+    .current-page-info {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .current-platform-tag {
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      background: rgba(229, 9, 20, 0.22);
+      border: 1px solid rgba(229, 9, 20, 0.42);
+      color: #ffb8b8;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .current-page-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-bright);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Profile Input Bar */
     .user-input-wrapper {
       display: flex;
       align-items: center;
       gap: 8px;
-      background: var(--glass-surface);
-      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(16px) saturate(180%);
       -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 12px;
-      padding: 5px 11px;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.2);
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 8px 11px;
+      margin-bottom: 12px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
 
-    .user-input-wrapper:hover {
-      background: var(--glass-surface-hover);
-      border-color: var(--glass-border-hover);
-    }
-
-    .user-input-wrapper:focus-within {
-      background: rgba(255, 255, 255, 0.09);
-      border-color: rgba(229, 9, 20, 0.5);
-      box-shadow: 0 0 14px rgba(229, 9, 20, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    }
-
-    .user-avatar-badge {
-      font-size: 18px;
-      cursor: pointer;
-      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      line-height: 1;
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-    }
-
-    .user-avatar-badge:hover { transform: scale(1.25) rotate(5deg); }
-    .user-avatar-badge:active { transform: scale(1.1); }
-
-    .username-input {
-      flex: 1;
+    .user-input-wrapper input {
       background: transparent !important;
       border: none !important;
       color: var(--text-bright);
-      font-size: 13px;
+      font-size: 0.85rem;
       font-weight: 600;
-      padding: 6px 0;
-      outline: none !important;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      padding: 2px 4px;
+      outline: none;
+      box-shadow: none !important;
     }
 
-    .username-input::placeholder {
+    .avatar-list {
+      display: flex;
+      justify-content: space-between;
+      gap: 5px;
+      margin-bottom: 12px;
+    }
+
+    .avatar-btn {
+      width: 34px;
+      height: 34px;
+      font-size: 1.15rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(255, 255, 255, 0.04);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .avatar-btn:hover {
+      background: rgba(255, 255, 255, 0.10);
+      transform: translateY(-2px);
+    }
+
+    .avatar-btn.selected {
+      border-color: var(--primary);
+      background: rgba(229, 9, 20, 0.22);
+      box-shadow: 0 0 12px rgba(229, 9, 20, 0.38);
+      transform: scale(1.06);
+    }
+
+    /* Section Headers */
+    .section-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    label {
+      display: block;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 5px;
       color: var(--text-muted);
-      font-weight: 500;
+      font-weight: 700;
     }
 
-    /* Bölüm Başlıkları */
-    .section-title-row {
+    input {
+      width: 100%;
+      padding: 9px 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      color: var(--text-bright);
+      font-size: 0.84rem;
+      transition: all 0.2s ease;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.10);
+      box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.22);
+    }
+
+    /* Switch Row */
+    .switches-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .switch-group {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 5px;
+      padding: 8px 10px;
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.09);
     }
 
-    .section-title {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.7px;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    .switch-text {
+      font-size: 0.73rem;
+      color: var(--text);
+      font-weight: 600;
     }
 
-    .badge-count {
-      font-size: 10.5px;
-      font-weight: 700;
-      background: rgba(46, 213, 115, 0.14);
-      color: var(--accent-green);
-      padding: 2px 8px;
-      border-radius: 9999px;
-      border: 1px solid rgba(46, 213, 115, 0.28);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 34px;
+      height: 19px;
+      flex-shrink: 0;
     }
 
-    /* Oda Koduyla Katıl Satırı */
-    .join-code-row {
-      display: flex;
-      gap: 6px;
-      align-items: center;
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
     }
 
-    .join-code-input {
-      flex: 1;
-      background: var(--glass-surface) !important;
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(16px) saturate(180%);
-      -webkit-backdrop-filter: blur(16px) saturate(180%);
-      border-radius: 12px;
-      color: #ff4757;
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 3px;
-      text-align: center;
-      text-transform: uppercase;
-      padding: 7px 10px;
-      outline: none;
-      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .join-code-input:focus {
-      background: rgba(255, 255, 255, 0.09) !important;
-      border-color: rgba(229, 9, 20, 0.5);
-      box-shadow: 0 0 14px rgba(229, 9, 20, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    }
-
-    .join-code-input::placeholder {
-      letter-spacing: 1px;
-      color: var(--text-muted);
-    }
-
-    .btn-join-code {
-      background: var(--accent-green-gradient);
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 12px;
-      padding: 7px 14px;
-      font-size: 12.5px;
-      font-weight: 700;
+    .slider {
+      position: absolute;
       cursor: pointer;
-      box-shadow: 0 3px 14px rgba(46, 213, 115, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      inset: 0;
+      background-color: rgba(255, 255, 255, 0.14);
+      transition: .25s;
+      border-radius: 20px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 13px;
+      width: 13px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #ffffff;
+      transition: .25s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background: var(--primary-gradient);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(15px);
+    }
+
+    /* Buttons */
+    .btn-start-party {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 12px;
+      background: var(--primary-gradient);
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(229, 9, 20, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.28);
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      letter-spacing: 0.3px;
     }
 
-    .btn-join-code:hover {
+    .btn-start-party:hover {
+      background: linear-gradient(135deg, #ff2d38, #ff5e66);
       transform: translateY(-1px);
-      box-shadow: 0 5px 18px rgba(46, 213, 115, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      box-shadow: 0 12px 28px rgba(229, 9, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35);
     }
 
-    .btn-join-code:active {
-      transform: translateY(0) scale(0.98);
-    }
-
-    .btn-join-code:focus-visible {
-      outline: 2px solid rgba(46, 213, 115, 0.6);
+    .btn-start-party:focus-visible,
+    .btn-go-movie:focus-visible,
+    .btn-secondary:focus-visible,
+    .btn-danger:focus-visible,
+    .room-id-display:focus-visible {
+      outline: 2px solid var(--accent-cyan);
       outline-offset: 2px;
     }
 
-    /* Açık Odalar Konteyneri */
-    #publicRoomList {
-      max-height: 125px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      padding-right: 3px;
+    .btn-go-movie {
+      background: linear-gradient(135deg, #10b981, #059669);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      color: #ffffff;
+      width: 100%;
+      padding: 10px;
+      font-weight: 800;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+      transition: all 0.2s ease;
     }
 
-    #publicRoomList::-webkit-scrollbar { width: 3px; }
-    #publicRoomList::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.20); border-radius: 2px; }
+    .btn-go-movie:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(16, 185, 129, 0.5);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(14px) saturate(180%);
+      -webkit-backdrop-filter: blur(14px) saturate(180%);
+      color: var(--text-bright);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      margin-top: 8px;
+      width: 100%;
+      padding: 9.5px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      border-radius: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.13);
+      border-color: rgba(255, 255, 255, 0.24);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: rgba(229, 9, 20, 0.16);
+      color: #ff6b72;
+      border: 1px solid rgba(229, 9, 20, 0.35);
+      margin-top: 8px;
+      width: 100%;
+      padding: 9.5px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      border-radius: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-danger:hover {
+      background: rgba(229, 9, 20, 0.28);
+      color: #ffffff;
+    }
+
+    /* Public Rooms Section */
+    .public-rooms-section {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.10);
+    }
+
+    .public-rooms-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .public-rooms-title {
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: var(--text-bright);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .public-count-pill {
+      background: rgba(46, 213, 115, 0.18);
+      border: 1px solid rgba(46, 213, 115, 0.38);
+      color: #7bed9f;
+      font-size: 0.65rem;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-weight: 800;
+    }
+
+    .btn-refresh-rooms {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .btn-refresh-rooms:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+    }
+
+    .public-rooms-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 185px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
 
     .public-room-card {
-      background: var(--glass-surface);
-      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(16px) saturate(180%);
       -webkit-backdrop-filter: blur(16px) saturate(180%);
-      border-radius: 12px;
-      padding: 6px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 13px;
+      padding: 10px 11px;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
 
     .public-room-card:hover {
-      background: var(--glass-surface-hover);
-      border-color: rgba(229, 9, 20, 0.4);
-      transform: translateY(-1.5px);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(229, 9, 20, 0.45);
+      transform: translateY(-1px);
     }
 
-    .public-room-info {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-
-    .public-room-code-badge {
-      font-size: 13px;
-      font-weight: 800;
-      color: #ff4757;
-      letter-spacing: 1px;
+    .public-room-top {
       display: flex;
       align-items: center;
-      gap: 5px;
+      justify-content: space-between;
+      gap: 6px;
     }
 
     .room-code-pill {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 800;
-      color: #ff4757;
-      letter-spacing: 1.5px;
-      background: rgba(229, 9, 20, 0.14);
-      border: 1px solid rgba(229, 9, 20, 0.30);
-      border-radius: 10px;
-      padding: 2px 8px;
+      background: rgba(229, 9, 20, 0.20);
       backdrop-filter: blur(10px) saturate(180%);
       -webkit-backdrop-filter: blur(10px) saturate(180%);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(229, 9, 20, 0.40);
+      color: #ff9f9f;
+      font-weight: 800;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 7px;
+      letter-spacing: 1px;
     }
 
-    .public-room-platform {
-      font-size: 10.5px;
-      color: var(--text-secondary);
-      font-weight: 600;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    .room-platform-tag {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #a5b4fc;
+      background: rgba(99, 102, 241, 0.16);
+      border: 1px solid rgba(99, 102, 241, 0.32);
+      padding: 2px 7px;
+      border-radius: 7px;
     }
 
-    .public-room-users {
-      font-size: 11px;
-      color: var(--accent-green);
+    .room-page-title {
+      font-size: 0.73rem;
       font-weight: 600;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      color: var(--text-bright);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .room-users-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .room-users-badges {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+      flex: 1;
     }
 
     .btn-join-public {
       background: var(--primary-gradient);
+      border: none;
       color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      border-radius: 10px;
-      padding: 4px 10px;
-      font-size: 11.5px;
-      font-weight: 700;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 5px 10px;
+      border-radius: 8px;
       cursor: pointer;
-      backdrop-filter: blur(12px) saturate(180%);
-      -webkit-backdrop-filter: blur(12px) saturate(180%);
-      box-shadow: 0 2px 8px rgba(229, 9, 20, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      white-space: nowrap;
+      box-shadow: 0 3px 10px rgba(229, 9, 20, 0.35);
+      transition: all 0.18s;
     }
 
     .btn-join-public:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 14px rgba(229, 9, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    }
-
-    .btn-join-public:active {
-      transform: scale(0.97);
-    }
-
-    .btn-join-public:focus-visible {
-      outline: 2px solid rgba(229, 9, 20, 0.6);
-      outline-offset: 1px;
-    }
-
-    .btn-delete-public {
-      background: rgba(229, 9, 20, 0.14);
-      color: #ff4d4d;
-      border: 1px solid rgba(229, 9, 20, 0.28);
-      border-radius: 10px;
-      padding: 4px 7px;
-      font-size: 11px;
-      cursor: pointer;
-      backdrop-filter: blur(12px) saturate(180%);
-      -webkit-backdrop-filter: blur(12px) saturate(180%);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 6px rgba(0, 0, 0, 0.2);
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      line-height: 1;
-    }
-
-    .btn-delete-public:hover {
-      background: rgba(229, 9, 20, 0.28);
-      border-color: rgba(229, 9, 20, 0.5);
-      transform: scale(1.08);
-    }
-
-    .btn-delete-public:active {
-      transform: scale(0.95);
-    }
-
-    .btn-delete-public:focus-visible {
-      outline: 2px solid rgba(229, 9, 20, 0.6);
-      outline-offset: 1px;
+      transform: scale(1.04);
+      box-shadow: 0 5px 14px rgba(229, 9, 20, 0.55);
     }
 
     .empty-room-msg {
-      font-size: 11.5px;
-      color: var(--text-muted);
-      text-align: center;
-      padding: 10px 12px;
-      background: var(--glass-surface);
-      border: 1px solid var(--glass-border);
-      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
       backdrop-filter: blur(12px) saturate(180%);
       -webkit-backdrop-filter: blur(12px) saturate(180%);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      border: 1px dashed rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+      font-size: 0.74rem;
+      color: var(--text-muted);
     }
 
-    /* Servis Kartları Grid - 2026 Frosted Glass Bento */
+    /* Platform Grid */
+    .platform-section-header {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin: 12px 0 7px 0;
+    }
+
     .platform-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
+      gap: 7px;
+      margin-bottom: 10px;
     }
 
     .platform-card {
-      background: var(--glass-surface);
-      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(16px) saturate(180%);
       -webkit-backdrop-filter: blur(16px) saturate(180%);
-      border-radius: 12px;
-      padding: 9px 4px;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 11px;
+      padding: 8px 4px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
 
     .platform-card:hover {
-      background: var(--glass-surface-hover);
-      border-color: rgba(229, 9, 20, 0.45);
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 6px 18px rgba(229, 9, 20, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-    }
-
-    .platform-card:active {
-      transform: translateY(0) scale(0.97);
-    }
-
-    .platform-card:focus-visible {
-      outline: 2px solid rgba(229, 9, 20, 0.5);
-      outline-offset: 1px;
+      background: rgba(255, 255, 255, 0.11);
+      border-color: rgba(255, 255, 255, 0.24);
+      transform: translateY(-2px);
     }
 
     .platform-icon {
-      font-size: 19px;
-      margin-bottom: 2px;
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+      font-size: 1.25rem;
+      margin-bottom: 3px;
     }
+
     .platform-name {
-      font-size: 11px;
+      font-size: 0.66rem;
       font-weight: 700;
       color: var(--text-bright);
       text-align: center;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     }
 
-    /* Parti Başlat Butonu */
-    .btn-start-party {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.28);
-      border-radius: 12px;
-      background: var(--primary-gradient);
-      color: #fff;
-      font-size: 13.5px;
-      font-weight: 800;
-      cursor: pointer;
-      box-shadow: 0 4px 18px rgba(229, 9, 20, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.28);
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      letter-spacing: 0.3px;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
-
-    .btn-start-party:hover {
-      transform: translateY(-1.5px);
-      box-shadow: 0 6px 24px rgba(229, 9, 20, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-    }
-
-    .btn-start-party:active {
-      transform: translateY(0) scale(0.98);
-    }
-
-    .btn-start-party:focus-visible {
-      outline: 2px solid rgba(229, 9, 20, 0.6);
-      outline-offset: 2px;
-    }
-
-    /* Switch - 2026 Frosted Glass */
-    .switch-group {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 7px;
-      background: var(--glass-surface);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(16px) saturate(180%);
-      -webkit-backdrop-filter: blur(16px) saturate(180%);
-      border-radius: 12px;
-      padding: 7px 11px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    }
-
-    .switch-text {
-      font-size: 12px;
-      color: var(--text-primary);
-      font-weight: 600;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
-    .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(255, 255, 255, 0.14);
-      transition: .25s cubic-bezier(0.16, 1, 0.3, 1);
-      border-radius: 20px;
-      border: 1px solid var(--glass-border);
-    }
-    .slider:before {
-      position: absolute; content: ""; height: 12px; width: 12px; left: 2px; bottom: 2px;
-      background-color: #bbb; transition: .25s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 50%;
-    }
-    input:checked + .slider { background-color: var(--primary-red); box-shadow: 0 0 10px rgba(229, 9, 20, 0.4); }
-    input:checked + .slider:before { transform: translateX(16px); background-color: white; }
-
-    /* Aktif Oda Kartı - 2026 Frosted Glass */
+    /* Active Room View */
     .active-room-card {
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      gap: 7px;
-    }
-
-    .active-status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(46, 213, 115, 0.14);
-      border: 1px solid rgba(46, 213, 115, 0.30);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      color: var(--accent-green);
-      padding: 3px 10px;
-      border-radius: 9999px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-      box-shadow: 0 2px 8px rgba(46, 213, 115, 0.15);
-    }
-
-    .status-pulse-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--accent-green);
-      border-radius: 50%;
-      box-shadow: 0 0 6px var(--accent-green);
-      animation: fsStatusPulse 1.8s infinite ease-in-out;
     }
 
     .room-id-display {
-      font-size: 22px;
-      font-weight: 900;
-      color: #ffffff;
-      margin: 2px 0 0 0;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #ff4b55;
+      margin: 8px 0;
       letter-spacing: 4px;
       cursor: pointer;
-      background: var(--glass-surface);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(16px) saturate(180%);
-      -webkit-backdrop-filter: blur(16px) saturate(180%);
-      border-radius: 13px;
-      padding: 7px 16px;
-      width: 100%;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 6px 20px rgba(0, 0, 0, 0.4);
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(14px) saturate(180%);
+      -webkit-backdrop-filter: blur(14px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      padding: 7px 18px;
+      display: inline-block;
+      transition: all 0.2s ease;
     }
 
     .room-id-display:hover {
-      background: var(--glass-surface-hover);
-      border-color: rgba(229, 9, 20, 0.45);
+      background: rgba(255, 255, 255, 0.12);
       transform: scale(1.02);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 8px 24px rgba(229, 9, 20, 0.25);
-    }
-
-    .room-id-display:active {
-      transform: scale(0.98);
-    }
-
-    .room-id-display:focus-visible {
-      outline: 2px solid rgba(229, 9, 20, 0.6);
-      outline-offset: 2px;
-    }
-
-    .room-id-hint {
-      font-size: 10.5px;
-      color: var(--text-muted);
-      margin-top: -3px;
-    }
-
-    .copied-toast {
-      font-size: 11px;
-      color: var(--accent-green);
-      font-weight: 700;
-      text-shadow: 0 0 8px rgba(46, 213, 115, 0.4);
-    }
-
-    .btn-go-movie {
-      background: var(--primary-gradient) !important;
-      border: 1px solid rgba(255, 255, 255, 0.28) !important;
-      color: #fff !important;
-      width: 100%;
-      padding: 9px !important;
-      font-size: 13px !important;
-      font-weight: 800 !important;
-      border-radius: 12px !important;
-      cursor: pointer;
-      box-shadow: 0 4px 18px rgba(229, 9, 20, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      letter-spacing: 0.2px;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
-
-    .btn-go-movie:hover {
-      transform: translateY(-1.5px);
-      box-shadow: 0 6px 24px rgba(229, 9, 20, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
-    }
-
-    .btn-go-movie:active {
-      transform: translateY(0) scale(0.98);
-    }
-
-    .btn-go-movie:focus-visible {
-      outline: 2px solid rgba(229, 9, 20, 0.6);
-      outline-offset: 2px;
     }
 
     .user-list-container {
       width: 100%;
-      margin-top: 3px;
-      padding-top: 6px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.10);
       text-align: left;
     }
 
+    .user-list-title {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
     .user-list-items {
+      font-size: 0.78rem;
+      color: var(--text);
+      max-height: 90px;
+      overflow-y: auto;
       display: flex;
       flex-wrap: wrap;
       gap: 5px;
-      margin-top: 4px;
     }
 
     .user-badge {
-      background: var(--glass-surface);
-      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.06);
       backdrop-filter: blur(14px) saturate(180%);
       -webkit-backdrop-filter: blur(14px) saturate(180%);
-      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
       padding: 3px 9px;
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      font-size: 11.5px;
+      font-size: 0.72rem;
       font-weight: 600;
-      color: #fff;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 2px 6px rgba(0, 0, 0, 0.2);
-      transition: all 0.2s ease;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-    }
-
-    .user-badge:hover {
-      background: var(--glass-surface-hover);
-      border-color: rgba(255, 255, 255, 0.20);
-      transform: translateY(-1px);
+      color: var(--text-bright);
     }
 
     .user-badge-online-dot {
-      width: 5px;
-      height: 5px;
-      background: var(--accent-green);
+      width: 6px;
+      height: 6px;
+      background: var(--emerald);
       border-radius: 50%;
-      box-shadow: 0 0 6px var(--accent-green);
+      box-shadow: 0 0 6px var(--emerald);
     }
 
-    .btn-secondary {
-      background: var(--glass-surface);
-      color: var(--text-bright);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(14px) saturate(180%);
-      -webkit-backdrop-filter: blur(14px) saturate(180%);
-      width: 100%;
-      padding: 7px;
-      font-size: 12.5px;
-      font-weight: 700;
-      border-radius: 11px;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    .join-code-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
     }
 
-    .btn-secondary:hover {
-      background: var(--glass-surface-hover);
-      border-color: rgba(255, 255, 255, 0.24);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    .join-code-row input {
+      text-transform: uppercase;
+      text-align: center;
+      font-weight: 800;
+      letter-spacing: 2px;
+      flex: 1;
     }
 
-    .btn-secondary:active {
-      transform: translateY(0) scale(0.98);
-    }
-
-    .btn-secondary:focus-visible {
-      outline: 2px solid rgba(255, 255, 255, 0.4);
-      outline-offset: 2px;
-    }
-
-    .btn-danger {
-      background: rgba(229, 9, 20, 0.12);
-      color: #ff4d4d;
-      border: 1px solid rgba(229, 9, 20, 0.28);
-      backdrop-filter: blur(14px) saturate(180%);
-      -webkit-backdrop-filter: blur(14px) saturate(180%);
-      width: 100%;
-      padding: 7px;
-      font-size: 12.5px;
-      font-weight: 700;
-      border-radius: 11px;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(229, 9, 20, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
-
-    .btn-danger:hover {
-      background: rgba(229, 9, 20, 0.25);
-      border-color: rgba(229, 9, 20, 0.50);
-      color: #ff6b6b;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(229, 9, 20, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.18);
-    }
-
-    .btn-danger:active {
-      transform: translateY(0) scale(0.98);
-    }
-
-    .btn-danger:focus-visible {
-      outline: 2px solid rgba(229, 9, 20, 0.6);
-      outline-offset: 2px;
+    .join-code-row button {
+      margin-top: 0;
+      width: auto;
+      padding: 0 16px;
     }
 
     .toast-popup {
       position: fixed;
-      bottom: 12px;
+      bottom: 16px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(18, 21, 33, 0.88);
+      background: rgba(14, 18, 28, 0.88);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.16);
       border-radius: 12px;
-      padding: 7px 16px;
-      font-size: 12px;
+      padding: 8px 14px;
+      font-size: 0.74rem;
       font-weight: 600;
       color: var(--text-bright);
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
       display: none;
       z-index: 1000;
-      text-align: center;
       white-space: nowrap;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     }
 
-    .hidden { display: none !important; }
+    .hidden {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Üst Başlık & Logo -->
+    <!-- Header -->
     <div class="logo-container">
       <div class="logo-brand">
-        <img src="icon128.png" class="logo-img" alt="Film Partisi">
-        <div class="logo-title-group">
-          <h1>Film Partisi<span class="logo-dot">.</span></h1>
+        <img src="icon.png" class="logo-img" alt="Film Partisi">
+        <div class="brand-titles">
+          <h1>Film <span>Partisi</span> 🍿</h1>
+          <div class="brand-sub">Evrensel Senkronizasyon & Sohbet</div>
         </div>
       </div>
-      <div class="status-badge" title="Bağlantı Durumu">
+      <div class="status-dot-wrap">
         <span class="status-dot" id="globalStatusDot"></span>
+        <span id="connStatusLabel">Hazır</span>
       </div>
     </div>
 
-    <!-- Kullanıcı Adı & Profil Simgesi -->
-    <div id="commonUserConfig" class="user-input-wrapper">
-      <span id="userAvatarDisplay" class="user-avatar-badge" title="Profil simgesini değiştir">🍿</span>
-      <input type="text" id="usernameInput" class="username-input" placeholder="Adınız">
-    </div>
-
-    <!-- Açık Odalar -->
-    <div id="publicRoomsSection">
-      <div class="section-title-row">
-        <span class="section-title">Açık Odalar</span>
-        <span id="publicRoomCountBadge" class="badge-count">0 Oda</span>
-      </div>
-      <div id="publicRoomList">
-        <div class="empty-room-msg">Odalar taranıyor...</div>
+    <!-- Aktif Sekme Bilgisi -->
+    <div class="current-page-bar" id="currentPageBar">
+      <div class="current-page-info">
+        <span class="current-platform-tag" id="currentPlatformTag">🎬 Web Video</span>
+        <span class="current-page-title" id="currentPageTitle">Sayfa algılanıyor...</span>
       </div>
     </div>
 
-    <!-- Oda Koduyla Katıl -->
-    <div id="joinCodeSection" style="padding-top: 2px;">
-      <div class="section-title-row">
-        <span class="section-title">Oda Koduyla Katıl</span>
+    <!-- Ortak Profil ve Avatar Seçici -->
+    <div id="profileSection">
+      <div class="user-input-wrapper">
+        <span>👤</span>
+        <input type="text" id="usernameInput" placeholder="Adınızı girin (Örn: Bekir)" maxlength="24">
       </div>
-      <div class="join-code-row">
-        <input type="text" id="joinRoomCodeInput" class="join-code-input" placeholder="ABCD" maxlength="4">
-        <button id="btnJoinWithCode" class="btn-join-code">Katıl</button>
+      <div class="avatar-list" id="avatarList">
+        <button class="avatar-btn selected" data-avatar="🍿">🍿</button>
+        <button class="avatar-btn" data-avatar="🍕">🍕</button>
+        <button class="avatar-btn" data-avatar="🍔">🍔</button>
+        <button class="avatar-btn" data-avatar="🦊">🦊</button>
+        <button class="avatar-btn" data-avatar="🐼">🐼</button>
+        <button class="avatar-btn" data-avatar="🔥">🔥</button>
       </div>
     </div>
 
-    <!-- 1. Aktif Oda Kartı (Oda Açıkken Görünür) -->
+    <!-- 1. AKTİF ODA KARTI -->
     <div id="activeRoomContainer" class="active-room-card hidden">
-      <div class="active-status-badge">
-        <span class="status-pulse-dot"></span>
-        <span>Oda Bağlantısı Aktif</span>
-      </div>
-      <div id="roomIdDisplay" class="room-id-display" title="Oda kodunu kopyalamak için tıklayın" role="button" tabindex="0">----</div>
-      <div class="room-id-hint">Kopyalamak için tıklayın</div>
-      <div class="copied-toast" id="copiedToast" style="display:none;">Kopyalandı</div>
-      
-      <button id="btnGoToMovie" class="btn-go-movie">Filme Git</button>
+      <div style="font-size: 0.75rem; color: var(--emerald); font-weight: 700;">Parti Aktif • Canlı Senkronizasyon</div>
+      <div id="roomIdDisplay" class="room-id-display" tabindex="0" title="Oda Kodunu Kopyala">----</div>
+      <div id="activeMovieTitle" class="room-page-title" style="max-width: 100%; margin-bottom: 6px;"></div>
+
+      <button id="btnGoToMovie" class="btn-go-movie hidden">Filme Git 🎬</button>
 
       <div class="user-list-container">
-        <div class="section-title" id="userCountTitle">Katılımcılar (0)</div>
+        <div class="user-list-title" id="userCountTitle">Katılımcılar (0)</div>
         <div class="user-list-items" id="activeUsersList"></div>
       </div>
 
@@ -900,43 +836,87 @@
       <button id="btnLeaveRoom" class="btn-danger">Odadan Ayrıl</button>
     </div>
 
-    <!-- 2. Parti Başlatma Kartı (Desteklenen film sayfasındayken) -->
+    <!-- 2. PARTİ BAŞLATMA EKRANI -->
     <div id="partyCreatorContainer" class="party-creator-panel hidden">
-      <div class="switch-group">
-        <span class="switch-text">Yalnızca ben kontrol edeyim</span>
-        <label class="switch">
-          <input type="checkbox" id="hostOnlySwitch">
-          <span class="slider"></span>
-        </label>
+      <div class="switches-container">
+        <div class="switch-group">
+          <span class="switch-text">Açık Oda</span>
+          <label class="switch">
+            <input type="checkbox" id="isPublicSwitch" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="switch-group">
+          <span class="switch-text">Sadece Ben</span>
+          <label class="switch">
+            <input type="checkbox" id="hostOnlySwitch">
+            <span class="slider"></span>
+          </label>
+        </div>
       </div>
-      <button id="btnStartParty" class="btn-start-party">Parti Başlat</button>
+
+      <button id="btnStartParty" class="btn-start-party">🍿 Film Partisi Başlat</button>
+
+      <div class="join-code-row">
+        <input type="text" id="joinRoomCodeInput" placeholder="ODA KODU (Örn: ABCD)" maxlength="12">
+        <button id="btnJoinWithCode" class="btn-secondary">Katıl</button>
+      </div>
     </div>
 
-    <!-- 3. Servis Seçici (Henüz bir film sayfasında değilken) -->
+    <!-- 3. PLATFORM SEÇİCİ EKRAN -->
     <div id="platformSelectorContainer" class="platform-selector-panel hidden">
-      <div class="section-title-row">
-        <span class="section-title">Platformlar</span>
+      <div class="join-code-row" style="margin-top: 0; margin-bottom: 8px;">
+        <input type="text" id="joinRoomCodeInputSelector" placeholder="ODA KODU İLE KATIL" maxlength="12">
+        <button id="btnJoinWithCodeSelector" class="btn-secondary">Katıl</button>
       </div>
-      <div class="platform-grid">
-        <div class="platform-card" data-url="https://www.netflix.com">
-          <span class="platform-icon">🍿</span>
-          <span class="platform-name">Netflix</span>
+    </div>
+
+    <!-- CANLI AÇIK ODALAR LİSTESİ (Her zaman erişilebilir) -->
+    <div class="public-rooms-section" id="publicRoomsSection">
+      <div class="public-rooms-header">
+        <div class="public-rooms-title">
+          <span>🌐 Açık Odalar</span>
+          <span class="public-count-pill" id="publicRoomsCountPill">0</span>
         </div>
-        <div class="platform-card" data-url="https://www.hdfilmcehennemi.com">
-          <span class="platform-icon">🎬</span>
-          <span class="platform-name">HDFilmCehennemi</span>
-        </div>
-        <div class="platform-card" data-url="https://t.ly/dizipalgiris">
-          <span class="platform-icon">🎥</span>
-          <span class="platform-name">Dizipal</span>
-        </div>
+        <button class="btn-refresh-rooms" id="btnRefreshPublicRooms">Yenile ↻</button>
+      </div>
+      <div id="publicRoomsList" class="public-rooms-list">
+        <div class="empty-room-msg">Açık odalar yükleniyor...</div>
+      </div>
+    </div>
+
+    <!-- HIZLI PLATFORM BAŞLATICI -->
+    <div class="platform-section-header">Hızlı Platform Aç</div>
+    <div class="platform-grid">
+      <div class="platform-card" data-url="https://www.netflix.com">
+        <span class="platform-icon">🍿</span>
+        <span class="platform-name">Netflix</span>
+      </div>
+      <div class="platform-card" data-url="https://www.youtube.com/?hl=tr&gl=TR">
+        <span class="platform-icon">▶️</span>
+        <span class="platform-name">YouTube</span>
+      </div>
+      <div class="platform-card" data-url="https://www.primevideo.com/offers/nonprimehomepage?ref_=dv_web_force_root">
+        <span class="platform-icon">💙</span>
+        <span class="platform-name">Prime Video</span>
+      </div>
+      <div class="platform-card" data-url="https://www.hdfilmcehennemi.nl/">
+        <span class="platform-icon">🔥</span>
+        <span class="platform-name">HDFilmCehennemi</span>
+      </div>
+      <div class="platform-card" data-url="https://www.fullhdfilmizlesene.now/">
+        <span class="platform-icon">🎞️</span>
+        <span class="platform-name">FullHDİzlesene</span>
+      </div>
+      <div class="platform-card" data-url="https://www.disneyplus.com">
+        <span class="platform-icon">✨</span>
+        <span class="platform-name">Disney+</span>
       </div>
     </div>
   </div>
 
-  <div class="toast-popup" id="globalToast">İşlem başarılı</div>
+  <div class="toast-popup" id="globalToast">Bildirim</div>
 
-  <!-- Firebase SDK Kütüphaneleri -->
   <script src="libs/firebase-app.js"></script>
   <script src="libs/firebase-database.js"></script>
   <script src="popup.js"></script>

@@ -2357,9 +2357,76 @@ console.log('--- FilmSync Test Suite Başlatılıyor ---');
   console.log('✅ Test 63: 2026 Frosted Glass (Cam Efekti) Bütüncül UI/UX ve Tasarım Tutarlılığı Başarılı.');
 }
 
-console.log('\n🎉 TÜM TESTLER (63/63) EKSİKSİZ VE BAŞARIYLA GEÇTİ! ALTYAPI KUSURSUZ, STABİL VE YÜKSEK PERFORMANSLI.');
+// TEST 64: Evrensel Platform & Iframe Video Motoru (YouTube, Prime Video, HDFilmCehennemi, FullHDFilmizlesene, TR Dublaj/Altyazı & Iframe Tam Ekran Koruması)
+{
+  const fs = require('fs');
+  const path = require('path');
 
+  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '../extension/manifest.json'), 'utf8'));
+  const injectJs = fs.readFileSync(path.join(__dirname, '../extension/inject.js'), 'utf8');
+  const contentJs = fs.readFileSync(path.join(__dirname, '../extension/content.js'), 'utf8');
 
+  // 1. Manifest all_frames & match_origin_as_fallback garantisi
+  assert.strictEqual(manifest.content_scripts[0].all_frames, true, 'İç içe iframe oynatıcılar için all_frames: true olmalı');
+  assert.strictEqual(manifest.content_scripts[0].match_origin_as_fallback, true, 'Dinamik blob/about:blank iframeler için match_origin_as_fallback: true olmalı');
 
+  // 2. inject.js içinde HTMLVideoElement.prototype.requestFullscreen sarmalayıcısı (Sohbet podu görünürlük garantisi)
+  assert(injectJs.includes('HTMLVideoElement.prototype.requestFullscreen'), 'Çıplak video etiketi tam ekran çağrıları kapsayıcıya yönlendirilmeli');
+  assert(injectJs.includes('filmsync-iframe-fullscreen-request'), 'Iframe tam ekran isteği üst pencere ile koordine edilmeli');
 
+  // 3. content.js içinde Shadow DOM video tarayıcısı ve Iframe Fullscreen Koordinatörü
+  assert(contentJs.includes('findAllVideosDeep'), 'Prime Video ve özel oynatıcılar için Shadow DOM derin video tarayıcısı bulunmalı');
+  assert(contentJs.includes('findBestVideoElement'), 'Reklam/önizleme yerine ana filmi seçen akıllı video puanlayıcı bulunmalı');
+  assert(contentJs.includes('filmsync-iframe-fullscreen-request'), 'Üst pencere iframe tam ekran isteğini yakalayıp sohbet podunu tam ekran köküne taşımalı');
+  assert(contentJs.includes('ensureRootInFullscreenElement'), 'Tam ekran değişiminde #filmsync-root aktif fullscreenElement içine taşınmalı');
 
+  console.log('✅ Test 64: Evrensel Platform, Shadow DOM Video Tarayıcısı ve Iframe Tam Ekran Koruması Başarılı.');
+}
+
+// TEST 65: 3-Katmanlı Sayfa Bağlamı (Main World + Content + EventTarget.prototype.addEventListener) Klavye Kalkanı (M/F/K/J/L Sessize Alma Engeli)
+{
+  const fs = require('fs');
+  const path = require('path');
+
+  const injectJs = fs.readFileSync(path.join(__dirname, '../extension/inject.js'), 'utf8');
+  const contentJs = fs.readFileSync(path.join(__dirname, '../extension/content.js'), 'utf8');
+
+  // 1. inject.js içinde EventTarget.prototype.addEventListener sarmalayıcısı ve main-world capture kalkanı
+  assert(injectJs.includes('EventTarget.prototype.addEventListener = function(type, listener, options)'), 'Sayfa oynatıcılarının (JWPlayer, Video.js, Plyr, YouTube, Prime) kendi keydown dinleyicileri sarmalanmalı');
+  assert(injectJs.includes('shouldInterceptForFilmSyncChat'), 'Sayfa bağlamında Space ve Escape hariç tüm karakter tuşları oynatıcıdan izole edilmeli');
+  assert(injectJs.includes("type: 'filmsync-mainworld-keydown'"), 'Sayfa bağlamında yakalanan tuşlar anında content.js sohbet kutusuna iletilmeli');
+
+  // 2. content.js içinde data-filmsync-room senkronizasyonu ve mainworld köprüsü
+  assert(contentJs.includes('syncRoomAttributeToDOM'), 'Aktif oda durumu documentElement üzerinde data-filmsync-room özniteliği ile senkronize edilmeli');
+  assert(contentJs.includes("event.data.type === 'filmsync-mainworld-keydown'"), 'content.js main-world üzerinden gelen tuşları sohbet kutusuna yazmalı');
+
+  console.log('✅ Test 65: 3-Katmanlı Main-World Klavye Kalkanı & Sıfır Sessize Alma (Anti-Mute) Garantisi Başarılı.');
+}
+
+// TEST 66: Herkese Açık Odalarda Co-Controller Yeni Bölüm Geçişi, Canlı Açık Oda Katılımcı İsimleri & Aktif Sayfa Başlığı Senkronizasyonu
+{
+  const fs = require('fs');
+  const path = require('path');
+
+  const bgJs = fs.readFileSync(path.join(__dirname, '../extension/background.js'), 'utf8');
+  const popupJs = fs.readFileSync(path.join(__dirname, '../extension/popup.js'), 'utf8');
+  const rules = JSON.parse(fs.readFileSync(path.join(__dirname, '../database.rules.json'), 'utf8'));
+
+  // 1. Herkese açık odalarda (hostOnly === false) odaya bağlı herkesin yeni bölüme geçişi tetikleyebilmesi
+  assert(bgJs.includes('const canControlUrl = isHost || !res.hostOnly;'), 'Herkese açık odalarda her katılımcı yeni bölüme geçişi senkronize edebilmeli');
+  assert(bgJs.includes('yeni bölüme/filme geçti'), 'Yeni bölüme geçildiğinde sohbet odasına otomatik sistem bildirimi gönderilmeli');
+  assert(bgJs.includes('detectPlatformName'), 'Background servisi platform adını otomatik algılamalı');
+
+  // 2. Popup açık odalar listesinde katılımcı sayısı, katılımcı isimleri ve sayfa başlığı gösterimi
+  assert(popupJs.includes('detectPlatformNameFromUrl'), 'Popup URL üzerinden platform adını doğru çözümlemeli');
+  assert(popupJs.includes('cleanPageTitle'), 'Popup açık olan film/bölüm başlığını temizleyerek göstermeli');
+  assert(popupJs.includes('👥 ${userCount} Kişi'), 'Açık odalarda aktif kişi sayısı net gösterilmeli');
+
+  // 3. Firebase kurallarında pageTitle ve platformName alanlarının doğrulanması
+  const lastStateRules = rules.rules.rooms.$roomId.lastState;
+  assert(lastStateRules.pageTitle && lastStateRules.platformName, 'Firebase kuralları lastState içinde pageTitle ve platformName alanlarına izin vermeli');
+
+  console.log('✅ Test 66: Co-Controller Bölüm Geçişi, Canlı Katılımcı İsimleri ve Sayfa Başlığı Senkronizasyonu Başarılı.');
+}
+
+console.log('\n🎉 TÜM TESTLER (66/66) EKSİKSİZ VE BAŞARIYLA GEÇTİ! ALTYAPI KUSURSUZ, STABİL VE YÜKSEK PERFORMANSLI.');

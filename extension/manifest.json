@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Film Partisi",
-  "version": "1.2.0",
-  "description": "Arkadaşlarınızla Netflix, YouTube ve tüm platformlarda eşzamanlı film ve video izleyin, sohbet edin.",
+  "version": "1.3.0",
+  "description": "Arkadaşlarınızla Netflix, YouTube, Prime Video, Dizipal, HDFilmCehennemi ve tüm platformlarda eşzamanlı film izleyin, sohbet edin.",
   "permissions": [
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -38,17 +39,15 @@
         "content.js"
       ],
       "run_at": "document_end",
-      "all_frames": true
+      "all_frames": true,
+      "match_about_blank": true,
+      "match_origin_as_fallback": true
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["inject.js"],
-      "matches": [
-        "*://*.netflix.com/*",
-        "*://*.disneyplus.com/*",
-        "*://*.youtube.com/*"
-      ]
+      "resources": ["inject.js", "icon48.png", "icon128.png"],
+      "matches": ["<all_urls>"]
     }
   ]
 }

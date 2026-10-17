@@ -16,13 +16,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   } else if (message.type === 'get-tab-id') {
     const tabId = sender.tab ? sender.tab.id : null;
-    sendResponse({ tabId: tabId });
+    const topUrl = (sender.tab && sender.tab.url) ? sender.tab.url : '';
+    const topTitle = (sender.tab && sender.tab.title) ? sender.tab.title : '';
+    sendResponse({ tabId: tabId, topUrl: topUrl, topTitle: topTitle });
     return false;
   } else if (message.type === 'page-unload') {
     const { roomId, username, userId, currentTime, isHost } = message;
     if (roomId && username) {
       // Yalnızca video gerçekten oynatılıyorsa (> 1s) ve oda sahibi veya serbest moddaysa duraklat
-      // Sekme ilk açılırken, yeniden yüklenirken veya video başlamamışken odayı sıfırlama!
       if (typeof currentTime === 'number' && currentTime > 1.0) {
         if (isHost !== false) {
           const patchBody = {
@@ -79,25 +80,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ status: 'success' });
     return true;
   } else if (message.type === 'create-room') {
-    const { roomId, hostId, username, avatar, hostOnly, url } = message;
+    const { roomId, hostId, username, avatar, hostOnly, url, pageTitle, platformName } = message;
     const cleanRoomId = (roomId || '').trim().toUpperCase();
+    const nowTs = Date.now();
 
     const roomData = {
       password: '',
+      createdAt: nowTs,
       hostId: hostId,
       hostOnly: hostOnly || false,
       users: {
         [hostId]: {
           username: username || 'Anonim',
           avatar: avatar || '🍿',
-          lastActive: Date.now()
+          lastActive: nowTs
         }
       },
       lastState: {
         isPlaying: false,
         currentTime: 0,
         url: url ? normalizeMovieUrl(url) : '',
-        lastUpdated: Date.now()
+        pageTitle: (pageTitle || '').slice(0, 200),
+        platformName: (platformName || detectPlatformName(url || '')).slice(0, 80),
+        lastUpdated: nowTs
       }
     };
 
@@ -180,17 +185,95 @@ function cleanupExpiredRoomsREST() {
     .catch(err => console.error('[FilmSync REST Cleanup Hatası]', err));
 }
 
-// Film/Dizi Adres Doğrulayıcı (Yalnızca gerçek oynatma sayfalarını hedefle)
+// Platform adını URL'den tespit eden yardımcı
+function detectPlatformName(url) {
+  if (!url || typeof url !== 'string') return 'Film Partisi';
+  const u = url.toLowerCase();
+  if (u.includes('netflix.com')) return 'Netflix';
+  if (u.includes('youtube.com') || u.includes('youtu.be')) return 'YouTube';
+  if (u.includes('primevideo.com') || u.includes('amazon.')) return 'Prime Video';
+  if (u.includes('disneyplus.com')) return 'Disney+';
+  if (u.includes('fullhdfilmizlesene')) return 'FullHDFilmizlesene';
+  if (u.includes('hdfilmcehennemi')) return 'HDFilmCehennemi';
+  if (u.includes('filmcehennemi')) return 'FilmCehennemi';
+  if (u.includes('dizipal')) return 'Dizipal';
+  if (u.includes('hdfilmizle')) return 'HDFilmİzle';
+  if (u.includes('blutv.com')) return 'BluTV';
+  if (u.includes('exxen.com')) return 'Exxen';
+  if (u.includes('gain.tv')) return 'GAİN';
+  if (u.includes('todtv.com')) return 'TOD';
+  if (u.includes('tabii.com')) return 'tabii';
+  if (u.includes('mubi.com')) return 'MUBI';
+  if (u.includes('crunchyroll.com')) return 'Crunchyroll';
+  if (u.includes('twitch.tv')) return 'Twitch';
+  if (u.includes('kick.com')) return 'Kick';
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.replace(/^www\./, '');
+  } catch (e) {
+    return 'Web Video';
+  }
+}
+
+// Film/Dizi Adres Doğrulayıcı (Yalnızca gerçek oynatma sayfalarını hedefle, arama/browse sayfalarını filtrele)
 function isMovieWatchUrl(url) {
   if (!url || typeof url !== 'string') return false;
   const u = url.toLowerCase();
-  if (u.includes('hdfilmcehennemi')) return true;
-  if (u.includes('dizipal')) return true;
-  if (u.includes('netflix.com/watch')) return true; // Sadece aktif video izleme sayfası!
-  if (u.includes('youtube.com/watch')) return true;
-  if (u.includes('disneyplus.com/video/')) return true;
-  if (u.includes('primevideo.com/detail') || u.includes('primevideo.com/watch')) return true;
-  if (u.includes('blutv.com') || u.includes('exxen.com') || u.includes('gain.tv') || u.includes('todtv.com.tr')) return true;
+  if (!u.startsWith('http://') && !u.startsWith('https://')) return false;
+
+  // Arama motorları, eklenti sayfaları ve bilinen liste/browse sayfaları hariç
+  if (u.includes('google.com/search') || u.includes('bing.com/search') || u.includes('yandex.com')) return false;
+  if (u.includes('github.com/') || u.includes('github.io/filmsync')) return false;
+
+  // Netflix: Sadece /watch/ aktif oynatma sayfasıdır (/browse ve /title fragmanları atlanır)
+  if (u.includes('netflix.com')) {
+    return u.includes('netflix.com/watch');
+  }
+  // YouTube: Sadece /watch veya /shorts aktif oynatma sayfasıdır (/feed, /results ve anasayfa atlanır)
+  if (u.includes('youtube.com')) {
+    return u.includes('youtube.com/watch') || u.includes('youtube.com/shorts/');
+  }
+  if (u.includes('youtu.be/')) return true;
+
+  // Disney+: /video/ sayfası
+  if (u.includes('disneyplus.com')) {
+    return u.includes('disneyplus.com/video/') || u.includes('/video/');
+  }
+
+  // Amazon Prime Video
+  if (u.includes('primevideo.com')) {
+    return u.includes('/detail') || u.includes('/watch') || u.includes('/gp/video') || u.includes('/region/');
+  }
+
+  // Bilinen Türk ve Global Film/Dizi Platformları
+  if (
+    u.includes('hdfilmcehennemi') ||
+    u.includes('filmcehennemi') ||
+    u.includes('fullhdfilmizlesene') ||
+    u.includes('dizipal') ||
+    u.includes('hdfilmizle') ||
+    u.includes('filmizle') ||
+    u.includes('jetfilmizle') ||
+    u.includes('kultfilmler') ||
+    u.includes('yabancidizi') ||
+    u.includes('dizibox') ||
+    u.includes('sezonlukdizi') ||
+    u.includes('sinefy') ||
+    u.includes('dizilla') ||
+    u.includes('dizigom') ||
+    u.includes('webteizle') ||
+    u.includes('blutv.com') ||
+    u.includes('exxen.com') ||
+    u.includes('gain.tv') ||
+    u.includes('todtv.com.tr') ||
+    u.includes('tabii.com') ||
+    u.includes('puhutv.com') ||
+    u.includes('mubi.com') ||
+    u.includes('crunchyroll.com')
+  ) {
+    return true;
+  }
+
   return false;
 }
 
@@ -208,6 +291,9 @@ function normalizeMovieUrl(url) {
     if (parsed.hostname.includes('youtube.com')) {
       const v = parsed.searchParams.get('v');
       if (v) return `https://www.youtube.com/watch?v=${v}`;
+      if (parsed.pathname.includes('/shorts/')) {
+        return `https://www.youtube.com${parsed.pathname.replace(/\/$/, '')}`;
+      }
     }
     if (parsed.hostname.includes('youtu.be')) {
       const v = parsed.pathname.replace(/^\//, '');
@@ -237,34 +323,57 @@ function areUrlsSameMovie(url1, url2) {
 let lastSyncedMovieUrl = '';
 let syncMovieUrlTimer = null;
 
-// Sekme Güncellendiğinde Arka Planda Film Adresini Sadece Oda Sahibi (Host) İçin Firebase'e Yaz
-function syncCurrentTabMovieUrl(tabId, url) {
+// Sekme Güncellendiğinde Arka Planda Film Adresini Firebase'e Yaz
+function syncCurrentTabMovieUrl(tabId, url, tabTitle = '') {
   if (!isMovieWatchUrl(url)) return;
   const cleanUrl = normalizeMovieUrl(url);
   if (areUrlsSameMovie(cleanUrl, lastSyncedMovieUrl)) return;
 
-  chrome.storage.local.get(['roomId', 'userId', 'activeTabId', 'hostId'], (res) => {
+  chrome.storage.local.get(['roomId', 'userId', 'username', 'activeTabId', 'hostId', 'hostOnly'], (res) => {
     // Sadece aktif bir oda varsa ve bu sekme belirlenmiş aktif sekme ise yaz
     if (!res.roomId) return;
     if (res.activeTabId && res.activeTabId !== tabId) return;
 
-    // SADECE ODA SAHİBİ (HOST) FİLM URL'SİNİ DEĞİŞTİREBİLİR!
-    // Misafir kullanıcılar başka sekmeye geçtiğinde veya odaya katıldığında oda linkini bozamaz.
-    if (res.hostId && res.userId && res.userId !== res.hostId) {
+    // Eğer "Yalnızca ben kontrol edeyim" (hostOnly) açıksa sadece host değiştirebilir.
+    // Ancak serbest moddaysa (hostOnly === false) ve kullanıcı zaten aktif parti sekmesindeyse yeni bölüme geçebilir.
+    const isHost = !res.hostId || res.userId === res.hostId;
+    const canControlUrl = isHost || !res.hostOnly;
+    if (!canControlUrl) {
       return;
     }
 
     if (syncMovieUrlTimer) clearTimeout(syncMovieUrlTimer);
     syncMovieUrlTimer = setTimeout(() => {
+      const previousUrl = lastSyncedMovieUrl;
       lastSyncedMovieUrl = cleanUrl;
       console.log(`[FilmSync Background] Canlı film adresi Firebase'e yazılıyor: ${cleanUrl}`);
+      const payload = {
+        url: cleanUrl,
+        platformName: detectPlatformName(cleanUrl),
+        senderId: res.userId || 'system'
+      };
+      if (tabTitle) {
+        payload.pageTitle = tabTitle.slice(0, 200);
+      }
       fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/lastState.json`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: cleanUrl,
-          senderId: res.userId || 'system'
-        })
+        body: JSON.stringify(payload)
+      }).then(() => {
+        if (previousUrl && !areUrlsSameMovie(previousUrl, cleanUrl)) {
+          const actorName = res.username || 'Katılımcı';
+          const sysMsg = {
+            userId: 'system',
+            username: 'Sistem',
+            message: `🎬 ${actorName} yeni bölüme/filme geçti.`,
+            timestamp: { '.sv': 'timestamp' }
+          };
+          fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms/${res.roomId}/messages.json`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sysMsg)
+          }).catch(() => {});
+        }
       }).catch(err => console.error('[FilmSync URL Sync Hatası]', err));
     }, 800);
   });
@@ -273,6 +382,6 @@ function syncCurrentTabMovieUrl(tabId, url) {
 // Tab Olay Dinleyicileri (SPA içi URL değişiminde ve sayfa tamamlanmasında tetikle)
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if ((changeInfo.status === 'complete' || changeInfo.url) && tab && tab.url) {
-    syncCurrentTabMovieUrl(tabId, tab.url);
+    syncCurrentTabMovieUrl(tabId, tab.url, tab.title || '');
   }
 });
