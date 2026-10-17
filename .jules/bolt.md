@@ -1,0 +1,3 @@
+## 2024-05-24 - Leading-Edge Throttle for High-Frequency UI Events
+**Learning:** Attaching unthrottled DOM queries (document.getElementById) and clearTimeout/setTimeout operations directly to 'mousemove' events causes massive layout thrashing and main thread blocking, as it fires hundreds of times per second. Delaying execution (trailing-edge) introduces UI latency.
+**Action:** Always apply a leading-edge throttle strategy (triggering the action immediately, then ignoring events for a short timeout like 150ms) to high-frequency events like mousemove or scroll to preserve responsiveness while preventing main thread CPU spikes.

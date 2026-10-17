@@ -1982,8 +1982,13 @@ let idleTimer = null;
 let isFullscreen = false;
 
 function setupFullscreenIdleDetector() {
+  let isThrottled = false;
   const handleMouseMove = () => {
     if (!isFullscreen) return;
+    if (isThrottled) return;
+
+    isThrottled = true;
+    setTimeout(() => { isThrottled = false; }, 150);
     
     showPanelAndToolbar();
     resetIdleTimer(isInputFocused ? 5000 : 3000);
