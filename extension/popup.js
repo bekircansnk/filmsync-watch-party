@@ -692,16 +692,30 @@ document.addEventListener('DOMContentLoaded', () => {
           card.innerHTML = `
             <div class="public-room-info">
               <div class="public-room-code-badge">
-                <span>🔑 ${roomId}</span>
+                <span>🔑 <span class="room-id-badge"></span></span>
               </div>
-              <div class="public-room-platform">${platformName}</div>
-              <div class="public-room-users">${displayUsersText}</div>
+              <div class="public-room-platform"><span class="room-platform-name"></span></div>
+              <div class="public-room-users"><span class="room-display-users"></span></div>
             </div>
             <div style="display: flex; align-items: center; gap: 4px;">
-              <button class="btn-join-public" data-code="${roomId}">Katıl</button>
-              ${activeUserCount === 0 ? `<button class="btn-delete-public" data-room="${roomId}" title="Boş Odayı Sil (İmha Et)">🗑️</button>` : ''}
+              <button class="btn-join-public" data-code=""></button>
+              <div class="delete-btn-container"></div>
             </div>
           `;
+          card.querySelector('.room-id-badge').textContent = roomId;
+          card.querySelector('.room-platform-name').textContent = platformName;
+          card.querySelector('.room-display-users').textContent = displayUsersText;
+          const joinBtn = card.querySelector('.btn-join-public');
+          joinBtn.textContent = 'Katıl';
+          joinBtn.dataset.code = roomId;
+          if (activeUserCount === 0) {
+            const delBtn = document.createElement('button');
+            delBtn.className = 'btn-delete-public';
+            delBtn.dataset.room = roomId;
+            delBtn.title = 'Boş Odayı Sil (İmha Et)';
+            delBtn.textContent = '🗑️';
+            card.querySelector('.delete-btn-container').appendChild(delBtn);
+          }
 
           card.querySelector('.btn-join-public').addEventListener('click', () => {
             joinRoomWithCode(roomId);
