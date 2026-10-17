@@ -1,9 +1,9 @@
 # 🧠 AKTİF BAĞLAM VE PROJE DURUMU (ACTIVE CONTEXT)
 
-* **Son Güncelleme:** 2026-10-17 17:57
+* **Son Güncelleme:** 2026-10-17 18:04
 * **Proje:** Film Partisi (FilmSync) — Senkronize Video İzleme & Sohbet Ekosistemi
 * **Uzak Repozituvar:** `git@github.com:bekircansnk/filmsync-watch-party.git` (Private)
-* **Aktif Dallar:** `main` & `mac/sync-all-updates-v1.2.0`
+* **Aktif Dal:** Yalnızca tek ve güncel `main` dalı (875 adet eski/bot dal tamamen temizlendi)
 * **Test Durumu:** 63/63 Senaryo Başarılı (`node scripts/verify_filmsync.js`)
 
 ---
