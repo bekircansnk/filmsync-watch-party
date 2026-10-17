@@ -105,3 +105,11 @@ API'nin yüklenemediği veya erişilemediği durumlarda, Teleparty'nin kullandı
 
 
 
+
+### 🎯 [2026-10-17 17:55] Standart Geliştirme — 17.10.2026 17:55
+* **Standart/Karar:** Standart Geliştirme — 17.10.2026 17:55
+* **Gerekçe:** Her yeni sohbette aynı kuralları ve standartları tekrar anlatmamak; projenin geçmişini ve gelecekte neyin nasıl yapılacağını kalıcı hale getirmek amacıyla oluşturuldu.
+* **Kapsam:** Proje geneli
+* **Durum:** Aktif & Yürürlükte
+
+---

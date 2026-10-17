@@ -76,6 +76,7 @@
 │   ├── LIVING_KNOWLEDGE_BASE.md
 │   └── PATTERNS.md
 ├── docs                    # Proje ve AI kullanım rehberleri
+│   ├── ai_rehberleri
 │   ├── jules
 │   ├── DEBUG_PROTOCOL.md
 │   ├── filmsync_docs.md
@@ -110,7 +111,6 @@
 │   ├── build_safari_app.sh
 │   └── verify_filmsync.js
 ├── teleparty
-│   ├── _locales
 ```
 
 ## 📜 Ajan Anayasası & Hafıza Mimarisi

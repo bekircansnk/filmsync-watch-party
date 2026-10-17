@@ -44,3 +44,11 @@ Bu proje, ana monorepodan tamamen ayrıştırılmış ve **kendi başına bağı
 
 ## 🔗 5. Canlı Veritabanı ve Entegrasyonlar
 - Tüm canlı veritabanı şifreleri, API bağlantıları ve gizli anahtarlar doğrudan [global-connections.md](file:///Users/bekir/.gemini/maestro/rules/global-connections.md) dosyasından okunmalıdır. Kod içerisine hardcoded yazılması kesinlikle yasaktır.
+
+## Proje Standartları & Süreklilik Kuralları (Kalıcı Hafıza)
+
+### 📌 [Standart & Süreklilik - 2026-10-17 17:55] Standart Geliştirme — 17.10.2026 17:55
+- Bu oturumda belirlenen 'Standart Geliştirme — 17.10.2026 17:55' standardı proje genelinde bağlayıcıdır.
+- Mevcut mimari desen bozulmadan, yeni eklemeler bu standart referans alınarak yapılacaktır.
+- Ayrıntılı rehber için bkz: docs/ai_rehberleri/
+
