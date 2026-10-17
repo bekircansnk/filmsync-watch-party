@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Film Partisi 🍿 | Birlikte Film İzleyin & Chrome Eklentisi İndirin</title>
+  <link rel="icon" href="/extension/icon48.png" type="image/png">
+  <style>
+    :root {
+      --bg-dark: #0b0c14;
+      --card-bg: rgba(18, 20, 32, 0.72);
+      --card-border: rgba(255, 255, 255, 0.14);
+      --card-border-hover: rgba(69, 243, 255, 0.40);
+      --accent-cyan: #45f3ff;
+      --accent-red: #ff3d47;
+      --accent-green: #2ed573;
+      --text-main: #ffffff;
+      --text-muted: rgba(255, 255, 255, 0.68);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(circle at top right, rgba(229, 9, 20, 0.18), transparent 45%),
+                  radial-gradient(circle at bottom left, rgba(69, 243, 255, 0.15), transparent 50%),
+                  radial-gradient(ellipse at center, rgba(30, 35, 55, 0.4), transparent 70%),
+                  var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 20px;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 740px;
+      background: var(--card-bg);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 38px 32px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .brand-logo {
+      font-size: 48px;
+      margin-bottom: 10px;
+      display: inline-block;
+      filter: drop-shadow(0 4px 14px rgba(255, 61, 71, 0.45));
+      animation: bounce 2s infinite ease-in-out;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 span {
+      background: linear-gradient(135deg, #ff3d47, #ff7675);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 10px rgba(255, 61, 71, 0.35));
+    }
+
+    .subtitle {
+      font-size: 15.5px;
+      color: var(--text-muted);
+      margin-bottom: 22px;
+      line-height: 1.5;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Durum Rozeti - 2026 Frosted Glass Pill */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 600;
+      margin-bottom: 22px;
+      backdrop-filter: blur(14px) saturate(180%);
+      -webkit-backdrop-filter: blur(14px) saturate(180%);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .status-badge.detected {
+      background: rgba(46, 213, 115, 0.16);
+      border: 1px solid rgba(46, 213, 115, 0.45);
+      color: var(--accent-green);
+      box-shadow: 0 0 24px rgba(46, 213, 115, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .status-badge.not-detected {
+      background: rgba(255, 165, 2, 0.16);
+      border: 1px solid rgba(255, 165, 2, 0.38);
+      color: #ffa502;
+      box-shadow: 0 0 20px rgba(255, 165, 2, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    /* Parti Davet Kutusu - 2026 Frosted Glass */
+    .party-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 22px;
+      margin-bottom: 24px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    }
+
+    .party-card-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-cyan);
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-shadow: 0 0 10px rgba(69, 243, 255, 0.3);
+    }
+
+    .room-code-badge {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      padding: 6px 20px;
+      border-radius: 12px;
+      border: 1px dashed rgba(69, 243, 255, 0.45);
+      display: inline-block;
+      margin: 6px 0 14px 0;
+      box-shadow: 0 4px 16px rgba(69, 243, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Butonlar - 5-State Frosted Glass */
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px 22px;
+      border-radius: 14px;
+      font-size: 14.5px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border: none;
+      letter-spacing: 0.2px;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ff3d47, #e50914);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 6px 22px rgba(229, 9, 20, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 28px rgba(229, 9, 20, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .btn-primary:focus-visible {
+      outline: 2px solid rgba(229, 9, 20, 0.6);
+      outline-offset: 2px;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #fff;
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.30);
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .btn-secondary:focus-visible {
+      outline: 2px solid rgba(69, 243, 255, 0.5);
+      outline-offset: 2px;
+    }
+
+    /* Kurulum Adımları - 2026 Frosted Glass Panel */
+    .setup-guide {
+      text-align: left;
+      background: rgba(12, 14, 24, 0.55);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border-radius: 20px;
+      padding: 22px 24px;
+      margin-top: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .setup-guide h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      text-shadow: 0 0 10px rgba(69, 243, 255, 0.3);
+    }
+
+    .setup-steps {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      counter-reset: steps-counter;
+    }
+
+    .setup-steps li {
+      counter-increment: steps-counter;
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.90);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .setup-steps li::before {
+      content: counter(steps-counter);
+      background: rgba(69, 243, 255, 0.2);
+      color: var(--accent-cyan);
+      font-weight: 700;
+      font-size: 12px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+      border: 1px solid rgba(69, 243, 255, 0.35);
+      box-shadow: 0 0 8px rgba(69, 243, 255, 0.2);
+    }
+
+    .code-snippet {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: #fff;
+      backdrop-filter: blur(10px) saturate(180%);
+      -webkit-backdrop-filter: blur(10px) saturate(180%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .copy-chip-btn {
+      background: rgba(69, 243, 255, 0.14);
+      border: 1px solid rgba(69, 243, 255, 0.38);
+      color: var(--accent-cyan);
+      padding: 3px 10px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-left: 6px;
+      transition: all 0.18s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .copy-chip-btn:hover {
+      background: rgba(69, 243, 255, 0.26);
+      transform: translateY(-1px);
+    }
+
+    /* Hızlı Platform Başlatıcı Izgarası */
+    .quick-platforms-box {
+      margin-top: 18px;
+      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 18px;
+      text-align: left;
+    }
+
+    .quick-platforms-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .quick-platforms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+      gap: 8px;
+    }
+
+    .platform-launch-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 10px;
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.18s;
+    }
+
+    .platform-launch-link:hover {
+      background: rgba(229, 9, 20, 0.22);
+      border-color: rgba(229, 9, 20, 0.45);
+      transform: translateY(-2px);
+    }
+
+    /* Özellik Izgarası - 2026 Frosted Glass Bento Cards */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 16px;
+      padding: 14px 10px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+
+    .feature-card:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(255, 255, 255, 0.22);
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+      color: #fff;
+    }
+
+    .feature-icon {
+      font-size: 22px;
+      margin-bottom: 6px;
+      display: block;
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+    }
+
+    /* Yayınlama & GitHub Pages Rehber Kutusu */
+    .publish-guide-details {
+      margin-top: 18px;
+      text-align: left;
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(69, 243, 255, 0.20);
+      border-radius: 16px;
+      padding: 12px 18px;
+      font-size: 12.5px;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .publish-guide-details summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      list-style: none;
+      user-select: none;
+    }
+
+    .publish-guide-details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .publish-guide-body {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.10);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      line-height: 1.55;
+    }
+
+    /* Bildirim Toast */
+    .portal-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(14, 18, 28, 0.94);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(46, 213, 115, 0.45);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 14px;
+      font-size: 13.5px;
+      font-weight: 600;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 9999;
+      text-align: center;
+      max-width: 90vw;
+    }
+
+    .portal-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    footer {
+      margin-top: 22px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.65);
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(14px) saturate(180%);
+      -webkit-backdrop-filter: blur(14px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    footer a {
+      color: rgba(255, 255, 255, 0.85);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    footer a:hover {
+      color: var(--accent-cyan);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="brand-logo">🍿</div>
+    <h1>Film <span>Partisi</span></h1>
+    <p class="subtitle">Arkadaşlarınızla Netflix, YouTube, Prime Video, HDFilmCehennemi, Dizipal ve tüm platformlarda eşzamanlı izleyin, kesintisiz sohbet edin.</p>
+
+    <!-- Durum Rozeti -->
+    <div id="statusBadge" class="status-badge not-detected">
+      <span class="status-dot"></span>
+      <span id="statusText">Eklenti kontrol ediliyor...</span>
+    </div>
+
+    <!-- Davet Bilgi Alanı -->
+    <div id="inviteArea" class="party-card" style="display: none;">
+      <div class="party-card-title">🎉 Katılacağınız Parti</div>
+      <div id="roomCodeDisplay" class="room-code-badge">----</div>
+      <p id="inviteNotice" style="font-size: 13.5px; color: var(--text-muted);">
+        Odaya katılmak ve filmi senkronize izlemek için eklenti gereklidir.
+      </p>
+    </div>
+
+    <!-- Ana Aksiyon Butonları -->
+    <div class="btn-group">
+      <a href="film-partisi-extension.zip" download="film-partisi-extension.zip" class="btn btn-primary" id="btnDownload">
+        📥 Eklentiyi İndir (.ZIP)
+      </a>
+      <button type="button" class="btn btn-secondary" id="btnCopySharePage">
+        🔗 Bu İndirme Sayfasını Paylaş
+      </button>
+      <a href="https://github.com/bekircansnk/filmsync-watch-party" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+        🐙 GitHub Deposu
+      </a>
+    </div>
+
+    <!-- İndirme Sonrası Hızlı Kurulum Doğrulama Çubuğu -->
+    <div id="downloadSuccessBanner" style="display: none; margin-bottom: 18px; padding: 14px 18px; border-radius: 16px; background: rgba(46, 213, 115, 0.14); border: 1px solid rgba(46, 213, 115, 0.45); text-align: left; font-size: 13px; line-height: 1.5; color: #fff;">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 6px;">
+        <strong style="color: #2ed573; font-size: 13.5px;">✅ film-partisi-extension.zip İndirme Başlatıldı!</strong>
+        <a href="film-partisi-extension.zip" target="_blank" rel="noopener noreferrer" download="film-partisi-extension.zip" style="color: #45f3ff; font-weight: 700; font-size: 12px; text-decoration: underline;">İnmediyse Buraya Tıklayın (Alternatif İndir)</a>
+      </div>
+      <div style="color: rgba(255,255,255,0.88);">
+        Şimdi inen ZIP dosyasını klasöre çıkartın, <span class="code-snippet">chrome://extensions</span> adresini açıp <strong>Geliştirici Modu</strong>'nu açın ve <strong>Paketlenmemiş öğe yükle</strong> ile klasörü seçin.
+      </div>
+    </div>
+
+    <!-- Kurulum Rehberi (3 Adımda Chrome'a Ekleme) -->
+    <div class="setup-guide" id="setupGuide">
+      <h3>
+        <span>🚀 Google Chrome & Edge Hızlı Kurulum (30 Saniye)</span>
+        <span style="font-size: 11.5px; color: #2ed573; font-weight: 700;">v1.3.0 Hazır Paket</span>
+      </h3>
+      <ol class="setup-steps">
+        <li>
+          <div>
+            Yukarıdaki <strong>📥 Eklentiyi İndir (.ZIP)</strong> butonuna tıklayın ve inen <span class="code-snippet">film-partisi-extension.zip</span> dosyasını masaüstüne klasöre çıkartın.
+          </div>
+        </li>
+        <li>
+          <div>
+            Tarayıcınızda <span class="code-snippet">chrome://extensions</span> sayfasını açın.
+            <button type="button" class="copy-chip-btn" id="btnCopyExtensionsUrl">📋 Adresi Kopyala</button>
+          </div>
+        </li>
+        <li>
+          <div>
+            Sağ üst köşedeki <strong>Geliştirici modu (Developer mode)</strong> anahtarını aktif edin.
+          </div>
+        </li>
+        <li>
+          <div>
+            Sol üstteki <strong>Paketlenmemiş öğe yükle (Load unpacked)</strong> butonuna basıp çıkarttığınız klasörün içindeki <span class="code-snippet">extension</span> klasörünü seçin.
+          </div>
+        </li>
+        <li>
+          <div>
+            Kurulum tamamlandı! Eklenti yüklendiği anda bu sayfa otomatik olarak yeşile dönecek ve partiye bağlanacaktır.
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <!-- Hızlı Platform Başlatıcı (Yeni Sekmede Açılır - Iframe Çökmesini Önler) -->
+    <div class="quick-platforms-box">
+      <div class="quick-platforms-title">
+        <span>🎬 Desteklenen Platformlarda Hemen Başlat</span>
+        <span style="color: var(--accent-green); font-size: 11px;">⚡ Tüm Iframe & HTML5 Uyumlu</span>
+      </div>
+      <div class="quick-platforms-grid">
+        <a href="https://www.netflix.com" target="_blank" rel="noopener noreferrer" class="platform-launch-link">🍿 Netflix</a>
+        <a href="https://www.youtube.com/?hl=tr&gl=TR" target="_blank" rel="noopener noreferrer" class="platform-launch-link">▶️ YouTube</a>
+        <a href="https://www.primevideo.com/offers/nonprimehomepage?ref_=dv_web_force_root" target="_blank" rel="noopener noreferrer" class="platform-launch-link">💙 Prime Video</a>
+        <a href="https://www.hdfilmcehennemi.nl/" target="_blank" rel="noopener noreferrer" class="platform-launch-link">🔥 HDFilmCehennemi</a>
+        <a href="https://www.fullhdfilmizlesene.now/" target="_blank" rel="noopener noreferrer" class="platform-launch-link">🎞️ FullHDİzlesene</a>
+        <a href="https://dizipal1590.com/" id="portalDizipalLink" data-resolver="https://t.ly/dizipalgiris" target="_blank" rel="noopener noreferrer" class="platform-launch-link">🎬 Dizipal</a>
+      </div>
+    </div>
+
+    <!-- Özellikler -->
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">⚡</span>
+        Sıfır Gecikme & Canlı RTT
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">⌨️</span>
+        3-Katmanlı Chat-First Kalkanı
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔊</span>
+        Web Audio Ses Efektleri
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🍿</span>
+        Netflix, YouTube, Prime, HDFilm
+      </div>
+    </div>
+
+    <!-- Yayına Alma & GitHub Pages Rehberi -->
+    <details class="publish-guide-details">
+      <summary>
+        <span>🌐 Bu Sayfayı Arkadaşlarınızla Nasıl Paylaşırsınız? (Canlı Yayın & GitHub Pages)</span>
+        <span>▾</span>
+      </summary>
+      <div class="publish-guide-body">
+        <div>
+          <strong>Yöntem 1 — Doğrudan Bu Uygulama Linki (Anında Hazır):</strong><br>
+          Sağ üstteki <strong>Publish / Share</strong> butonundan aldığınız uygulama bağlantısını veya yukarıdaki <strong>"🔗 Bu İndirme Sayfasını Paylaş"</strong> butonunu kullanarak arkadaşlarınızı doğrudan bu sayfaya davet edebilirsiniz. Tıklayan herkes <span class="code-snippet">film-partisi-extension.zip</span> paketini anında indirebilir.
+        </div>
+        <div>
+          <strong>Yöntem 2 — GitHub Pages (<span class="code-snippet">bekircansnk.github.io/filmsync-watch-party</span>) Aktifleştirme:</strong><br>
+          1. GitHub deponuzda (<span class="code-snippet">bekircansnk/filmsync-watch-party</span>) üst menüden <strong>Settings (Ayarlar)</strong> sekmesine girin.<br>
+          2. Eğer depo <em>Özel (Private)</em> ise en alttaki <strong>Danger Zone &rarr; Change repository visibility &rarr; Make public</strong> ile herkese açık yapın.<br>
+          3. Sol menüden <strong>Pages</strong> sekmesine tıklayın; <strong>Build and deployment &rarr; Source</strong> kısmını <strong>GitHub Actions</strong> (veya <strong>Deploy from a branch &rarr; main &rarr; /docs</strong>) olarak seçip kaydedin.<br>
+          4. Deponun ana sayfasında sağ üstteki <strong>Hakkında (About) ⚙️</strong> çark simgesine tıklayıp <em>"Use your GitHub Pages website"</em> kutusunu işaretleyin; böylece GitHub sayfasında doğrudan tıklanabilir web sitesi linkiniz görünür!
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <div id="portalToast" class="portal-toast">Bildirim</div>
+
+  <footer>
+    Film Partisi v1.3 &bull; Açık Kaynak Watch Party Deneyimi &bull; <a href="https://github.com/bekircansnk/filmsync-watch-party" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </footer>
+
+  <script>
+    (function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const joinCode = urlParams.get('join');
+      const pass = urlParams.get('pass') || '';
+
+      const statusBadge = document.getElementById('statusBadge');
+      const statusText = document.getElementById('statusText');
+      const inviteArea = document.getElementById('inviteArea');
+      const roomCodeDisplay = document.getElementById('roomCodeDisplay');
+      const inviteNotice = document.getElementById('inviteNotice');
+      const setupGuide = document.getElementById('setupGuide');
+      const btnDownload = document.getElementById('btnDownload');
+      const downloadSuccessBanner = document.getElementById('downloadSuccessBanner');
+      const btnCopyExtensionsUrl = document.getElementById('btnCopyExtensionsUrl');
+      const btnCopySharePage = document.getElementById('btnCopySharePage');
+      const portalToast = document.getElementById('portalToast');
+
+      function showToast(msg) {
+        if (!portalToast) return;
+        portalToast.textContent = msg;
+        portalToast.classList.add('show');
+        clearTimeout(showToast._timer);
+        showToast._timer = setTimeout(() => {
+          portalToast.classList.remove('show');
+        }, 4000);
+      }
+
+      function copyTextSafe(text, successMsg) {
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+              showToast(successMsg);
+            }).catch(() => fallbackCopy(text, successMsg));
+          } else {
+            fallbackCopy(text, successMsg);
+          }
+        } catch (e) {
+          fallbackCopy(text, successMsg);
+        }
+      }
+
+      function fallbackCopy(text, successMsg) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          showToast(successMsg);
+        } catch (e) {
+          showToast('Kopyalanacak adres: ' + text);
+        }
+      }
+
+      // 1. Çökmeyi Önleyen Doğrudan ZIP İndirme İşleyicisi (Iframe & Tüm Tarayıcılarla %100 Uyumlu)
+      if (btnDownload) {
+        btnDownload.addEventListener('click', async (e) => {
+          const href = btnDownload.getAttribute('href') || '';
+          if (!href.endsWith('.zip')) {
+            return;
+          }
+          e.preventDefault();
+          const originalText = btnDownload.innerHTML;
+          btnDownload.innerHTML = '⏳ Paket Hazırlanıyor...';
+
+          if (downloadSuccessBanner) {
+            downloadSuccessBanner.style.display = 'block';
+          }
+
+          try {
+            const response = await fetch('film-partisi-extension.zip', { cache: 'no-store' });
+            if (!response.ok) throw new Error('ZIP indirilemedi');
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const tempLink = document.createElement('a');
+            tempLink.href = blobUrl;
+            tempLink.download = 'film-partisi-extension.zip';
+            document.body.appendChild(tempLink);
+            tempLink.click();
+            document.body.removeChild(tempLink);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+
+            btnDownload.innerHTML = '✅ İndirildi (film-partisi-extension.zip)';
+            showToast('🍿 film-partisi-extension.zip indirildi! Klasöre çıkartıp chrome://extensions üzerinden yükleyin.');
+            setTimeout(() => {
+              btnDownload.innerHTML = originalText;
+            }, 3500);
+          } catch (err) {
+            btnDownload.innerHTML = originalText;
+            showToast('📥 Yukarıdaki yeşil kutuda yer alan "Alternatif İndir" bağlantısına tıklayarak ZIP dosyasını indirebilirsiniz.');
+          }
+        });
+      }
+
+      // 2. chrome://extensions Kopyalama Butonu
+      if (btnCopyExtensionsUrl) {
+        btnCopyExtensionsUrl.addEventListener('click', () => {
+          copyTextSafe('chrome://extensions', '📋 "chrome://extensions" kopyalandı! Yeni sekme açıp adres çubuğuna yapıştırın.');
+        });
+      }
+
+      // 3. Bu İndirme Sayfasını Paylaş Butonu
+      if (btnCopySharePage) {
+        btnCopySharePage.addEventListener('click', () => {
+          copyTextSafe(window.location.href, '🔗 İndirme ve parti sayfası bağlantısı panoya kopyalandı!');
+        });
+      }
+
+      if (joinCode) {
+        inviteArea.style.display = 'block';
+        roomCodeDisplay.textContent = joinCode.toUpperCase();
+      }
+
+      function onExtensionDetected() {
+        statusBadge.className = 'status-badge detected';
+        statusText.textContent = 'Film Partisi Tespit Edildi! 🍿';
+
+        if (joinCode) {
+          inviteNotice.innerHTML = '<strong>Eklenti aktif!</strong> Parti hazırlandı, yönlendiriliyorsunuz... 🎬';
+          if (setupGuide) setupGuide.style.display = 'none';
+        } else {
+          showToast('🎉 Film Partisi eklentisi tarayıcınızda aktif! Bir platform seçip partiyi başlatabilirsiniz.');
+        }
+      }
+
+      function checkExtension() {
+        const isInstalled = document.documentElement.getAttribute('data-filmsync-installed') === 'true';
+        if (isInstalled) {
+          onExtensionDetected();
+          return true;
+        }
+        return false;
+      }
+
+      // 1. Custom Event Dinleyicisi
+      window.addEventListener('filmsync-extension-installed', () => {
+        onExtensionDetected();
+      });
+
+      // 2. Anlık (0ms) DOM Özniteliği Değişim Gözlemcisi (MutationObserver)
+      try {
+        const observer = new MutationObserver((mutations) => {
+          for (const m of mutations) {
+            if (m.attributeName === 'data-filmsync-installed') {
+              if (checkExtension()) {
+                observer.disconnect();
+              }
+            }
+          }
+        });
+        observer.observe(document.documentElement, { attributes: true });
+      } catch (e) {}
+
+      // 3. İlk kontrol ve kısa aralıklı fallback sorgulama
+      if (!checkExtension()) {
+        let attempts = 0;
+        const interval = setInterval(() => {
+          attempts++;
+          if (checkExtension() || attempts > 10) {
+            clearInterval(interval);
+            if (!checkExtension()) {
+              statusBadge.className = 'status-badge not-detected';
+              statusText.textContent = 'Eklenti Yüklü Değil — Aşağıdan İndirin';
+            }
+          }
+        }, 200);
+      }
+    })();
+  </script>
+</body>
+</html>
