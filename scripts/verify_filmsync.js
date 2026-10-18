@@ -2853,5 +2853,36 @@ console.log('--- FilmSync Test Suite Başlatılıyor ---');
   console.log('✅ Test 72: Canlı VM Simülasyonu — Farklı Ekranlarda Oda Başlatma, Gizli Sohbeti Dispatch İle Uyandırma ve Silinmeme Koruması Başarılı.');
 }
 
-console.log('\n🎉 TÜM TESTLER (72/72) EKSİKSİZ VE BAŞARIYLA GEÇTİ! ALTYAPI KUSURSUZ, STABİL VE YÜKSEK PERFORMANSLI.');
+// TEST 73: Manifest V3 Yerleşik Main-World Inject Scripti, Katı CSP/SOP Koruma Zırhı ve Bfcache Uyumlu Pagehide Yaşam Döngüsü
+{
+  const fs = require('fs');
+  const path = require('path');
+
+  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '../extension/manifest.json'), 'utf8'));
+  const contentJs = fs.readFileSync(path.join(__dirname, '../extension/content.js'), 'utf8');
+  const injectJs = fs.readFileSync(path.join(__dirname, '../extension/inject.js'), 'utf8');
+
+  // 1. Manifest V3 world: MAIN script zırhı doğrulaması
+  const mainWorldScript = manifest.content_scripts.find(cs => cs.world === 'MAIN');
+  assert(!!mainWorldScript, 'manifest.content_scripts içinde world: "MAIN" tanımlı script bulunmalı');
+  assert(mainWorldScript.js.includes('inject.js'), 'world: "MAIN" scripti inject.js dosyasını içermeli');
+  assert.strictEqual(mainWorldScript.run_at, 'document_start', 'inject.js run_at: "document_start" olmalı');
+  assert.strictEqual(mainWorldScript.all_frames, true, 'inject.js all_frames: true olmalı');
+
+  // 2. inject.js data-filmsync-inject-loaded damgası doğrulaması
+  assert(injectJs.includes('setAttribute(\'data-filmsync-inject-loaded\', \'true\')'), 'inject.js yüklendiğinde DOM üzerine data-filmsync-inject-loaded damgası vurmalı');
+
+  // 3. content.js injectPageHookScript içinde katı CSP / YouTube unsafe-attempt kalkanı doğrulaması
+  assert(contentJs.includes('data-filmsync-inject-loaded'), 'content.js inject.js varlığını data-filmsync-inject-loaded ile doğrulamalı');
+  assert(contentJs.includes('host.includes(\'youtube.com\')'), 'content.js YouTube gibi katı CSP uygulayan sayfalarda DOM script enjeksiyonunu engellemeli');
+
+  // 4. Modern Chromium Permissions Policy ve bfcache uyumlu pagehide dinleyicisi doğrulaması
+  assert(contentJs.includes("window.addEventListener('pagehide'"), 'content.js modern tarayıcı standartları için pagehide olayını dinlemeli');
+  assert(contentJs.includes("window.addEventListener('beforeunload'"), 'content.js eski tarayıcılar için beforeunload olayını da dinlemeli');
+  assert(contentJs.includes('isPageExitHandled'), 'content.js mükerrer çıkış mesajlarını isPageExitHandled ile bastırmalı');
+
+  console.log('✅ Test 73: Manifest V3 Yerleşik Main-World Inject Scripti, Katı CSP/SOP Koruma Zırhı ve Bfcache Uyumlu Pagehide Yaşam Döngüsü Başarılı.');
+}
+
+console.log('\n🎉 TÜM TESTLER (73/73) EKSİKSİZ VE BAŞARIYLA GEÇTİ! ALTYAPI KUSURSUZ, STABİL VE YÜKSEK PERFORMANSLI.');
 

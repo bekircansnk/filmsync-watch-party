@@ -3,6 +3,12 @@
   if (window.__filmsyncInjectLoaded) return;
   window.__filmsyncInjectLoaded = true;
 
+  try {
+    if (document.documentElement) {
+      document.documentElement.setAttribute('data-filmsync-inject-loaded', 'true');
+    }
+  } catch (e) {}
+
   console.log('[FilmSync Inject] Evrensel platform ve klavye zırhı yüklendi.');
 
   const host = window.location.host.toLowerCase();

@@ -269,9 +269,20 @@ function isIgnoredNonPlayerFrame() {
 // Evrensel inject.js enjeksiyonu (Ana sayfa ve tüm oynatıcı iframeleri için)
 function injectPageHookScript() {
   try {
-    if (isIgnoredNonPlayerFrame()) return;
-    if (!window.location.protocol.startsWith('http')) return;
+    // 1. Eğer inject.js Manifest V3 world: "MAIN" ile zaten yüklendiyse DOM'a tekrar ekleme
+    if (document.documentElement && document.documentElement.getAttribute('data-filmsync-inject-loaded') === 'true') {
+      return;
+    }
     if (document.getElementById('filmsync-page-inject-script')) return;
+    if (isIgnoredNonPlayerFrame()) return;
+    if (!window.location.protocol || !window.location.protocol.startsWith('http')) return;
+
+    // 2. YouTube ve benzeri katı CSP uygulayan sitelerde veya doğrudan ana dünyada çalışan sayfalarda gereksiz DOM müdahalesi yapma
+    const host = (window.location.hostname || '').toLowerCase();
+    if (host.includes('youtube.com') || host.includes('googlevideo.com')) {
+      return;
+    }
+
     const script = document.createElement('script');
     script.id = 'filmsync-page-inject-script';
     script.src = chrome.runtime.getURL('inject.js');
@@ -867,8 +878,11 @@ function init(forceOpenChat = false) {
 }
 
 // Sayfa yenilenirken veya kapanırken durum güncellemesi tetikle (REST API üzerinden Service Worker ile çalışır)
-window.addEventListener('beforeunload', () => {
+let isPageExitHandled = false;
+function handlePageExitNotification() {
+  if (isPageExitHandled) return;
   if (roomId && isFirebaseInitialized && window === window.top) {
+    isPageExitHandled = true;
     removeVideoListeners();
 
     const hasActiveVideo = !!findBestVideoElement();
@@ -899,7 +913,9 @@ window.addEventListener('beforeunload', () => {
       isHost: (!hostOnly || userId === hostId)
     });
   }
-});
+}
+window.addEventListener('pagehide', handlePageExitNotification);
+window.addEventListener('beforeunload', handlePageExitNotification);
 
 // Mesaj payload'ı içerisindeki oda bilgilerini anında yerel state'e uygula
 function applyImmediateRoomPayload(message) {
