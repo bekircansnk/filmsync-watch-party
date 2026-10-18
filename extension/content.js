@@ -1513,7 +1513,11 @@ function applyRemoteState(state) {
   lastKnownState = state;
   
   // Yönlendirme bildirimi (Sadece video adresi gerçekten farklı bir filme/bölüme aitse ve üst penceredeysek)
-  if (state.url && !areUrlsSameMovie(window.location.href, state.url) && window === window.top) {
+  // 1. Oda sahibi (host) kesinlikle yönlendirilmez ve bildirim görmez (Host serbestçe gezinir)
+  // 2. Durumu güncelleyen kişi (senderId) kesinlikle yönlendirilmez
+  const isHost = (userId && hostId && userId === hostId) || (!hostOnly && !hostId);
+  const isSender = (state.senderId && state.senderId === userId);
+  if (!isHost && !isSender && state.url && !areUrlsSameMovie(window.location.href, state.url) && window === window.top) {
     if (!isEmbedUrl(state.url) && window.filmsyncDismissedUrl !== state.url) {
       showMovieRedirectNotification(state.url, state.pageTitle);
       return;
@@ -1652,7 +1656,9 @@ function executeForceSync() {
     if (!state) return;
     lastKnownState = state;
 
-    if (state.url && !areUrlsSameMovie(window.location.href, state.url) && window === window.top) {
+    const isHost = (userId && hostId && userId === hostId) || (!hostOnly && !hostId);
+    const isSender = (state.senderId && state.senderId === userId);
+    if (!isHost && !isSender && state.url && !areUrlsSameMovie(window.location.href, state.url) && window === window.top) {
       if (!isEmbedUrl(state.url) && window.filmsyncDismissedUrl !== state.url) {
         showMovieRedirectNotification(state.url, state.pageTitle);
         return;
@@ -3951,8 +3957,10 @@ function showNotificationToast(sender, text) {
   }, duration);
 }
 
-// --- 🎬 OTOMATİK VE TEK TIKLA YENİ BÖLÜM / FİLM YÖNLENDİRME BİLDİRİMİ ---
+// --- 🎬 YENİ BÖLÜM / FİLM BİLGİLENDİRME BİLDİRİMİ (GERİ SAYIMLI, SIFIR OTOMATİK YÖNLENDİRME) ---
 function showMovieRedirectNotification(targetUrl, targetTitle = '') {
+  // 1. Oda sahibi (host) kesinlikle bildirim almaz ve yönlendirilmez (Host serbestçe gezinir)
+  if (userId && hostId && userId === hostId) return;
   if (isEmbedUrl(targetUrl)) {
     Logger.log('[FilmSync] Hedef URL bir embed adresi olduğundan yönlendirme toastu engellendi:', targetUrl);
     return;
@@ -3970,53 +3978,65 @@ function showMovieRedirectNotification(targetUrl, targetTitle = '') {
   const toast = document.createElement('div');
   toast.id = 'filmsync-redirect-toast';
   toast.classList.add('filmsync-toast');
-  toast.setAttribute('style', 'background: rgba(14, 22, 38, 0.84) !important; backdrop-filter: blur(20px) saturate(180%) !important; -webkit-backdrop-filter: blur(20px) saturate(180%) !important; border: 1px solid rgba(69, 243, 255, 0.42) !important; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65), 0 0 24px rgba(69, 243, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.20) !important;');
+  toast.setAttribute('style', 'background: rgba(14, 22, 38, 0.92) !important; backdrop-filter: blur(24px) saturate(190%) !important; -webkit-backdrop-filter: blur(24px) saturate(190%) !important; border: 1px solid rgba(69, 243, 255, 0.45) !important; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(69, 243, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.20) !important; cursor: pointer !important; padding: 14px 18px !important; border-radius: 14px !important; transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;');
   
-  let autoNavigateCancelled = false;
-  let countdown = 3;
+  let countdown = 5;
+  let isDismissed = false;
 
   const closeBtn = document.createElement('span');
   closeBtn.textContent = '✕';
-  closeBtn.setAttribute('style', 'position: absolute; top: 10px; right: 12px; width: 24px; height: 24px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.16); color: rgba(255, 255, 255, 0.85); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; cursor: pointer; backdrop-filter: blur(12px) saturate(180%); -webkit-backdrop-filter: blur(12px) saturate(180%); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12); z-index: 10;');
-  
+  closeBtn.setAttribute('title', 'Kapat');
+  closeBtn.setAttribute('style', 'position: absolute; top: 10px; right: 12px; width: 22px; height: 22px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18); color: rgba(255, 255, 255, 0.85); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; cursor: pointer; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); transition: all 0.2s ease; z-index: 10;');
+
   const toastHeader = document.createElement('div');
   toastHeader.className = 'filmsync-toast-header';
-  toastHeader.setAttribute('style', 'display: block !important; color: #45f3ff !important; font-size: 14px !important; font-weight: 800 !important; text-shadow: 0 1px 3px rgba(0,0,0,0.7) !important; margin-bottom: 4px !important;');
+  toastHeader.setAttribute('style', 'display: flex !important; align-items: center !important; gap: 6px !important; color: #45f3ff !important; font-size: 13.5px !important; font-weight: 800 !important; text-shadow: 0 1px 3px rgba(0,0,0,0.7) !important; margin-bottom: 5px !important;');
   toastHeader.textContent = '🎬 Yeni Bölüm / Film Başladı';
 
   const toastBody = document.createElement('div');
   toastBody.className = 'filmsync-toast-body';
-  toastBody.setAttribute('style', 'color: #ffffff !important; font-weight: 500 !important; cursor: pointer; padding-right: 15px; font-size: 13.5px !important; line-height: 1.4 !important; text-shadow: 0 1px 3px rgba(0,0,0,0.6) !important;');
-  toastBody.textContent = targetTitle
-    ? `"${targetTitle}" açıldı. ${countdown} sn içinde otomatik geçiliyor... (Hemen geçmek için tıklayın)`
-    : `Odada yeni bir bölüm/film açıldı. ${countdown} sn içinde otomatik geçiliyor... 🍿`;
+  toastBody.setAttribute('style', 'color: #ffffff !important; font-weight: 500 !important; font-size: 13px !important; line-height: 1.45 !important; text-shadow: 0 1px 3px rgba(0,0,0,0.6) !important; padding-right: 18px;');
+  
+  function updateToastContent() {
+    const displayTitle = targetTitle ? `"${targetTitle}"` : 'Yeni bölüme / filme';
+    toastBody.innerHTML = `<span>${displayTitle} açıldı.</span><br><span style="color: #6ee7b7; font-weight: 600; text-decoration: underline;">Yönlendirmek için tıklayın</span> <span style="color: rgba(255,255,255,0.6); font-size: 11.5px;">(${countdown} sn)</span>`;
+  }
+  updateToastContent();
 
   const countInterval = setInterval(() => {
-    if (autoNavigateCancelled) {
+    if (isDismissed) {
       clearInterval(countInterval);
       return;
     }
     countdown--;
     if (countdown > 0) {
-      toastBody.textContent = targetTitle
-        ? `"${targetTitle}" açıldı. ${countdown} sn içinde otomatik geçiliyor...`
-        : `Odada yeni bir bölüm/film açıldı. ${countdown} sn içinde otomatik geçiliyor... 🍿`;
+      updateToastContent();
     } else {
       clearInterval(countInterval);
-      if (!autoNavigateCancelled && toast.parentNode) {
-        toast.remove();
-        chrome.runtime.sendMessage({ type: 'redirect-tab', url: normalizeMovieUrl(targetUrl) });
-      }
+      isDismissed = true;
+      window.filmsyncDismissedUrl = targetUrl;
+      toast.classList.remove('active');
+      setTimeout(() => toast.remove(), 350);
+      // 🛑 KESİNLİKLE OTOMATİK YÖNLENDİRME YAPILMAZ! 5 sn geri sayımdan sonra kendiliğinden kaybolur.
     }
   }, 1000);
 
   closeBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    autoNavigateCancelled = true;
+    isDismissed = true;
     clearInterval(countInterval);
     window.filmsyncDismissedUrl = targetUrl;
     toast.classList.remove('active');
     setTimeout(() => toast.remove(), 350);
+  });
+
+  toast.addEventListener('click', () => {
+    isDismissed = true;
+    clearInterval(countInterval);
+    window.filmsyncDismissedUrl = targetUrl;
+    toast.classList.remove('active');
+    setTimeout(() => toast.remove(), 350);
+    chrome.runtime.sendMessage({ type: 'redirect-tab', url: normalizeMovieUrl(targetUrl) });
   });
 
   toast.appendChild(closeBtn);
@@ -4027,15 +4047,6 @@ function showMovieRedirectNotification(targetUrl, targetTitle = '') {
 
   requestAnimationFrame(() => {
     toast.classList.add('active');
-  });
-
-  toast.addEventListener('click', () => {
-    autoNavigateCancelled = true;
-    clearInterval(countInterval);
-    toast.classList.remove('active');
-    setTimeout(() => toast.remove(), 350);
-    window.filmsyncDismissedUrl = targetUrl;
-    chrome.runtime.sendMessage({ type: 'redirect-tab', url: normalizeMovieUrl(targetUrl) });
   });
 }
 

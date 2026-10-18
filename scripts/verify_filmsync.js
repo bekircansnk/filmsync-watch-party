@@ -950,7 +950,8 @@ console.log('--- FilmSync Test Suite Başlatılıyor ---');
 
 // TEST 31: showMovieRedirectNotification Bölüm Değişim Bildirimi
 {
-  function shouldShowRedirectToast(currentUrl, targetUrl) {
+  function shouldShowRedirectToast(currentUrl, targetUrl, isHost = false, isSender = false) {
+    if (isHost || isSender) return false;
     function areUrlsSame(u1, u2) {
       const id1 = (u1.match(/\/watch\/(\d+)/) || [])[1];
       const id2 = (u2.match(/\/watch\/(\d+)/) || [])[1];
@@ -959,19 +960,40 @@ console.log('--- FilmSync Test Suite Başlatılıyor ---');
     return !areUrlsSame(currentUrl, targetUrl);
   }
 
-  // 1. Bölümden 2. Bölüme geçildiğinde videoElement olsa bile toast gösterilmeli
+  // 1. Misafir kullanıcı için 1. Bölümden 2. Bölüme geçildiğinde videoElement olsa bile toast gösterilmeli
   assert.strictEqual(
-    shouldShowRedirectToast('https://www.netflix.com/watch/81646429', 'https://www.netflix.com/watch/81646430'),
+    shouldShowRedirectToast('https://www.netflix.com/watch/81646429', 'https://www.netflix.com/watch/81646430', false, false),
     true,
-    'Yeni bölüme geçildiğinde yönlendirme toastu gösterilmeli'
+    'Yeni bölüme geçildiğinde misafire bilgilendirme toastu gösterilmeli'
   );
 
-  // Aynı bölümde gösterilmemeli
+  // 2. Oda sahibi (host) kesinlikle bildirim almamalı ve yönlendirilmemeli! (Host serbestçe gezinir)
   assert.strictEqual(
-    shouldShowRedirectToast('https://www.netflix.com/watch/81646429?trackId=1', 'https://www.netflix.com/watch/81646429'),
+    shouldShowRedirectToast('https://www.netflix.com/watch/81646429', 'https://www.netflix.com/watch/81646430', true, false),
+    false,
+    'Oda sahibi (host) yeni sayfaya geçtiğinde asla bildirim almamalı'
+  );
+
+  // 3. Durumu güncelleyen kişi (senderId) bildirim almamalı
+  assert.strictEqual(
+    shouldShowRedirectToast('https://www.netflix.com/watch/81646429', 'https://www.netflix.com/watch/81646430', false, true),
+    false,
+    'Durumu güncelleyen kullanıcı bildirim almamalı'
+  );
+
+  // 4. Aynı bölümde gösterilmemeli
+  assert.strictEqual(
+    shouldShowRedirectToast('https://www.netflix.com/watch/81646429?trackId=1', 'https://www.netflix.com/watch/81646429', false, false),
     false,
     'Aynı bölümde toast gösterilmemeli'
   );
+
+  // 5. 5 sn geri sayım sonrası otomatik yönlendirmenin KESİNLİKLE kaldırıldığını doğrula
+  const fs = require('fs');
+  const path = require('path');
+  const contentJsCode = fs.readFileSync(path.join(__dirname, '../extension/content.js'), 'utf8');
+  assert(contentJsCode.includes('// 🛑 KESİNLİKLE OTOMATİK YÖNLENDİRME YAPILMAZ!'), 'showMovieRedirectNotification içinde otomatik yönlendirme tamamen kaldırılmış olmalı');
+  assert(contentJsCode.includes('countdown = 5;'), 'showMovieRedirectNotification 5 saniyelik geri sayım kullanmalı');
 
   console.log('✅ Test 31: showMovieRedirectNotification Bölüm Değişimi Bildirimi Başarılı.');
 }
