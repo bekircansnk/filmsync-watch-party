@@ -17,3 +17,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Kullanıcı talimatı doğrultusunda tüm zamanlanmış Jules sidecar görevleri (`/jules-yonet` cron) iptal edildi ve kaldırıldı.
   - Çalışan tüm Jules arka plan süreçleri `pkill` ile sonlandırıldı.
   - Proje dokümantasyonundaki tüm Jules görev durumları pasif/iptal olarak güncellendi.
+
+## [Güncel Tarih] - Drift Eşitleme İyileştirmesi
+- **İyileştirmeler:**
+  - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
+  - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
