@@ -645,6 +645,8 @@ function shouldShowChatUIInTop() {
 
 // Sayfada aktif bir video veya video oynatıcı iframe olup olmadığını kontrol eden evrensel yardımcı
 function hasVideoOrPlayerFrame() {
+  // Performans: DOM reflow (layout thrashing) önlemek için önce önbelleğe alınmış elementi kontrol et
+  if (videoElement && videoElement.isConnected) return true;
   if (findBestVideoElement()) return true;
   if (hasChildFrameVideo) return true;
   try {
@@ -1423,7 +1425,8 @@ function setupFirebaseListeners() {
 
 // Video elementinin ve platform API'sinin hazır olup olmadığını sorgulayan ve bekleyen mekanizma
 function ensureVideoReady(callback, retriesLeft = 25) {
-  const activeVideo = findBestVideoElement();
+  // Performans: DOM reflow (layout thrashing) önlemek için önce önbelleğe alınmış, bağlı video elementini kullan
+  const activeVideo = (videoElement && videoElement.isConnected) ? videoElement : findBestVideoElement();
   const isBrowseExclusion = window.location.href.includes('netflix.com/browse') || 
                             window.location.href.includes('netflix.com/title') || 
                             window.location.href.includes('youtube.com/feed');
@@ -1755,7 +1758,8 @@ function sendMediaEvent(isPlaying, currentTime, action = 'event') {
     return;
   }
 
-  const hasActiveVideo = !!findBestVideoElement() || hasChildFrameVideo;
+  const activeVideo = (videoElement && videoElement.isConnected) ? videoElement : findBestVideoElement();
+  const hasActiveVideo = !!activeVideo || hasChildFrameVideo;
   const isBrowseExclusion = window.location.href.includes('netflix.com/browse') || 
                             window.location.href.includes('netflix.com/title') || 
                             window.location.href.includes('youtube.com/feed');
@@ -1763,8 +1767,6 @@ function sendMediaEvent(isPlaying, currentTime, action = 'event') {
     Logger.log('[FilmSync] Video izleme sayfası olmayan sayfadan medya olayı gönderilmesi engellendi.');
     return;
   }
-
-  const activeVideo = videoElement || findBestVideoElement();
   // Seek eyleminde readyState < 1 olsa bile (kullanıcı henüz yüklenen noktanın ilerisine sardığında) olayı engelleme!
   if (action !== 'seek' && activeVideo && (activeVideo.readyState < 1 || isNaN(activeVideo.duration) || activeVideo.duration === 0)) {
     Logger.log('[FilmSync] Video henüz hazır değil, medya olayı atlanıyor.');
