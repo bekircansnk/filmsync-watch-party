@@ -17,3 +17,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Kullanıcı talimatı doğrultusunda tüm zamanlanmış Jules sidecar görevleri (`/jules-yonet` cron) iptal edildi ve kaldırıldı.
   - Çalışan tüm Jules arka plan süreçleri `pkill` ile sonlandırıldı.
   - Proje dokümantasyonundaki tüm Jules görev durumları pasif/iptal olarak güncellendi.
+
+## [11.08.2026] - XSS Açıkları Giderildi
+- `extension/content.js` ve `extension/popup.js` içindeki `innerHTML` kullanımları incelendi.
+- DOM tabanlı XSS açıklarını (Cross-Site Scripting) engellemek amacıyla, dinamik kullanıcı verilerinin (isim, oda adı, mesajlar vb.) doğrudan `innerHTML` içerisine yazılması engellendi.
+- Statik HTML yapısı için `innerHTML` kullanılmaya devam edilirken, kullanıcıdan alınan veriler özel yer tutucu (placeholder) elemanlarına (örn: `<span class="dynamic-text"></span>`) `.textContent` özelliği ile güvenli bir şekilde atandı.

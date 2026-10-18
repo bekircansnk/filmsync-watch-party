@@ -2806,7 +2806,7 @@ function createChatUI() {
     <!-- Yüzen Cam Sohbet Podu (Floating Glass Chat Pod) -->
     <div id="filmsync-chat-panel" class="active">
       <div class="filmsync-header">
-        <div class="filmsync-room-meta" id="filmsyncRoomMeta" title="Katılımcılar">🍿 1 Kişi · ${username || 'Anonim'}</div>
+        <div class="filmsync-room-meta" id="filmsyncRoomMeta" title="Katılımcılar">🍿 1 Kişi · <span class="dynamic-text"></span></div>
         <button class="filmsync-close-btn" id="filmsyncCloseBtn" title="Kapat (Escape)">✕</button>
       </div>
 
@@ -2843,6 +2843,9 @@ function createChatUI() {
 
   const mountTarget = document.body || document.documentElement;
   mountTarget.appendChild(root);
+
+  const metaDynamic = root.querySelector('#filmsyncRoomMeta .dynamic-text');
+  if (metaDynamic) metaDynamic.textContent = username || 'Anonim';
   (document.head || document.documentElement).appendChild(style);
 
   document.body?.classList.add('filmsync-sidebar-open');
