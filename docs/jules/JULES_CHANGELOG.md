@@ -17,3 +17,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Kullanıcı talimatı doğrultusunda tüm zamanlanmış Jules sidecar görevleri (`/jules-yonet` cron) iptal edildi ve kaldırıldı.
   - Çalışan tüm Jules arka plan süreçleri `pkill` ile sonlandırıldı.
   - Proje dokümantasyonundaki tüm Jules görev durumları pasif/iptal olarak güncellendi.
+
+## [18.10.2026] - Logger Entegrasyonu ve Try-Catch Koruma
+- **Hata Düzeltmeleri ve Geliştirmeler:**
+  - `extension/content.js` ve `extension/popup.js` içerisindeki standart `console.log`, `console.warn` ve `console.error` çıktıları yapılandırılmış bir `Logger` ile değiştirildi.
+  - Netflix, Disney+, YouTube gibi API'lerle etkileşime giren `PlayerAdapter` (`play`, `pause`, `seek`) metotları, eklentinin çökmesini engellemek için `try-catch` blokları ile koruma altına alındı.
