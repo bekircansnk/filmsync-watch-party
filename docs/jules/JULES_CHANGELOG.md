@@ -17,8 +17,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Kullanıcı talimatı doğrultusunda tüm zamanlanmış Jules sidecar görevleri (`/jules-yonet` cron) iptal edildi ve kaldırıldı.
   - Çalışan tüm Jules arka plan süreçleri `pkill` ile sonlandırıldı.
   - Proje dokümantasyonundaki tüm Jules görev durumları pasif/iptal olarak güncellendi.
+## [29.07.2026] - Performans ve Video Oynatıcı İzolasyonu İyileştirmeleri
+- `extension/content.js` içerisinde sohbet paneli açıldığında (body `filmsync-sidebar-open` class'ını aldığında) Netflix, YouTube, Disney+ vb. popüler platformların video oynatıcılarına (`.watch-video`, `.nf-player-container`, `#ytd-player`, `disney-web-player`, vs.) özel css kuralları eklendi.
+- Sohbet paneli ile video ekranının çakışmaması ve videonun sol panele düzgün oturması için bu elementlere `width: calc(100% - 390px) !important;` ve `max-width: calc(100% - 390px) !important;` kuralları uygulandı.
+- Yüksek kare hızında (high-frame-rate) video oynatımında DOM reflow (yeniden hesaplama) kaynaklı takılma ve performans kayıplarını en aza indirmek için bu layout değişikliklerinde CSS geçişleri (`transition: none !important;`) tamamen devre dışı bırakıldı. Bu sayede paneli açıp kapatırken veya pencere boyutu değiştiğinde video kare düşmeleri engellendi.
 
-## [18.10.2024] - Firebase Güvenlik İyileştirmesi
+## [18.10.2026] - Firebase Güvenlik İyileştirmesi
 - **Güvenlik Düzeltmeleri:**
   - `database.rules.json` dosyasında Firebase Realtime Database okuma kuralları güncellendi.
   - Öncesinde tüm odaların listelenmesine izin veren `rooms` seviyesindeki `".read": true` kuralı kaldırılarak, yalnızca bilinen oda ID'leri ile spesifik odalara erişim sağlayacak şekilde `"$roomId"` seviyesine taşındı. Bu sayede aktif izleme partilerinin hassas verilerinin sızması engellendi.
