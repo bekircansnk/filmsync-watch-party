@@ -3,9 +3,9 @@
     ".read": false,
     ".write": false,
     "rooms": {
-      ".read": true,
       ".indexOn": ["createdAt"],
       "$roomId": {
+        ".read": true,
         ".write": true,
         ".validate": "newData.hasChildren(['lastState']) || newData.hasChildren(['users']) || !newData.exists()",
         "name": {

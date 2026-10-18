@@ -17,3 +17,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Kullanıcı talimatı doğrultusunda tüm zamanlanmış Jules sidecar görevleri (`/jules-yonet` cron) iptal edildi ve kaldırıldı.
   - Çalışan tüm Jules arka plan süreçleri `pkill` ile sonlandırıldı.
   - Proje dokümantasyonundaki tüm Jules görev durumları pasif/iptal olarak güncellendi.
+
+## [18.10.2024] - Firebase Güvenlik İyileştirmesi
+- **Güvenlik Düzeltmeleri:**
+  - `database.rules.json` dosyasında Firebase Realtime Database okuma kuralları güncellendi.
+  - Öncesinde tüm odaların listelenmesine izin veren `rooms` seviyesindeki `".read": true` kuralı kaldırılarak, yalnızca bilinen oda ID'leri ile spesifik odalara erişim sağlayacak şekilde `"$roomId"` seviyesine taşındı. Bu sayede aktif izleme partilerinin hassas verilerinin sızması engellendi.

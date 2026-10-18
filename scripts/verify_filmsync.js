@@ -1474,7 +1474,7 @@ console.log('--- FilmSync Test Suite Başlatılıyor ---');
   const rules = JSON.parse(fs.readFileSync(rulesPath, 'utf8'));
   assert.strictEqual(rules.rules['.read'], false, 'Root read izni kilitli olmalı');
   assert.strictEqual(rules.rules['.write'], false, 'Root write izni kilitli olmalı');
-  assert.strictEqual(rules.rules.rooms['.read'], true, 'Odalar genel okunabilmeli');
+  // assert.strictEqual(rules.rules.rooms['.read'], true, 'Odalar genel okunabilmeli'); // Sentinel fix: Odalar artık genel okunamaz
   assert(rules.rules.rooms.$roomId['.write'], 'Oda yazma izni tanımlı olmalı');
   assert(rules.rules.rooms.$roomId.lastState, 'lastState şema doğrulaması tanımlı olmalı');
   assert(rules.rules.rooms.$roomId.users, 'users şema doğrulaması tanımlı olmalı');
