@@ -2764,6 +2764,22 @@ function createChatUI() {
       overflow-x: hidden !important;
     }
 
+    /* Netflix, YouTube, Disney+ vb. Oynatıcı İzolasyonları ve Daraltma */
+    /* Not: DOM Reflow (yeniden hesaplama) performans kaybını önlemek için width yerine transform (scale) vs. kullanılabilir
+       Ancak video elementleri için genellikle transform sorun yaratır. Performansı artırmak için transitionları layout özelliklerinde kısıtlıyoruz. */
+    body.filmsync-sidebar-open .watch-video,
+    body.filmsync-sidebar-open .nf-player-container,
+    body.filmsync-sidebar-open #ytd-player,
+    body.filmsync-sidebar-open .html5-video-player,
+    body.filmsync-sidebar-open disney-web-player,
+    body.filmsync-sidebar-open .btm-media-player,
+    body.filmsync-sidebar-open .media-client-container {
+      width: calc(100% - 390px) !important;
+      max-width: calc(100% - 390px) !important;
+      left: 0 !important;
+      transition: none !important; /* DOM reflow performans kaybını engellemek için */
+    }
+
     @keyframes fs-spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
