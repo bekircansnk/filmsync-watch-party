@@ -17,6 +17,7 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
   - Kullanıcı talimatı doğrultusunda tüm zamanlanmış Jules sidecar görevleri (`/jules-yonet` cron) iptal edildi ve kaldırıldı.
   - Çalışan tüm Jules arka plan süreçleri `pkill` ile sonlandırıldı.
   - Proje dokümantasyonundaki tüm Jules görev durumları pasif/iptal olarak güncellendi.
+<<<<<<< HEAD
 ## [29.07.2026] - Performans ve Video Oynatıcı İzolasyonu İyileştirmeleri
 - `extension/content.js` içerisinde sohbet paneli açıldığında (body `filmsync-sidebar-open` class'ını aldığında) Netflix, YouTube, Disney+ vb. popüler platformların video oynatıcılarına (`.watch-video`, `.nf-player-container`, `#ytd-player`, `disney-web-player`, vs.) özel css kuralları eklendi.
 - Sohbet paneli ile video ekranının çakışmaması ve videonun sol panele düzgün oturması için bu elementlere `width: calc(100% - 390px) !important;` ve `max-width: calc(100% - 390px) !important;` kuralları uygulandı.
@@ -31,3 +32,7 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **Güvenlik Düzeltmeleri:**
   - `database.rules.json` dosyasında Firebase Realtime Database okuma kuralları güncellendi.
   - Öncesinde tüm odaların listelenmesine izin veren `rooms` seviyesindeki `".read": true` kuralı kaldırılarak, yalnızca bilinen oda ID'leri ile spesifik odalara erişim sağlayacak şekilde `"$roomId"` seviyesine taşındı. Bu sayede aktif izleme partilerinin hassas verilerinin sızması engellendi.
+## [18.10.2026] - Logger Entegrasyonu ve Try-Catch Koruma
+- **Hata Düzeltmeleri ve Geliştirmeler:**
+  - `extension/content.js` ve `extension/popup.js` içerisindeki standart `console.log`, `console.warn` ve `console.error` çıktıları yapılandırılmış bir `Logger` ile değiştirildi.
+  - Netflix, Disney+, YouTube gibi API'lerle etkileşime giren `PlayerAdapter` (`play`, `pause`, `seek`) metotları, eklentinin çökmesini engellemek için `try-catch` blokları ile koruma altına alındı.

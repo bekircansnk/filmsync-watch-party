@@ -20,6 +20,26 @@ let publicRoomsRef = null;
 let currentTabPlatformName = 'Web Video';
 let currentTabCleanTitle = '';
 
+
+const Logger = {
+  log: (...args) => {
+    // Sadece debug modunda veya belirli durumlarda aktif edilebilir.
+    // console.log('[FilmSync]', ...args);
+  },
+  warn: (...args) => {
+    // Düzeltildi: console.warn kullanılabilir, kendi kendisini çağırmaz
+    console.warn('[FilmSync Warn]', ...args);
+  },
+  error: (...args) => {
+    // Düzeltildi: console.error kullanılabilir, kendi kendisini çağırmaz
+    console.error('[FilmSync Error]', ...args);
+  }
+};
+
+
+
+
+
 // Önbellekte kalan eski Firebase WebSocket hata bayraklarını temizle ve MV3 CSP uyumlu WebSocket zorla (Takılı kalmayı %100 önler)
 function clearStaleFirebaseCache() {
   try {
@@ -220,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
       db = firebase.database();
     }
   } catch (e) {
-    console.error("Firebase init error:", e);
+    Logger.error("Firebase init error:", e);
   }
 
   // Kayıtlı güncel Dizipal adresini yükle ve kart üzerinde güncelle
@@ -464,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
             finalizePartyCreation();
           })
           .catch(err => {
-            console.warn('[FilmSync Popup] REST oda kurulum hatası, Background üzerinden tamamlanıyor:', err);
+            Logger.warn('[FilmSync Popup] REST oda kurulum hatası, Background üzerinden tamamlanıyor:', err);
             chrome.runtime.sendMessage({
               type: 'create-room',
               roomId,
@@ -585,7 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       })
       .catch(err => {
-        console.error(err);
+        Logger.error(err);
         showGlobalToast('Bağlantı hatası yaşandı.');
         resetStatus();
       });
@@ -1034,7 +1054,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderActiveRoomState(snapshot.val());
       });
     } catch (e) {
-      console.error(e);
+      Logger.error(e);
     }
   }
 
