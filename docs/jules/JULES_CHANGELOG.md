@@ -40,3 +40,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+- **Tarih:** $(date +'%Y-%m-%d')
+- **Görev:** PlayerAdapter ve ensureVideoReady iyileştirmesi, eşzamanlama sorunlarının giderilmesi
+- **Değişiklikler:**
+  - `PlayerAdapter.play()`, `pause()`, ve `seek()` metotları yeniden düzenlenerek platformlara özel kod tekrarları azaltıldı. Tüm çağrılarda iframe mesajlaşması korundu.
+  - Video oynatma (play) isteği esnasında, tarayıcı autoplay politikaları nedeniyle oluşabilecek hataları yakalayabilmek için geri dönen promise (`playPromise`) üzerinde catch bloğu uygulandı.
+  - `executeProgrammaticSync` fonksiyonu, parametrik bir `lockDuration` alacak şekilde güncellendi.
+  - `applyRemoteState` içinde play ve pause emirleri sırasında manuel olarak `isSyncing` flag'ını değiştiren kodlar yerine `executeProgrammaticSync` kullanıldı. Bu sayede `isProgrammaticSeeking` de doğru bir şekilde aktif ediliyor.
+  - `ensureVideoReady`'nin `applyRemoteState` içindeki callback'inde oluşabilecek race condition'ı engellemek için, state gelene kadar güncel durumun (`lastKnownState`) değişip değişmediğini kontrol eden bir savunma eklendi.

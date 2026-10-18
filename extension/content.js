@@ -380,69 +380,41 @@ const PlayerAdapter = {
 
   play: () => {
     try {
-
-    const vid = videoElement || findBestVideoElement();
-    if (PlayerAdapter.isNetflix()) {
+      const vid = videoElement || findBestVideoElement();
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-    } else if (PlayerAdapter.isDisney()) {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
-    } else if (PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
-    } else {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
-    }
-      } catch (err) {
+      if (!PlayerAdapter.isNetflix() && vid && vid.paused) {
+        const playPromise = vid.play();
+        if (playPromise !== undefined && typeof playPromise.catch === 'function') {
+          playPromise.catch((e) => Logger.error('Play prevented:', e));
+        }
+      }
+    } catch (err) {
       Logger.error('PlayerAdapter.play hatası:', err);
     }
   },
 
   pause: () => {
     try {
-
-    const vid = videoElement || findBestVideoElement();
-    if (PlayerAdapter.isNetflix()) {
+      const vid = videoElement || findBestVideoElement();
       window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-    } else if (PlayerAdapter.isDisney()) {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-      if (vid && !vid.paused) vid.pause();
-    } else if (PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-      if (vid && !vid.paused) vid.pause();
-    } else {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-      if (vid && !vid.paused) vid.pause();
-    }
-      } catch (err) {
+      if (!PlayerAdapter.isNetflix() && vid && !vid.paused) {
+        vid.pause();
+      }
+    } catch (err) {
       Logger.error('PlayerAdapter.pause hatası:', err);
     }
   },
 
   seek: (seconds) => {
     try {
-
-    const vid = videoElement || findBestVideoElement();
-    if (PlayerAdapter.isNetflix()) {
+      const vid = videoElement || findBestVideoElement();
       window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-    } else if (PlayerAdapter.isDisney()) {
-      window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-      if (vid) {
-        try { vid.currentTime = seconds; } catch (e) {}
+      if (!PlayerAdapter.isNetflix() && vid) {
+        if (!PlayerAdapter.isYouTube() || Math.abs(vid.currentTime - seconds) > 0.5) {
+          try { vid.currentTime = seconds; } catch (e) {}
+        }
       }
-    } else if (PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-      if (vid && Math.abs(vid.currentTime - seconds) > 0.5) {
-        try { vid.currentTime = seconds; } catch (e) {}
-      }
-    } else {
-      window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-      if (vid) {
-        try { vid.currentTime = seconds; } catch (e) {}
-      }
-    }
-      } catch (err) {
+    } catch (err) {
       Logger.error('PlayerAdapter.seek hatası:', err);
     }
   }
@@ -1488,10 +1460,12 @@ function finishProgrammaticSync() {
 }
 
 // Programatik Senkronizasyon Yürütücü (Kilit & Döngü Korumalı)
-function executeProgrammaticSync(targetSeconds, syncAction) {
+function executeProgrammaticSync(targetSeconds, syncAction, lockDuration = 2500) {
   isSyncing = true;
   isProgrammaticSeeking = true;
-  lastProgrammaticSeekTime = targetSeconds;
+  if (targetSeconds !== null && targetSeconds !== undefined) {
+    lastProgrammaticSeekTime = targetSeconds;
+  }
   lastProgrammaticSeekTimestamp = Date.now();
 
   if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
@@ -1504,7 +1478,7 @@ function executeProgrammaticSync(targetSeconds, syncAction) {
 
   syncSafetyTimer = setTimeout(() => {
     finishProgrammaticSync();
-  }, 2500);
+  }, lockDuration);
 }
 
 // Uzak Durumu Videoya Uygula
@@ -1526,6 +1500,10 @@ function applyRemoteState(state) {
 
   ensureVideoReady((isReady) => {
     if (!isReady || !videoElement) return;
+    if (state !== lastKnownState) {
+      Logger.log('[FilmSync] State superseded by a newer state, ignoring old state.');
+      return;
+    }
 
     // Video buffering veya seeking halindeyse hard seek yapıp CDN buffer'ı tekrar çökertme
     if (videoElement.seeking || videoElement.readyState < 2) {
@@ -1563,7 +1541,7 @@ function applyRemoteState(state) {
         PlayerAdapter.seek(targetTime);
         if (state.isPlaying && videoElement.paused) PlayerAdapter.play();
         else if (!state.isPlaying && !videoElement.paused) PlayerAdapter.pause();
-      });
+      }, 2500);
       return;
     }
 
@@ -1573,11 +1551,11 @@ function applyRemoteState(state) {
         executeProgrammaticSync(targetTime, () => {
           PlayerAdapter.seek(targetTime);
           PlayerAdapter.play();
-        });
+        }, 2500);
       } else {
-        isSyncing = true;
-        PlayerAdapter.play();
-        setTimeout(() => { isSyncing = false; }, 800);
+        executeProgrammaticSync(targetTime, () => {
+          PlayerAdapter.play();
+        }, 1200);
       }
       return;
     }
@@ -1588,11 +1566,11 @@ function applyRemoteState(state) {
         executeProgrammaticSync(state.currentTime, () => {
           PlayerAdapter.seek(state.currentTime);
           PlayerAdapter.pause();
-        });
+        }, 2500);
       } else {
-        isSyncing = true;
-        PlayerAdapter.pause();
-        setTimeout(() => { isSyncing = false; }, 800);
+        executeProgrammaticSync(state.currentTime, () => {
+          PlayerAdapter.pause();
+        }, 1200);
       }
       return;
     }
@@ -1603,7 +1581,7 @@ function applyRemoteState(state) {
         Logger.log(`[FilmSync] Büyük sapma (${drift.toFixed(1)}s), hard seek ile yetişiliyor.`);
         executeProgrammaticSync(targetTime, () => {
           PlayerAdapter.seek(targetTime);
-        });
+        }, 2500);
         return;
       }
 
@@ -1635,7 +1613,7 @@ function applyRemoteState(state) {
       if (drift > 0.8) {
         executeProgrammaticSync(state.currentTime, () => {
           PlayerAdapter.seek(state.currentTime);
-        });
+        }, 2500);
       }
     }
   });
