@@ -22,6 +22,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - Sohbet paneli ile video ekranının çakışmaması ve videonun sol panele düzgün oturması için bu elementlere `width: calc(100% - 390px) !important;` ve `max-width: calc(100% - 390px) !important;` kuralları uygulandı.
 - Yüksek kare hızında (high-frame-rate) video oynatımında DOM reflow (yeniden hesaplama) kaynaklı takılma ve performans kayıplarını en aza indirmek için bu layout değişikliklerinde CSS geçişleri (`transition: none !important;`) tamamen devre dışı bırakıldı. Bu sayede paneli açıp kapatırken veya pencere boyutu değiştiğinde video kare düşmeleri engellendi.
 
+## [11.08.2026] - XSS Açıkları Giderildi
+- `extension/content.js` ve `extension/popup.js` içindeki `innerHTML` kullanımları incelendi.
+- DOM tabanlı XSS açıklarını (Cross-Site Scripting) engellemek amacıyla, dinamik kullanıcı verilerinin (isim, oda adı, mesajlar vb.) doğrudan `innerHTML` içerisine yazılması engellendi.
+- Statik HTML yapısı için `innerHTML` kullanılmaya devam edilirken, kullanıcıdan alınan veriler özel yer tutucu (placeholder) elemanlarına `.textContent` özelliği ile güvenli bir şekilde atandı.
+
 ## [18.10.2026] - Firebase Güvenlik İyileştirmesi
 - **Güvenlik Düzeltmeleri:**
   - `database.rules.json` dosyasında Firebase Realtime Database okuma kuralları güncellendi.
