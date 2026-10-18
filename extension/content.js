@@ -1603,7 +1603,12 @@ function applyRemoteState(state) {
         return;
       }
 
-      if (drift <= 3.0) {
+      // Dinamik sapma toleransı: Yüksek gecikmeli durumlarda toleransı artır (max 4.0s),
+      // normal durumlarda daha sıkı tut (min 1.5s).
+      const networkLatency = typeof navigator !== 'undefined' && navigator.connection && navigator.connection.rtt ? navigator.connection.rtt / 1000 : 0.5;
+      const dynamicThreshold = Math.max(1.5, Math.min(4.0, 2.0 + networkLatency));
+
+      if (drift <= dynamicThreshold) {
         if (!PlayerAdapter.isNetflix() && videoElement.playbackRate !== 1.0) {
           try { videoElement.playbackRate = 1.0; } catch (e) {}
         }
@@ -1980,6 +1985,28 @@ function startDriftCorrection() {
         });
       }
       return;
+    }
+
+    // Oda üyesi isek (host değilsek), mevcut oynatıcı durumunu lastKnownState ile karşılaştır.
+    // Toleransı (threshold) ağ gecikmesine göre dinamik olarak hesapla.
+    if (lastKnownState && lastKnownState.isPlaying) {
+      const now = getEstimatedServerTime();
+      const timeDiff = Math.max(0, (now - (lastKnownState.lastUpdated || now)) / 1000);
+      const targetTime = lastKnownState.currentTime + timeDiff;
+      const drift = Math.abs(videoElement.currentTime - targetTime);
+
+      const networkLatency = typeof navigator !== 'undefined' && navigator.connection && navigator.connection.rtt ? navigator.connection.rtt / 1000 : 0.5;
+      const dynamicThreshold = Math.max(1.5, Math.min(4.0, 2.5 + networkLatency)); // Default was approx 2.5s conceptually, now dynamic
+
+      if (drift > dynamicThreshold) {
+        console.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s`);
+        forceSync();
+      } else if (lastKnownState.isPlaying && videoElement.paused) {
+        // Play state mismatch
+        forceSync();
+      }
+    } else if (lastKnownState && !lastKnownState.isPlaying && !videoElement.paused) {
+       forceSync();
     }
   }, 5000);
 }
