@@ -40,3 +40,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+# FilmSync Watch Party - Güvenlik Güncellemesi (XSS Düzeltmesi)
+
+- `extension/content.js` dosyasında `toastBody.innerHTML` kullanılırken `displayTitle` değişkeninin doğrudan enjekte edilmesi yerine `textContent` ile güvenli bir şekilde atanması sağlandı.
+
+- `extension/content.js` dosyasında `systemBubble` ve `msgBubble` elementleri güvenli bir şekilde `textContent` kullanılarak güncellendi.
+- `extension/content.js` dosyasındaki overlay ve modal oluşturma işlemlerinde `innerHTML` yerine statik HTML şablonları güvenli bir şekilde entegre edildi. `roomName` değişkenleri DOM manipülasyonu ile güvenli bir şekilde aktarıldı.
+- `extension/popup.js` dosyasındaki kart (`card.innerHTML`) render işlemi kontrol edildi. `safeRoomId` escape mekanizması korundu.
