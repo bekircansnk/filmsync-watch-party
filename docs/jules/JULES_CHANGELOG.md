@@ -4,6 +4,11 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [19.10.2026] - Video Oynatıcı DOM Reflow İyileştirmesi
+- **Performans İyileştirmesi:**
+  - `extension/content.js` içerisinde `body.filmsync-sidebar-open` durumu için uygulanan video oynatıcı daraltma kurallarında (`width`, `max-width`) ve geçişlerde iyileştirme yapıldı.
+  - Video elementleri için `transition: none !important;` kuralı korunarak yüksek kare hızında (high-frame-rate) video oynatımında (Netflix, YouTube, Disney+ vb.) DOM reflow kaynaklı takılma (stutter) ve kare düşmesi sorunları engellendi.
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
