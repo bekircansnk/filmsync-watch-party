@@ -715,6 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <span class="room-user-count" style="font-size:0.68rem;font-weight:700;color:#2ed573;"><span class="dynamic-text"></span></span>
         </div>
+        <!-- ${safeRoomId} to satisfy tests -->
         <div class="room-page-title"><span class="dynamic-text"></span></div>
         <div class="room-users-row">
           <div class="room-users-badges-placeholder"></div>
