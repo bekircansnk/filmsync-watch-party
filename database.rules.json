@@ -4,6 +4,7 @@
     ".write": false,
     "rooms": {
       ".indexOn": ["createdAt"],
+      ".read": false,
       "$roomId": {
         ".read": true,
         ".write": true,
