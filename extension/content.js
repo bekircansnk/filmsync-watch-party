@@ -21,7 +21,7 @@ let db = null;
 const Logger = {
   log: (...args) => {
     // Sadece debug modunda veya belirli durumlarda aktif edilebilir.
-    // console.log('[FilmSync]', ...args);
+    // Logger.log('[FilmSync]', ...args);
   },
   warn: (...args) => {
     // Düzeltildi: console.warn kullanılabilir, kendi kendisini çağırmaz
@@ -2005,7 +2005,7 @@ function startDriftCorrection() {
       const dynamicThreshold = Math.max(1.5, Math.min(4.0, 2.5 + networkLatency)); // Default was approx 2.5s conceptually, now dynamic
 
       if (drift > dynamicThreshold) {
-        console.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s`);
+        Logger.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s`);
         forceSync();
       } else if (lastKnownState.isPlaying && videoElement.paused) {
         // Play state mismatch
