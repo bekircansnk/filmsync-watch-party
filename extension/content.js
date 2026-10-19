@@ -1577,7 +1577,8 @@ function applyRemoteState(state) {
       } else {
         isSyncing = true;
         PlayerAdapter.play();
-        setTimeout(() => { isSyncing = false; }, 800);
+        if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
+        syncSafetyTimer = setTimeout(() => { finishProgrammaticSync(); }, 800);
       }
       return;
     }
@@ -1592,7 +1593,8 @@ function applyRemoteState(state) {
       } else {
         isSyncing = true;
         PlayerAdapter.pause();
-        setTimeout(() => { isSyncing = false; }, 800);
+        if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
+        syncSafetyTimer = setTimeout(() => { finishProgrammaticSync(); }, 800);
       }
       return;
     }
@@ -2115,7 +2117,8 @@ function handleSeekEvent(e) {
     lastTrackedVideoTime = videoElement.currentTime;
     lastTrackedVideoTimestamp = Date.now();
     if (isProgrammaticSeeking) {
-      setTimeout(() => {
+      if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
+      syncSafetyTimer = setTimeout(() => {
         finishProgrammaticSync();
       }, 600);
     }
