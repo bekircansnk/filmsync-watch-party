@@ -806,15 +806,15 @@
     <div id="profileSection">
       <div class="user-input-wrapper">
         <span>👤</span>
-        <input type="text" id="usernameInput" placeholder="Adınızı girin (Örn: Bekir)" maxlength="24">
+        <input type="text" id="usernameInput" placeholder="Adınızı girin (Örn: Bekir)" aria-label="Adınızı girin" maxlength="24">
       </div>
-      <div class="avatar-list" id="avatarList">
-        <button class="avatar-btn selected" data-avatar="🍿">🍿</button>
-        <button class="avatar-btn" data-avatar="🍕">🍕</button>
-        <button class="avatar-btn" data-avatar="🍔">🍔</button>
-        <button class="avatar-btn" data-avatar="🦊">🦊</button>
-        <button class="avatar-btn" data-avatar="🐼">🐼</button>
-        <button class="avatar-btn" data-avatar="🔥">🔥</button>
+      <div class="avatar-list" id="avatarList" role="group" aria-label="Profil Avatarı Seçin">
+        <button class="avatar-btn selected" data-avatar="🍿" aria-label="Patlamış mısır avatarı seç">🍿</button>
+        <button class="avatar-btn" data-avatar="🍕" aria-label="Pizza avatarı seç">🍕</button>
+        <button class="avatar-btn" data-avatar="🍔" aria-label="Hamburger avatarı seç">🍔</button>
+        <button class="avatar-btn" data-avatar="🦊" aria-label="Tilki avatarı seç">🦊</button>
+        <button class="avatar-btn" data-avatar="🐼" aria-label="Panda avatarı seç">🐼</button>
+        <button class="avatar-btn" data-avatar="🔥" aria-label="Ateş avatarı seç">🔥</button>
       </div>
     </div>
 
