@@ -40,3 +40,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [Current Date] - Güvenlik Açığı Koruması (Firebase Kuralları)
+- **Güvenlik İyileştirmesi:**
+  - `database.rules.json` içerisinde, `rooms/$roomId` düğümündeki genel yazma izni (overwriting) sınırlandırıldı. Sadece yeni oda oluşturulmasına veya oda silinmesine izin verecek şekilde `.write: "!data.exists() || !newData.exists()"` olarak güncellendi.
+  - Odanın tamamen üzerine yazılmasını önlemek amacıyla spesifik alanlara (`lastState`, `users/$userId`, `messages/$messageId`, `reactions/$reactionId`) ayrı ayrı `.write: true` izni verilerek, yetkisiz veri kaybı ve tahribatın önüne geçildi.
