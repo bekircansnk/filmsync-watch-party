@@ -40,3 +40,12 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## 2024-05-18 - Konsol ve API İyileştirmeleri
+**💡 Ne Yapıldı:**
+- `extension/content.js` ve `extension/popup.js` içerisindeki standart `console.log/warn/error` çıktıları yapılandırılmış `Logger` yapısına geçirildi.
+- Netflix, Disney+ ve YouTube API hook'larına (videoElement.play çağrılarına) asenkron promise işlemleri için güvenli `playPromise !== undefined && typeof playPromise.catch === 'function'` kontrolü eklendi.
+
+**🎯 Neden:**
+- Standart konsol çıktılarını bir log yöneticisi etrafında toplayarak ileride kolayca devre dışı bırakılabilmesi ve temiz bir konsol elde edilmesi sağlandı.
+- Tarayıcıların "autoplay policy" kısıtlamaları yüzünden `play()` fonksiyonunun fırlattığı `Uncaught (in promise)` hataları eklentiyi çökertmemesi veya performansı düşürmemesi için yönetildi.

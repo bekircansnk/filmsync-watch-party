@@ -386,13 +386,28 @@ const PlayerAdapter = {
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
     } else if (PlayerAdapter.isDisney()) {
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
+      if (vid && vid.paused) {
+        const playPromise = vid.play();
+        if (playPromise !== undefined && typeof playPromise.catch === 'function') {
+          playPromise.catch(e => Logger.warn('Oynatma engellendi:', e));
+        }
+      }
     } else if (PlayerAdapter.isYouTube()) {
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
+      if (vid && vid.paused) {
+        const playPromise = vid.play();
+        if (playPromise !== undefined && typeof playPromise.catch === 'function') {
+          playPromise.catch(e => Logger.warn('Oynatma engellendi:', e));
+        }
+      }
     } else {
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
+      if (vid && vid.paused) {
+        const playPromise = vid.play();
+        if (playPromise !== undefined && typeof playPromise.catch === 'function') {
+          playPromise.catch(e => Logger.warn('Oynatma engellendi:', e));
+        }
+      }
     }
       } catch (err) {
       Logger.error('PlayerAdapter.play hatası:', err);
@@ -2005,7 +2020,7 @@ function startDriftCorrection() {
       const dynamicThreshold = Math.max(1.5, Math.min(4.0, 2.5 + networkLatency)); // Default was approx 2.5s conceptually, now dynamic
 
       if (drift > dynamicThreshold) {
-        console.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s`);
+        Logger.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s`);
         forceSync();
       } else if (lastKnownState.isPlaying && videoElement.paused) {
         // Play state mismatch
