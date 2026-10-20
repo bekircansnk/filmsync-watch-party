@@ -3,10 +3,12 @@
     ".read": false,
     ".write": false,
     "rooms": {
-      ".indexOn": ["createdAt"],
+      ".indexOn": [
+        "createdAt"
+      ],
       "$roomId": {
         ".read": true,
-        ".write": true,
+        ".write": "!data.exists() || !newData.exists()",
         ".validate": "newData.hasChildren(['lastState']) || newData.hasChildren(['users']) || !newData.exists()",
         "name": {
           ".validate": "newData.isString() && newData.val().length <= 100"
@@ -57,7 +59,8 @@
           },
           "senderId": {
             ".validate": "!newData.exists() || newData.isString()"
-          }
+          },
+          ".write": true
         },
         "users": {
           "$userId": {
@@ -82,7 +85,8 @@
             },
             "isBuffering": {
               ".validate": "!newData.exists() || newData.isBoolean()"
-            }
+            },
+            ".write": true
           }
         },
         "messages": {
@@ -99,7 +103,8 @@
             },
             "isSystem": {
               ".validate": "!newData.exists() || newData.isBoolean()"
-            }
+            },
+            ".write": true
           }
         },
         "reactions": {
@@ -113,7 +118,8 @@
             },
             "timestamp": {
               ".validate": "!newData.exists() || newData.isNumber()"
-            }
+            },
+            ".write": true
           }
         }
       }
