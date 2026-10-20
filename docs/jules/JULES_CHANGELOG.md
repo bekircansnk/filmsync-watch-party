@@ -40,3 +40,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## 2024-XX-XX - Video Senkronizasyonu Yarış Durumu (Race Condition) Çözümü
+
+**💡 Ne:** `applyRemoteState` fonksiyonu içerisinde asenkron olarak çalışan `ensureVideoReady` çağrısının hemen öncesinde senkronizasyon kilitlerinin (`isSyncing`, `syncSafetyTimer`) devreye alınması sağlandı.
+
+**🎯 Neden:** Uzak bir oynatma durumu (remote state) alındığında video oynatıcısının hazır olması için beklenirken (örneğin Netflix oynatıcısına ping atılıp beklenmesi gibi durumlarda), kullanıcı yanlışlıkla videoya manuel müdahalede (play/pause/seek) bulunduğunda senkronizasyon döngülerinin oluşmasını engellemek için bu işlem yapılmıştır. Önceden, `isSyncing` kilidi ancak video hazır olduktan sonra (yani `executeProgrammaticSync` içinde) açılıyordu; asenkron bekleme süresindeki boşluk, kilitli olmayan bir durumda video olaylarının tetiklenmesine neden oluyordu.

@@ -1512,6 +1512,14 @@ function applyRemoteState(state) {
   if (!state) return;
   lastKnownState = state;
   
+  // Olası yarış durumlarını (race conditions) engellemek için, asenkron video bekleme
+  // sürecine girmeden hemen önce senkronizasyon kilitlerini devreye alıyoruz.
+  isSyncing = true;
+  if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
+  syncSafetyTimer = setTimeout(() => {
+    finishProgrammaticSync();
+  }, 3500);
+
   // Yönlendirme bildirimi (Sadece video adresi gerçekten farklı bir filme/bölüme aitse ve üst penceredeysek)
   // 1. Oda sahibi (host) kesinlikle yönlendirilmez ve bildirim görmez (Host serbestçe gezinir)
   // 2. Durumu güncelleyen kişi (senderId) kesinlikle yönlendirilmez
