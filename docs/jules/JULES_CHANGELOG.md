@@ -40,3 +40,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [18.10.2026] - XSS Açıkları Giderildi ve Güvenlik İyileştirmeleri (İkinci Faz)
+- **Hata Düzeltmeleri:**
+  - `extension/content.js` dosyasındaki dinamik içeriğe sahip `toastBody.innerHTML` ataması incelendi. Değişkenlerin (film/bölüm adı ve geri sayım süresi) doğrudan string şablonu içerisinde `innerHTML` kullanılarak basılması, DOM tabanlı XSS açıklarına sebep olma potansiyeli taşıyordu.
+  - Bu yapı, statik HTML iskeletinin `innerHTML` ile, dinamik kısımların ise `textContent` kullanılarak özel placeholder sınıflarına (`.dynamic-title`, `.dynamic-countdown`) atanması şeklinde güvenli bir hale getirildi.
+  - Katılma (auto-join) ve isim sorma (prompt) modalları oluşturulurken kullanılan `overlay.innerHTML` ve `modal.innerHTML` içerisindeki `${roomName}` string şablon değişimleri, statik içerik kullanımı korunarak XSS risklerine karşı `.textContent` kullanımı ile temizlendi.
+  - `filmsyncRoomMeta` içeriği güncellenirken kullanıcı isimlerinin yer aldığı `names` değişkeni `textContent` ile güvenli şekilde eklendi.
