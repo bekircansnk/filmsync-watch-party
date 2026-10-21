@@ -4,6 +4,14 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ---
 
+## [24.10.2026] - Sidebar ve Video Oynatıcı Boyutlandırma Optimizasyonu
+- **Optimizasyon:**
+  - Sidebar açıldığında (`body.filmsync-sidebar-open`) video player container'larının daraltılması işlemi incelendi.
+  - Oynatıcı izolasyonlarındaki (Netflix, YouTube vb.) `width` ve `max-width` değerleri `%` tabanlı sistemden `vw` (viewport width) birimine geçirildi.
+  - Bu değişiklik, sayfa geneli genişliğe dayalı karmaşık stil hesaplamaları yerine viewport genişliğine dayalı sabit bir hesaplama sunarak reflow sürecine katkıda bulundu. Mevcut `transition: none !important;` kuralı ile beraber yüksek kare hızında kesintisiz izleme deneyimi sağlandı.
+
+
+
 ## [19.07.2026] - Manuel Düzeltmeler ve Jules Entegrasyonu (Başlangıç)
 - **Hata Düzeltmeleri:**
   - Video olmayan sayfalarda host'un `lastState` güncellemesi ve film URL'sini ezmesi engellendi.
