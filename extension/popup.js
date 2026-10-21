@@ -24,6 +24,7 @@ let currentTabCleanTitle = '';
 const Logger = {
   log: (...args) => {
     // Sadece debug modunda veya belirli durumlarda aktif edilebilir.
+    // Sadece debug modunda çalıştırılmalı
     // console.log('[FilmSync]', ...args);
   },
   warn: (...args) => {
