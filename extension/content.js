@@ -340,6 +340,9 @@ function findAllVideosDeep(rootNode = document, depth = 0) {
 // Sayfadaki en uygun (en büyük / aktif) <video> elementini bulan akıllı seçici
 // (Prime Video, YouTube ve film sitelerindeki gizli 0x0 reklam/önizleme videolarını eler)
 function findBestVideoElement() {
+  if (videoElement && videoElement.isConnected && (videoElement.readyState >= 1 || videoElement.src || videoElement.currentSrc)) {
+    return videoElement;
+  }
   const videos = findAllVideosDeep(document);
 
   if (videos.length === 0) return null;
@@ -381,7 +384,7 @@ const PlayerAdapter = {
   play: () => {
     try {
 
-    const vid = videoElement || findBestVideoElement();
+    const vid = findBestVideoElement();
     if (PlayerAdapter.isNetflix()) {
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
     } else if (PlayerAdapter.isDisney()) {
@@ -402,7 +405,7 @@ const PlayerAdapter = {
   pause: () => {
     try {
 
-    const vid = videoElement || findBestVideoElement();
+    const vid = findBestVideoElement();
     if (PlayerAdapter.isNetflix()) {
       window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
     } else if (PlayerAdapter.isDisney()) {
@@ -423,7 +426,7 @@ const PlayerAdapter = {
   seek: (seconds) => {
     try {
 
-    const vid = videoElement || findBestVideoElement();
+    const vid = findBestVideoElement();
     if (PlayerAdapter.isNetflix()) {
       window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
     } else if (PlayerAdapter.isDisney()) {
@@ -449,7 +452,7 @@ const PlayerAdapter = {
 };
 
 function toggleVideoPlayPause() {
-  const vid = videoElement || findBestVideoElement();
+  const vid = findBestVideoElement();
   if (vid) {
     if (vid.paused) {
       PlayerAdapter.play();
@@ -1764,7 +1767,7 @@ function sendMediaEvent(isPlaying, currentTime, action = 'event') {
     return;
   }
 
-  const activeVideo = videoElement || findBestVideoElement();
+  const activeVideo = findBestVideoElement();
   // Seek eyleminde readyState < 1 olsa bile (kullanıcı henüz yüklenen noktanın ilerisine sardığında) olayı engelleme!
   if (action !== 'seek' && activeVideo && (activeVideo.readyState < 1 || isNaN(activeVideo.duration) || activeVideo.duration === 0)) {
     Logger.log('[FilmSync] Video henüz hazır değil, medya olayı atlanıyor.');
@@ -1896,12 +1899,7 @@ function startVideoTracking() {
     }
 
     // Eğer videoElement zaten bulunduysa ve DOM içinde hala aktif/geçerliyse, her saniye tüm DOM/ShadowDOM ağacını yeniden tarama! (M4 CPU Optimizasyonu)
-    let bestVideo = null;
-    if (videoElement && videoElement.isConnected && (videoElement.readyState >= 1 || videoElement.src || videoElement.currentSrc)) {
-      bestVideo = videoElement;
-    } else {
-      bestVideo = findBestVideoElement();
-    }
+    let bestVideo = findBestVideoElement();
 
     const hasActiveVideo = !!bestVideo;
     const isBrowseExclusion = window.location.href.includes('netflix.com/browse') || 
@@ -4570,7 +4568,7 @@ function startIframeFullscreenKeeper() {
                       document.msFullscreenElement;
                       
     const root = document.getElementById('filmsync-root');
-    const isEffectivelyFullscreen = !!(fsElement || (isParentIframeFullscreen && (videoElement || findBestVideoElement())));
+    const isEffectivelyFullscreen = !!(fsElement || (isParentIframeFullscreen && (findBestVideoElement())));
     
     if (isEffectivelyFullscreen) {
       if (!root) {
