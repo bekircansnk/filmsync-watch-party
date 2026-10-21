@@ -806,15 +806,15 @@
     <div id="profileSection">
       <div class="user-input-wrapper">
         <span>👤</span>
-        <input type="text" id="usernameInput" placeholder="Adınızı girin (Örn: Bekir)" maxlength="24">
+        <input type="text" id="usernameInput" aria-label="Kullanıcı Adı" placeholder="Adınızı girin (Örn: Bekir)" maxlength="24">
       </div>
       <div class="avatar-list" id="avatarList">
-        <button class="avatar-btn selected" data-avatar="🍿">🍿</button>
-        <button class="avatar-btn" data-avatar="🍕">🍕</button>
-        <button class="avatar-btn" data-avatar="🍔">🍔</button>
-        <button class="avatar-btn" data-avatar="🦊">🦊</button>
-        <button class="avatar-btn" data-avatar="🐼">🐼</button>
-        <button class="avatar-btn" data-avatar="🔥">🔥</button>
+        <button class="avatar-btn selected" aria-label="Patlamış mısır avatarı" data-avatar="🍿">🍿</button>
+        <button class="avatar-btn" aria-label="Pizza avatarı" data-avatar="🍕">🍕</button>
+        <button class="avatar-btn" aria-label="Hamburger avatarı" data-avatar="🍔">🍔</button>
+        <button class="avatar-btn" aria-label="Tilki avatarı" data-avatar="🦊">🦊</button>
+        <button class="avatar-btn" aria-label="Panda avatarı" data-avatar="🐼">🐼</button>
+        <button class="avatar-btn" aria-label="Ateş avatarı" data-avatar="🔥">🔥</button>
       </div>
     </div>
 
@@ -858,7 +858,7 @@
       <button id="btnStartParty" class="btn-start-party">🍿 Film Partisi Başlat</button>
 
       <div class="join-code-row">
-        <input type="text" id="joinRoomCodeInput" placeholder="ODA KODU (Örn: ABCD)" maxlength="12">
+        <input type="text" id="joinRoomCodeInput" aria-label="Oda Kodu" placeholder="ODA KODU (Örn: ABCD)" maxlength="12">
         <button id="btnJoinWithCode" class="btn-secondary">Katıl</button>
       </div>
     </div>
@@ -866,7 +866,7 @@
     <!-- 3. PLATFORM SEÇİCİ EKRAN -->
     <div id="platformSelectorContainer" class="platform-selector-panel hidden">
       <div class="join-code-row" style="margin-top: 0; margin-bottom: 8px;">
-        <input type="text" id="joinRoomCodeInputSelector" placeholder="ODA KODU İLE KATIL" maxlength="12">
+        <input type="text" id="joinRoomCodeInputSelector" aria-label="Oda Kodu ile Katıl" placeholder="ODA KODU İLE KATIL" maxlength="12">
         <button id="btnJoinWithCodeSelector" class="btn-secondary">Katıl</button>
       </div>
     </div>

@@ -2920,17 +2920,17 @@ function createChatUI() {
 
       <!-- Emoji Reaksiyon Barı -->
       <div class="filmsync-reaction-bar">
-        <button class="filmsync-react-btn" data-emoji="👍">👍</button>
-        <button class="filmsync-react-btn" data-emoji="😮">😮</button>
-        <button class="filmsync-react-btn" data-emoji="😢">😢</button>
-        <button class="filmsync-react-btn" data-emoji="😂">😂</button>
-        <button class="filmsync-react-btn" data-emoji="🤯">🤯</button>
-        <button class="filmsync-react-btn" data-emoji="🔥">🔥</button>
+        <button class="filmsync-react-btn" aria-label="Beğen" data-emoji="👍">👍</button>
+        <button class="filmsync-react-btn" aria-label="Şaşkın" data-emoji="😮">😮</button>
+        <button class="filmsync-react-btn" aria-label="Üzgün" data-emoji="😢">😢</button>
+        <button class="filmsync-react-btn" aria-label="Gülme" data-emoji="😂">😂</button>
+        <button class="filmsync-react-btn" aria-label="Şok olmuş" data-emoji="🤯">🤯</button>
+        <button class="filmsync-react-btn" aria-label="Ateş" data-emoji="🔥">🔥</button>
       </div>
       
       <!-- Mesaj Girişi -->
       <div class="filmsync-input-area">
-        <input type="text" id="filmsyncMsgInput" placeholder="Mesaj yazın... (Enter)" autocomplete="off">
+        <input type="text" id="filmsyncMsgInput" aria-label="Sohbet mesajı" placeholder="Mesaj yazın... (Enter)" autocomplete="off">
         <button class="filmsync-send-btn" id="filmsyncSendBtn" title="Gönder">
           <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>

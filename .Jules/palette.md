@@ -1,0 +1,3 @@
+## 2024-05-19 - ARIA Labels for Emoji Reaction Buttons
+**Learning:** Found multiple icon-only emoji reaction buttons (`<button class="filmsync-react-btn" data-emoji="...">`) and avatar buttons in `extension/content.js` and `extension/popup.html` completely lacking `aria-label` attributes. Without them, screen readers would only announce them as generic "button" or awkwardly read out unicode emojis. This is a common pattern for fast-prototyped extension UI.
+**Action:** Always verify icon-only and emoji-only `<button>` or `<input>` elements have explicit `aria-label` attributes for screen reader accessibility, especially in injected floating chat pods or popup interfaces.
