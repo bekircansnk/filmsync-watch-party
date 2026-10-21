@@ -2858,8 +2858,8 @@ function createChatUI() {
     body.filmsync-sidebar-open disney-web-player,
     body.filmsync-sidebar-open .btm-media-player,
     body.filmsync-sidebar-open .media-client-container {
-      width: calc(100% - 390px) !important;
-      max-width: calc(100% - 390px) !important;
+      width: calc(100vw - 390px) !important;
+      max-width: calc(100vw - 390px) !important;
       left: 0 !important;
       transition: none !important; /* DOM reflow performans kaybını engellemek için */
     }
