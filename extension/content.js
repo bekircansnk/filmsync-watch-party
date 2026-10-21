@@ -1,3 +1,13 @@
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 (function() {
   'use strict';
   if (typeof window !== 'undefined' && window.__FILMSYNC_CONTENT_LOADED__) {
@@ -3998,7 +4008,8 @@ function showMovieRedirectNotification(targetUrl, targetTitle = '') {
   toastBody.setAttribute('style', 'color: #ffffff !important; font-weight: 500 !important; font-size: 13px !important; line-height: 1.45 !important; text-shadow: 0 1px 3px rgba(0,0,0,0.6) !important; padding-right: 18px;');
   
   function updateToastContent() {
-    const displayTitle = targetTitle ? `"${targetTitle}"` : 'Yeni bölüme / filme';
+    const safeTitle = targetTitle ? escapeHtml(targetTitle) : '';
+    const displayTitle = safeTitle ? `"${safeTitle}"` : 'Yeni bölüme / filme';
     toastBody.innerHTML = `<span>${displayTitle} açıldı.</span><br><span style="color: #6ee7b7; font-weight: 600; text-decoration: underline;">Yönlendirmek için tıklayın</span> <span style="color: rgba(255,255,255,0.6); font-size: 11.5px;">(${countdown} sn)</span>`;
   }
   updateToastContent();
