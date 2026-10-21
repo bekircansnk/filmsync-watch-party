@@ -40,3 +40,7 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## 2025-02-18 - Yarış Durumları ve Video Oynatıcı Düzenlemesi
+**Ne Yapıldı:** `extension/content.js` içindeki `PlayerAdapter` ve `ensureVideoReady` metodlarındaki uzak durum güncellemeleri (`applyRemoteState`) ile yerel kullanıcı eylemleri arasındaki yarış durumları (race conditions) çözüldü.
+**Neden:** Önceki `isSyncing` kilidi, `applyRemoteState` içinde `ensureVideoReady` asenkron çağrısından sonra ayarlanıyordu; bu da ara kullanıcı olaylarının senkronizasyon döngülerini tetiklemesine neden olan asenkron bir boşluk oluşturuyordu. Ayrıca `PlayerAdapter.play()`, otomatik oynatma (autoplay) politikası sözü (promise) hatalarını düzgün yakalamıyor ve doğru yerel geri dönüşleri tetiklemiyordu. `isSyncing = true` video elementini beklemeden *önce* ayarlanarak ve oynatma çağrısı söz (promise) kontrolüyle sarılarak video senkronizasyonu kararlı hale getirildi; artık uzak arama (seek) veya oynatmalarda (play) takılma olmuyor.

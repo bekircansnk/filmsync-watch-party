@@ -380,69 +380,42 @@ const PlayerAdapter = {
 
   play: () => {
     try {
-
-    const vid = videoElement || findBestVideoElement();
-    if (PlayerAdapter.isNetflix()) {
+      const vid = videoElement || findBestVideoElement();
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-    } else if (PlayerAdapter.isDisney()) {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
-    } else if (PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
-    } else {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
-    }
-      } catch (err) {
+      if (!PlayerAdapter.isNetflix() && vid && vid.paused) {
+        const playPromise = vid.play();
+        if (playPromise !== undefined && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {});
+        }
+      }
+    } catch (err) {
       Logger.error('PlayerAdapter.play hatası:', err);
     }
   },
 
   pause: () => {
     try {
-
-    const vid = videoElement || findBestVideoElement();
-    if (PlayerAdapter.isNetflix()) {
+      const vid = videoElement || findBestVideoElement();
       window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-    } else if (PlayerAdapter.isDisney()) {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-      if (vid && !vid.paused) vid.pause();
-    } else if (PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-      if (vid && !vid.paused) vid.pause();
-    } else {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-      if (vid && !vid.paused) vid.pause();
-    }
-      } catch (err) {
+      if (!PlayerAdapter.isNetflix() && vid && !vid.paused) {
+        vid.pause();
+      }
+    } catch (err) {
       Logger.error('PlayerAdapter.pause hatası:', err);
     }
   },
 
   seek: (seconds) => {
     try {
-
-    const vid = videoElement || findBestVideoElement();
-    if (PlayerAdapter.isNetflix()) {
+      const vid = videoElement || findBestVideoElement();
       window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-    } else if (PlayerAdapter.isDisney()) {
-      window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-      if (vid) {
+      if (!PlayerAdapter.isNetflix() && vid) {
+        if (PlayerAdapter.isYouTube() && Math.abs(vid.currentTime - seconds) <= 0.5) {
+          return;
+        }
         try { vid.currentTime = seconds; } catch (e) {}
       }
-    } else if (PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-      if (vid && Math.abs(vid.currentTime - seconds) > 0.5) {
-        try { vid.currentTime = seconds; } catch (e) {}
-      }
-    } else {
-      window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-      if (vid) {
-        try { vid.currentTime = seconds; } catch (e) {}
-      }
-    }
-      } catch (err) {
+    } catch (err) {
       Logger.error('PlayerAdapter.seek hatası:', err);
     }
   }
@@ -1524,8 +1497,15 @@ function applyRemoteState(state) {
     }
   }
 
+  isSyncing = true;
+  if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
+  syncSafetyTimer = setTimeout(finishProgrammaticSync, 12000);
+
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+    if (!isReady || !videoElement) {
+      finishProgrammaticSync();
+      return;
+    }
 
     // Video buffering veya seeking halindeyse hard seek yapıp CDN buffer'ı tekrar çökertme
     if (videoElement.seeking || videoElement.readyState < 2) {
@@ -1534,13 +1514,18 @@ function applyRemoteState(state) {
       let playableTimer = null;
       const onVideoPlayable = () => {
         if (playableTimer) clearTimeout(playableTimer);
-        if (!videoElement) return;
+        if (!videoElement) {
+          finishProgrammaticSync();
+          return;
+        }
         videoElement.removeEventListener('canplay', onVideoPlayable);
         videoElement.removeEventListener('loadeddata', onVideoPlayable);
         if (pendingState) {
           const s = pendingState;
           pendingState = null;
           applyRemoteState(s);
+        } else {
+          finishProgrammaticSync();
         }
       };
       videoElement.addEventListener('canplay', onVideoPlayable, { once: true });
@@ -1575,9 +1560,9 @@ function applyRemoteState(state) {
           PlayerAdapter.play();
         });
       } else {
-        isSyncing = true;
+        if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
         PlayerAdapter.play();
-        setTimeout(() => { isSyncing = false; }, 800);
+        syncSafetyTimer = setTimeout(finishProgrammaticSync, 800);
       }
       return;
     }
@@ -1590,9 +1575,9 @@ function applyRemoteState(state) {
           PlayerAdapter.pause();
         });
       } else {
-        isSyncing = true;
+        if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
         PlayerAdapter.pause();
-        setTimeout(() => { isSyncing = false; }, 800);
+        syncSafetyTimer = setTimeout(finishProgrammaticSync, 800);
       }
       return;
     }
@@ -1616,6 +1601,7 @@ function applyRemoteState(state) {
         if (!PlayerAdapter.isNetflix() && videoElement.playbackRate !== 1.0) {
           try { videoElement.playbackRate = 1.0; } catch (e) {}
         }
+        finishProgrammaticSync();
         return;
       }
 
@@ -1627,6 +1613,7 @@ function applyRemoteState(state) {
             : Math.max(0.95, 1.0 - rateFactor);
         } catch (e) {}
       }
+      finishProgrammaticSync();
       return;
     }
 
@@ -1636,8 +1623,11 @@ function applyRemoteState(state) {
         executeProgrammaticSync(state.currentTime, () => {
           PlayerAdapter.seek(state.currentTime);
         });
+        return;
       }
     }
+
+    finishProgrammaticSync();
   });
 }
 
