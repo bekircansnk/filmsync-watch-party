@@ -806,15 +806,15 @@
     <div id="profileSection">
       <div class="user-input-wrapper">
         <span>👤</span>
-        <input type="text" id="usernameInput" placeholder="Adınızı girin (Örn: Bekir)" maxlength="24">
+        <input type="text" id="usernameInput" placeholder="Adınızı girin (Örn: Bekir)" aria-label="Kullanıcı Adı" maxlength="24">
       </div>
       <div class="avatar-list" id="avatarList">
-        <button class="avatar-btn selected" data-avatar="🍿">🍿</button>
-        <button class="avatar-btn" data-avatar="🍕">🍕</button>
-        <button class="avatar-btn" data-avatar="🍔">🍔</button>
-        <button class="avatar-btn" data-avatar="🦊">🦊</button>
-        <button class="avatar-btn" data-avatar="🐼">🐼</button>
-        <button class="avatar-btn" data-avatar="🔥">🔥</button>
+        <button class="avatar-btn selected" data-avatar="🍿" aria-label="Patlamış Mısır Avatarı Seç" title="Patlamış Mısır">🍿</button>
+        <button class="avatar-btn" data-avatar="🍕" aria-label="Pizza Avatarı Seç" title="Pizza">🍕</button>
+        <button class="avatar-btn" data-avatar="🍔" aria-label="Hamburger Avatarı Seç" title="Hamburger">🍔</button>
+        <button class="avatar-btn" data-avatar="🦊" aria-label="Tilki Avatarı Seç" title="Tilki">🦊</button>
+        <button class="avatar-btn" data-avatar="🐼" aria-label="Panda Avatarı Seç" title="Panda">🐼</button>
+        <button class="avatar-btn" data-avatar="🔥" aria-label="Ateş Avatarı Seç" title="Ateş">🔥</button>
       </div>
     </div>
 
@@ -842,14 +842,14 @@
         <div class="switch-group">
           <span class="switch-text">Açık Oda</span>
           <label class="switch">
-            <input type="checkbox" id="isPublicSwitch" checked>
+            <input type="checkbox" id="isPublicSwitch" aria-label="Açık Oda Seçeneği" checked>
             <span class="slider"></span>
           </label>
         </div>
         <div class="switch-group">
           <span class="switch-text">Sadece Ben</span>
           <label class="switch">
-            <input type="checkbox" id="hostOnlySwitch">
+            <input type="checkbox" id="hostOnlySwitch" aria-label="Sadece Ben Kontrol Edebilirim Seçeneği">
             <span class="slider"></span>
           </label>
         </div>
