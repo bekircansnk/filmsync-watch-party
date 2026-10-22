@@ -40,3 +40,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+### YYYY-MM-DD - Firebase Dinleyici Sızıntısı Onarımı
+* `extension/content.js` dosyasında `cleanupFirebase()` ve `setupFirebaseListeners()` içindeki Firebase `.off()` çağrıları güncellendi.
+* `messages` ve `reactions` için `.limitToLast()` sorguları ile oluşturulan dinleyiciler için eksik `.off()` çağrıları eklendi (`.limitToLast(50).off()` ve `.limitToLast(5).off()`).
+* Oda sahibi bilgileri (`hostId` ve `hostOnly`) için eksik `.off()` çağrıları eklendi.
+* `.info/serverTimeOffset` dinleyicisi için eksik `.off()` çağrısı `cleanupFirebase()` içine eklendi ve yeni dinleyici kaydından önce de `.off()` çağrısı yapıldı.
