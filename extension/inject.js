@@ -9,7 +9,6 @@
     }
   } catch (e) {}
 
-  console.log('[FilmSync Inject] Evrensel platform ve klavye zırhı yüklendi.');
 
   const host = window.location.host.toLowerCase();
   const isNetflix = host.includes('netflix.com');
@@ -214,8 +213,7 @@
       }
       return null;
     } catch (e) {
-      console.error('[FilmSync Inject] Netflix player eldesi başarısız:', e);
-      return null;
+            return null;
     }
   }
 
@@ -225,8 +223,7 @@
       const hostEl = document.querySelector("disney-web-player");
       return hostEl ? hostEl.mediaPlayer : null;
     } catch (e) {
-      console.error('[FilmSync Inject] Disney+ player eldesi başarısız:', e);
-      return null;
+            return null;
     }
   }
 
@@ -267,8 +264,7 @@
         }
       }
     } catch (err) {
-      console.error('[FilmSync Inject] Disney+ DOM Fallback hatası:', err);
-    }
+          }
   }
 
   // --- ▶️ YOUTUBE OYNATICI API'SİNE ERİŞİM ---
@@ -280,8 +276,7 @@
       }
       return document.querySelector("#movie_player") || document.querySelector(".html5-video-player");
     } catch (e) {
-      console.error('[FilmSync Inject] YouTube player eldesi başarısız:', e);
-      return null;
+            return null;
     }
   }
 
@@ -344,8 +339,7 @@
       if (isSupplemental) {
         if (!hasSkippedSupplemental) {
           hasSkippedSupplemental = true;
-          console.log('[FilmSync Inject] Netflix supplemental/pre-play tespit edildi, tek seferlik atlanıyor.');
-          if (typeof wrapperNode.handleFinishPrePlay === 'function') {
+                    if (typeof wrapperNode.handleFinishPrePlay === 'function') {
             wrapperNode.handleFinishPrePlay();
           }
         }
@@ -395,8 +389,7 @@
     if (player && isNetflixPlayerReady(player)) {
       if (!netflixReadyNotified || forceResend) {
         netflixReadyNotified = true;
-        console.log('[FilmSync Inject] Netflix oynatıcı API tam hazır, sinyal gönderildi.');
-        window.postMessage({ source: 'filmsync-inject', action: 'player-ready', platform: 'netflix' }, '*');
+                window.postMessage({ source: 'filmsync-inject', action: 'player-ready', platform: 'netflix' }, '*');
       }
       processNetflixCommandQueue();
       return true;
@@ -492,8 +485,7 @@
         }
       }
     } catch (err) {
-      console.error('[FilmSync Inject] Netflix player komut hatası:', err);
-    } finally {
+          } finally {
       isProcessingQueue = false;
       if (netflixCommandQueue.length > 0) {
         setTimeout(processNetflixCommandQueue, lastExecutedAction === 'seek' ? 250 : 100);
@@ -535,8 +527,7 @@
             player.seek(value * 1000);
           }
         } catch (err) {
-          console.error('[FilmSync Inject] Disney+ player komut hatası:', err);
-          handleDisneyDOMFallback(action, value);
+                    handleDisneyDOMFallback(action, value);
         }
       } else {
         handleDisneyDOMFallback(action, value);
@@ -555,8 +546,7 @@
             player.seekTo(value, true);
           }
         } catch (err) {
-          console.error('[FilmSync Inject] YouTube player komut hatası:', err);
-        }
+                  }
       }
     }
     // Diğer tüm siteler (JWPlayer, Video.js, Prime Video, FullHDFilmizlesene, HDFilmCehennemi, Dizipal vb.)
