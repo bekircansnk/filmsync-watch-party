@@ -40,3 +40,18 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [Bug Fix] XSS Güvenlik İyileştirmeleri - `content.js`
+
+**Tarih:** 2025-02-23
+
+**Açıklama:**
+Kullanıcıdan alınan metinlerin, oda isimlerinin ve diğer değişkenlerin doğrudan `innerHTML` kullanılarak DOM'a eklendiği güvenlik açıkları tespit edildi ve düzeltildi.
+
+**Yapılan Değişiklikler:**
+- `content.js` içerisindeki `updateToastContent` fonksiyonunda bulunan `toastBody.innerHTML` kullanımı güncellendi. `displayTitle` ve `countdown` gibi dinamik içerikler statik HTML içine yerleştirilmek yerine, `innerHTML` ile sadece iskelet oluşturulduktan sonra `textContent` kullanılarak güvenli bir şekilde eklendi.
+- Statik `innerHTML` kullanımları kontrol edildi ve kullanıcı verisini doğrudan içeren kısımlar, XSS (Cross-Site Scripting) ataklarına karşı güvenli hale getirmek adına text olarak DOM node'larına `textContent` metodu ile yazdırıldı.
+- `popup.js` içerisindeki DOM manipülasyonlarının halihazırda güvenli bir şekilde `escapeHtml` ve `textContent` kombinasyonuyla kullanıldığı doğrulandı.
+
+**Öğrenilenler / İpuçları:**
+Metin tabanlı değişkenlerin DOM'a yansıtılmasında `innerHTML` kullanmaktan kaçınılmalı, bunun yerine DOM elementleri oluşturulup `textContent` veya `innerText` ile metinler yerleştirilmelidir. Bu, zararlı script enjeksiyonlarını engellemek için kritik bir adımdır.
