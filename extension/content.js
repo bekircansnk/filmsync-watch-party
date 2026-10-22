@@ -1524,8 +1524,17 @@ function applyRemoteState(state) {
     }
   }
 
+  isSyncing = true;
+  if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
+  syncSafetyTimer = setTimeout(() => {
+    finishProgrammaticSync();
+  }, 2500);
+
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+    if (!isReady || !videoElement) {
+      finishProgrammaticSync();
+      return;
+    }
 
     // Video buffering veya seeking halindeyse hard seek yapıp CDN buffer'ı tekrar çökertme
     if (videoElement.seeking || videoElement.readyState < 2) {
@@ -1575,9 +1584,8 @@ function applyRemoteState(state) {
           PlayerAdapter.play();
         });
       } else {
-        isSyncing = true;
         PlayerAdapter.play();
-        setTimeout(() => { isSyncing = false; }, 800);
+        setTimeout(() => { finishProgrammaticSync(); }, 800);
       }
       return;
     }
@@ -1590,9 +1598,8 @@ function applyRemoteState(state) {
           PlayerAdapter.pause();
         });
       } else {
-        isSyncing = true;
         PlayerAdapter.pause();
-        setTimeout(() => { isSyncing = false; }, 800);
+        setTimeout(() => { finishProgrammaticSync(); }, 800);
       }
       return;
     }
@@ -1616,6 +1623,7 @@ function applyRemoteState(state) {
         if (!PlayerAdapter.isNetflix() && videoElement.playbackRate !== 1.0) {
           try { videoElement.playbackRate = 1.0; } catch (e) {}
         }
+        finishProgrammaticSync();
         return;
       }
 
@@ -1627,6 +1635,7 @@ function applyRemoteState(state) {
             : Math.max(0.95, 1.0 - rateFactor);
         } catch (e) {}
       }
+      finishProgrammaticSync();
       return;
     }
 
@@ -1636,8 +1645,13 @@ function applyRemoteState(state) {
         executeProgrammaticSync(state.currentTime, () => {
           PlayerAdapter.seek(state.currentTime);
         });
+      } else {
+        finishProgrammaticSync();
       }
+      return;
     }
+
+    finishProgrammaticSync();
   });
 }
 
