@@ -1610,7 +1610,9 @@ function applyRemoteState(state) {
       // Dinamik sapma toleransı: Yüksek gecikmeli durumlarda toleransı artır (max 4.0s),
       // normal durumlarda daha sıkı tut (min 1.5s).
       const networkLatency = typeof navigator !== 'undefined' && navigator.connection && navigator.connection.rtt ? navigator.connection.rtt / 1000 : 0.5;
-      const dynamicThreshold = Math.max(1.5, Math.min(4.0, 2.0 + networkLatency));
+      const playStateMismatch = (lastKnownState.isPlaying && videoElement.paused) || (!lastKnownState.isPlaying && !videoElement.paused);
+      const baseThreshold = playStateMismatch ? 1.0 : 2.0;
+      const dynamicThreshold = Math.max(playStateMismatch ? 1.0 : 1.5, Math.min(4.0, baseThreshold + networkLatency));
 
       if (drift <= dynamicThreshold) {
         if (!PlayerAdapter.isNetflix() && videoElement.playbackRate !== 1.0) {
@@ -2002,7 +2004,11 @@ function startDriftCorrection() {
       const drift = Math.abs(videoElement.currentTime - targetTime);
 
       const networkLatency = typeof navigator !== 'undefined' && navigator.connection && navigator.connection.rtt ? navigator.connection.rtt / 1000 : 0.5;
-      const dynamicThreshold = Math.max(1.5, Math.min(4.0, 2.5 + networkLatency)); // Default was approx 2.5s conceptually, now dynamic
+      const playStateMismatch = (lastKnownState.isPlaying && videoElement.paused) || (!lastKnownState.isPlaying && !videoElement.paused);
+
+      let baseThreshold = playStateMismatch ? 1.0 : 2.0;
+
+      const dynamicThreshold = Math.max(playStateMismatch ? 1.0 : 1.5, Math.min(4.0, baseThreshold + networkLatency));
 
       if (drift > dynamicThreshold) {
         console.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s`);
