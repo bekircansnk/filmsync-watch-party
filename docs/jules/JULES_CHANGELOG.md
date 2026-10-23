@@ -40,3 +40,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [10.11.2026] - Performans ve Video Oynatıcı İzolasyonu İyileştirmeleri (Reflow)
+- **Performans İyileştirmeleri:**
+  - `extension/content.js` içerisinde sohbet paneli açıldığında (body `filmsync-sidebar-open` class'ını aldığında) DOM reflow (yeniden hesaplama) kaynaklı takılmaları ve performans kayıplarını en aza indirmek için `body.filmsync-sidebar-open` CSS kuralına `transition: none !important;` eklendi.
+  - Bu sayede, özellikle Netflix, Disney+ ve YouTube gibi platformlarda yüksek kare hızında (high-frame-rate) video oynatımı sırasında yan panel açılıp kapandığında oluşan mikro takılmalar (micro-stutters) engellendi ve sayfa düzeninin anında yeniden boyutlandırılması sağlandı.

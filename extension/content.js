@@ -2846,6 +2846,7 @@ function createChatUI() {
     /* Sayfa ve Oynatıcı - Tam Boyut Cam Akış */
     body.filmsync-sidebar-open {
       overflow-x: hidden !important;
+      transition: none !important;
     }
 
     /* Netflix, YouTube, Disney+ vb. Oynatıcı İzolasyonları ve Daraltma */
@@ -2862,6 +2863,8 @@ function createChatUI() {
       max-width: calc(100% - 390px) !important;
       left: 0 !important;
       transition: none !important; /* DOM reflow performans kaybını engellemek için */
+      will-change: width, max-width !important;
+      contain: layout !important;
     }
 
     @keyframes fs-spin {
