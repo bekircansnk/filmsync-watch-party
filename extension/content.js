@@ -1524,12 +1524,17 @@ function applyRemoteState(state) {
     }
   }
 
+  isSyncing = true;
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+    if (!isReady || !videoElement) {
+      isSyncing = false;
+      return;
+    }
 
     // Video buffering veya seeking halindeyse hard seek yapıp CDN buffer'ı tekrar çökertme
     if (videoElement.seeking || videoElement.readyState < 2) {
       Logger.log('[FilmSync] Video buffering/seeking durumunda, eşitleme sıraya alınıyor.');
+      isSyncing = false;
       pendingState = state;
       let playableTimer = null;
       const onVideoPlayable = () => {
@@ -1564,6 +1569,7 @@ function applyRemoteState(state) {
         if (state.isPlaying && videoElement.paused) PlayerAdapter.play();
         else if (!state.isPlaying && !videoElement.paused) PlayerAdapter.pause();
       });
+      isSyncing = false;
       return;
     }
 
@@ -1604,6 +1610,7 @@ function applyRemoteState(state) {
         executeProgrammaticSync(targetTime, () => {
           PlayerAdapter.seek(targetTime);
         });
+        isSyncing = false;
         return;
       }
 
@@ -1616,6 +1623,7 @@ function applyRemoteState(state) {
         if (!PlayerAdapter.isNetflix() && videoElement.playbackRate !== 1.0) {
           try { videoElement.playbackRate = 1.0; } catch (e) {}
         }
+        isSyncing = false;
         return;
       }
 
@@ -1627,6 +1635,7 @@ function applyRemoteState(state) {
             : Math.max(0.95, 1.0 - rateFactor);
         } catch (e) {}
       }
+      isSyncing = false;
       return;
     }
 
@@ -1638,6 +1647,9 @@ function applyRemoteState(state) {
         });
       }
     }
+
+    // Güvenlik için, eğer executeProgrammaticSync veya diğer özel durumlar çalışmadıysa isSyncing'i temizle
+    setTimeout(() => { isSyncing = false; }, 800);
   });
 }
 
