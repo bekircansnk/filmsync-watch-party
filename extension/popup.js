@@ -1062,6 +1062,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (db && currentRoomId) {
       db.ref(`rooms/${currentRoomId}/users`).off();
       db.ref(`rooms/${currentRoomId}/lastState`).off();
+      db.ref(`rooms/${currentRoomId}/messages`).off();
+      db.ref(`rooms/${currentRoomId}/messages`).limitToLast(50).off();
+      db.ref(`rooms/${currentRoomId}/reactions`).off();
+      db.ref(`rooms/${currentRoomId}/reactions`).limitToLast(5).off();
+      db.ref(`rooms/${currentRoomId}/hostId`).off();
+      db.ref(`rooms/${currentRoomId}/hostOnly`).off();
     }
     currentRoomId = null;
   }
