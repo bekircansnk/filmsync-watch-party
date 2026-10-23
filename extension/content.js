@@ -1994,25 +1994,23 @@ function startDriftCorrection() {
     }
 
     // Oda üyesi isek (host değilsek), mevcut oynatıcı durumunu lastKnownState ile karşılaştır.
-    // Toleransı (threshold) ağ gecikmesine göre dinamik olarak hesapla.
-    if (lastKnownState && lastKnownState.isPlaying) {
+    if (lastKnownState) {
       const now = getEstimatedServerTime();
-      const timeDiff = Math.max(0, (now - (lastKnownState.lastUpdated || now)) / 1000);
+      const timeDiff = lastKnownState.isPlaying ? Math.max(0, (now - (lastKnownState.lastUpdated || now)) / 1000) : 0;
       const targetTime = lastKnownState.currentTime + timeDiff;
       const drift = Math.abs(videoElement.currentTime - targetTime);
 
       const networkLatency = typeof navigator !== 'undefined' && navigator.connection && navigator.connection.rtt ? navigator.connection.rtt / 1000 : 0.5;
-      const dynamicThreshold = Math.max(1.5, Math.min(4.0, 2.5 + networkLatency)); // Default was approx 2.5s conceptually, now dynamic
+      const isPlayStateMismatch = (lastKnownState.isPlaying && videoElement.paused) || (!lastKnownState.isPlaying && !videoElement.paused);
 
-      if (drift > dynamicThreshold) {
-        console.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s`);
-        forceSync();
-      } else if (lastKnownState.isPlaying && videoElement.paused) {
-        // Play state mismatch
+      // Ağ gecikmesine veya oynatma durumu uyumsuzluğuna göre dinamik eşik (threshold) ayarı
+      const baseThreshold = isPlayStateMismatch ? 1.0 : 2.5;
+      const dynamicThreshold = Math.max(1.0, Math.min(4.0, baseThreshold + networkLatency));
+
+      if (drift > dynamicThreshold || isPlayStateMismatch) {
+        console.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s, Durum Uyumsuzluğu: ${isPlayStateMismatch}`);
         forceSync();
       }
-    } else if (lastKnownState && !lastKnownState.isPlaying && !videoElement.paused) {
-       forceSync();
     }
   }, 5000);
 }
