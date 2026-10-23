@@ -40,3 +40,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [18.10.2026] - Yapılandırma ve Gizli Veri Denetimi
+- **Güvenlik İncelemesi:**
+  - `extension/content.js` ve `extension/popup.js` içerisindeki `firebaseConfig` bilgileri incelendi. `apiKey` değerinin Firebase Web SDK istemci tarafı başlatması için herkese açık, zorunlu bir tanımlayıcı olduğu ve idari bir kimlik bilgisi (admin credential) veya sunucu sırrı (secret) olmadığı doğrulandı. Eklentinin bozulmaması için bu veri korundu.
+  - Veritabanında yetkisiz toplu erişimi engellemek için daha önce kök (root) dizininden sınırlandırılmış okuma ve yazma kuralları (yalnızca `$roomId` özelinde kısıtlanmış) yeniden teyit edildi. Hiçbir idari yetki (service account vb.) kod tabanına sızdırılmamıştır.
