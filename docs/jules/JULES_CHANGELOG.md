@@ -40,3 +40,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [19.10.2026] - Oynatıcı Eşitleme ve Sapma Kontrolü İyileştirildi
+- **Hata Düzeltmeleri ve Geliştirmeler:**
+  - `extension/content.js` içindeki `startDriftCorrection` fonksiyonunda yer alan eşitleme (threshold) mantığı geliştirildi.
+  - Ağ gecikmesine (`networkLatency`) ek olarak, oynatma durumu (oynatılıyor/duraklatıldı) uyumsuzlukları da dikkate alınarak `dynamicThreshold` hesaplaması daha hassas (durum uyumsuzluğunda 1.0s tabanlı, normalde 2.5s tabanlı) hale getirildi.
+  - Sapma veya oynatma durumu uyumsuzluğu durumunda `forceSync()` işleminin daha tutarlı ve kesintisiz çağrılması sağlandı.
