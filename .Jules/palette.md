@@ -1,0 +1,3 @@
+## 2023-10-24 - Add ARIA Labels to Profile Inputs and Avatar Buttons
+**Learning:** Found multiple inputs and icon-only buttons in `popup.html` missing `aria-label`s, which makes navigation hard for screen readers. Notably, the avatar selector buttons just had emoji without accessible descriptions, and the username input lacked an associated label or `aria-label`.
+**Action:** Added `aria-label` and `title` to the avatar buttons to describe the emoji options. Added `aria-label` to the username input field. Next time, always check icon-only buttons for `aria-label` attributes and ensure inputs are properly labeled.

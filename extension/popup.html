@@ -805,16 +805,16 @@
     <!-- Ortak Profil ve Avatar Seçici -->
     <div id="profileSection">
       <div class="user-input-wrapper">
-        <span>👤</span>
-        <input type="text" id="usernameInput" placeholder="Adınızı girin (Örn: Bekir)" maxlength="24">
+        <span aria-hidden="true">👤</span>
+        <input type="text" id="usernameInput" aria-label="Kullanıcı Adı" placeholder="Adınızı girin (Örn: Bekir)" maxlength="24">
       </div>
-      <div class="avatar-list" id="avatarList">
-        <button class="avatar-btn selected" data-avatar="🍿">🍿</button>
-        <button class="avatar-btn" data-avatar="🍕">🍕</button>
-        <button class="avatar-btn" data-avatar="🍔">🍔</button>
-        <button class="avatar-btn" data-avatar="🦊">🦊</button>
-        <button class="avatar-btn" data-avatar="🐼">🐼</button>
-        <button class="avatar-btn" data-avatar="🔥">🔥</button>
+      <div class="avatar-list" id="avatarList" role="group" aria-label="Avatar Seçimi">
+        <button class="avatar-btn selected" data-avatar="🍿" aria-label="Patlamış Mısır Avatarı" title="Patlamış Mısır">🍿</button>
+        <button class="avatar-btn" data-avatar="🍕" aria-label="Pizza Avatarı" title="Pizza">🍕</button>
+        <button class="avatar-btn" data-avatar="🍔" aria-label="Hamburger Avatarı" title="Hamburger">🍔</button>
+        <button class="avatar-btn" data-avatar="🦊" aria-label="Tilki Avatarı" title="Tilki">🦊</button>
+        <button class="avatar-btn" data-avatar="🐼" aria-label="Panda Avatarı" title="Panda">🐼</button>
+        <button class="avatar-btn" data-avatar="🔥" aria-label="Ateş Avatarı" title="Ateş">🔥</button>
       </div>
     </div>
 
