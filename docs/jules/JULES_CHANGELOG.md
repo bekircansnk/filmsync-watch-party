@@ -38,5 +38,6 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 
 ## [18.10.2026] - Drift Eşitleme İyileştirmesi
 - **İyileştirmeler:**
-  - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
-  - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+  - `extension/content.js` dosyasındaki statik sapma eşiği (2.5s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
+  - Oynatıcı durumu uyumsuzluklarında (kullanıcı oynatırken videonun durması) daha sıkı (1.0s) bir eşik uygulanarak kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı genişletildi.
+  - `console.log` kullanımı `Logger.log` olarak değiştirildi.
