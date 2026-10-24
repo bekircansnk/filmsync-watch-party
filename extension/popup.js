@@ -752,19 +752,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!publicRoomsList) return;
 
     // 1. Önbelleksiz (no-store) REST sorgusu ile ~100ms içinde listeyi doldur ("Açık odalar yükleniyor..." takılmasını önler)
-    fetch(`https://movieparty-af87f-default-rtdb.firebaseio.com/rooms.json?t=${Date.now()}`, {
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache, no-store' }
-    })
-      .then(res => res.json())
-      .then(roomsObj => {
-        renderPublicRoomsFromData(roomsObj);
-      })
-      .catch(() => {
-        if (publicRoomsList.innerHTML.includes('yükleniyor')) {
-          publicRoomsList.innerHTML = '<div class="empty-room-msg">Şu an aktif açık oda yok. İlk partiyi sen başlat! 🍿</div>';
-        }
-      });
+    // Odalar gizlendiği için rooms.json doğrudan okunamıyor.
+    // İleride publicRooms backend servisi yazıldığında aktif edilecek.
+    if (publicRoomsList.innerHTML.includes('yükleniyor')) {
+      publicRoomsList.innerHTML = '<div class="empty-room-msg">Odalar gizlilik sebebiyle listelenmiyor. Özel oda koduyla katılın! 🍿</div>';
+    }
 
     // 2. Eşzamanlı WebSocket Dinleyicisi
     if (!db && typeof firebase !== 'undefined') {
@@ -782,6 +774,8 @@ document.addEventListener('DOMContentLoaded', () => {
       publicRoomsRef = db.ref('rooms').limitToLast(40);
       publicRoomsRef.on('value', (snapshot) => {
         renderPublicRoomsFromData(snapshot.val());
+      }, (error) => {
+        console.error('Public rooms fetch denied (security):', error);
       });
     } catch (e) {}
   }
