@@ -40,3 +40,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [19.10.2026] - Senkronizasyon ve Race Condition Hataları Giderildi
+- **Hata Düzeltmeleri:**
+  - `applyRemoteState` içerisindeki senkronizasyon kilidi (`isSyncing = true`) asenkron `ensureVideoReady` çağrısının öncesine taşınarak, uzak durum uygulanırken araya giren manuel kullanıcı işlemlerinin (play, pause, seek) neden olduğu yarış durumları engellendi.
+  - Olası kilitlenme durumlarını (deadlock) önlemek için, asenkron boşluklardaki tüm erken dönüş (early return) senaryolarına kilidi serbest bırakacak (`isSyncing = false`) temizleme mantığı eklendi.
