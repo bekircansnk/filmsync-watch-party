@@ -1063,6 +1063,9 @@ document.addEventListener('DOMContentLoaded', () => {
       db.ref(`rooms/${currentRoomId}/users`).off();
       db.ref(`rooms/${currentRoomId}/lastState`).off();
     }
+    if (publicRoomsRef) {
+      publicRoomsRef.off();
+    }
     currentRoomId = null;
   }
 
