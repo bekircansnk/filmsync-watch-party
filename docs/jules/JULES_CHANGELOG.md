@@ -40,3 +40,7 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+## [24.10.2026] - Açık Odalar Zafiyeti Giderildi
+- **Güvenlik Düzeltmeleri:**
+  - Firebase rules kısıtlamasına uyum sağlamak için arka planda tüm odaları çeken `cleanupExpiredRoomsREST` fonksiyonu kaldırıldı.
+  - Public rooms API zafiyetini (rooms.json kuralının ihlali) gidermek için anasayfadaki global `rooms.json` ve `rooms` referans listeleme kodları gizlilik ve güvenlik sebebiyle pasife çekildi.
