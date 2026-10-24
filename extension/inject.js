@@ -9,7 +9,6 @@
     }
   } catch (e) {}
 
-  console.log('[FilmSync Inject] Evrensel platform ve klavye zırhı yüklendi.');
 
   const host = window.location.host.toLowerCase();
   const isNetflix = host.includes('netflix.com');
@@ -344,8 +343,7 @@
       if (isSupplemental) {
         if (!hasSkippedSupplemental) {
           hasSkippedSupplemental = true;
-          console.log('[FilmSync Inject] Netflix supplemental/pre-play tespit edildi, tek seferlik atlanıyor.');
-          if (typeof wrapperNode.handleFinishPrePlay === 'function') {
+                    if (typeof wrapperNode.handleFinishPrePlay === 'function') {
             wrapperNode.handleFinishPrePlay();
           }
         }
@@ -395,8 +393,7 @@
     if (player && isNetflixPlayerReady(player)) {
       if (!netflixReadyNotified || forceResend) {
         netflixReadyNotified = true;
-        console.log('[FilmSync Inject] Netflix oynatıcı API tam hazır, sinyal gönderildi.');
-        window.postMessage({ source: 'filmsync-inject', action: 'player-ready', platform: 'netflix' }, '*');
+                window.postMessage({ source: 'filmsync-inject', action: 'player-ready', platform: 'netflix' }, '*');
       }
       processNetflixCommandQueue();
       return true;
