@@ -3999,7 +3999,28 @@ function showMovieRedirectNotification(targetUrl, targetTitle = '') {
   
   function updateToastContent() {
     const displayTitle = targetTitle ? `"${targetTitle}"` : 'Yeni bölüme / filme';
-    toastBody.innerHTML = `<span>${displayTitle} açıldı.</span><br><span style="color: #6ee7b7; font-weight: 600; text-decoration: underline;">Yönlendirmek için tıklayın</span> <span style="color: rgba(255,255,255,0.6); font-size: 11.5px;">(${countdown} sn)</span>`;
+    toastBody.innerHTML = '';
+
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = `${displayTitle} açıldı.`;
+
+    const br = document.createElement('br');
+
+    const linkSpan = document.createElement('span');
+    linkSpan.style.color = '#6ee7b7';
+    linkSpan.style.fontWeight = '600';
+    linkSpan.style.textDecoration = 'underline';
+    linkSpan.textContent = 'Yönlendirmek için tıklayın';
+
+    const countSpan = document.createElement('span');
+    countSpan.style.color = 'rgba(255,255,255,0.6)';
+    countSpan.style.fontSize = '11.5px';
+    countSpan.textContent = ` (${countdown} sn)`;
+
+    toastBody.appendChild(titleSpan);
+    toastBody.appendChild(br);
+    toastBody.appendChild(linkSpan);
+    toastBody.appendChild(countSpan);
   }
   updateToastContent();
 
