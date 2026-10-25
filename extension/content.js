@@ -3997,9 +3997,14 @@ function showMovieRedirectNotification(targetUrl, targetTitle = '') {
   toastBody.className = 'filmsync-toast-body';
   toastBody.setAttribute('style', 'color: #ffffff !important; font-weight: 500 !important; font-size: 13px !important; line-height: 1.45 !important; text-shadow: 0 1px 3px rgba(0,0,0,0.6) !important; padding-right: 18px;');
   
+  toastBody.innerHTML = `<span class="toast-title"></span><br><span style="color: #6ee7b7; font-weight: 600; text-decoration: underline;">Yönlendirmek için tıklayın</span> <span class="toast-countdown" style="color: rgba(255,255,255,0.6); font-size: 11.5px;"></span>`;
+  const toastTitleSpan = toastBody.querySelector('.toast-title');
+  const toastCountdownSpan = toastBody.querySelector('.toast-countdown');
+
   function updateToastContent() {
     const displayTitle = targetTitle ? `"${targetTitle}"` : 'Yeni bölüme / filme';
-    toastBody.innerHTML = `<span>${displayTitle} açıldı.</span><br><span style="color: #6ee7b7; font-weight: 600; text-decoration: underline;">Yönlendirmek için tıklayın</span> <span style="color: rgba(255,255,255,0.6); font-size: 11.5px;">(${countdown} sn)</span>`;
+    toastTitleSpan.textContent = `${displayTitle} açıldı.`;
+    toastCountdownSpan.textContent = `(${countdown} sn)`;
   }
   updateToastContent();
 
