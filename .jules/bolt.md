@@ -1,0 +1,3 @@
+## 2026-10-25 - Prevent layout thrashing and redundant DOM queries
+**Learning:** Calling `getBoundingClientRect()` on every `findBestVideoElement()` call during sync loops or interval checks causes severe layout thrashing and micro-stutters. Also, relying on `videoElement || findBestVideoElement()` at call sites risks using stale or disconnected elements if the inline check bypasses validation.
+**Action:** Centralized cache validation (`isConnected` and `readyState >= 1`) directly inside `findBestVideoElement()`. Avoided inline `||` checks. Added `contain: layout !important;` and `will-change: width, max-width !important;` to player containers to isolate layout recalculations during sidebar toggling.
