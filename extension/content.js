@@ -1524,13 +1524,25 @@ function applyRemoteState(state) {
     }
   }
 
+  isSyncing = true;
+  if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
+  syncSafetyTimer = setTimeout(() => {
+    isSyncing = false;
+  }, 2500);
+
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+    if (!isReady || !videoElement) {
+      isSyncing = false;
+      if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
+      return;
+    }
 
     // Video buffering veya seeking halindeyse hard seek yapıp CDN buffer'ı tekrar çökertme
     if (videoElement.seeking || videoElement.readyState < 2) {
       Logger.log('[FilmSync] Video buffering/seeking durumunda, eşitleme sıraya alınıyor.');
       pendingState = state;
+      isSyncing = false;
+      if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
       let playableTimer = null;
       const onVideoPlayable = () => {
         if (playableTimer) clearTimeout(playableTimer);
@@ -1575,9 +1587,9 @@ function applyRemoteState(state) {
           PlayerAdapter.play();
         });
       } else {
-        isSyncing = true;
         PlayerAdapter.play();
-        setTimeout(() => { isSyncing = false; }, 800);
+        if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
+        syncSafetyTimer = setTimeout(() => { isSyncing = false; }, 800);
       }
       return;
     }
@@ -1590,9 +1602,9 @@ function applyRemoteState(state) {
           PlayerAdapter.pause();
         });
       } else {
-        isSyncing = true;
         PlayerAdapter.pause();
-        setTimeout(() => { isSyncing = false; }, 800);
+        if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
+        syncSafetyTimer = setTimeout(() => { isSyncing = false; }, 800);
       }
       return;
     }
@@ -1616,6 +1628,8 @@ function applyRemoteState(state) {
         if (!PlayerAdapter.isNetflix() && videoElement.playbackRate !== 1.0) {
           try { videoElement.playbackRate = 1.0; } catch (e) {}
         }
+        isSyncing = false;
+        if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
         return;
       }
 
@@ -1627,6 +1641,8 @@ function applyRemoteState(state) {
             : Math.max(0.95, 1.0 - rateFactor);
         } catch (e) {}
       }
+      isSyncing = false;
+      if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
       return;
     }
 
@@ -1636,8 +1652,12 @@ function applyRemoteState(state) {
         executeProgrammaticSync(state.currentTime, () => {
           PlayerAdapter.seek(state.currentTime);
         });
+        return;
       }
     }
+
+    isSyncing = false;
+    if (syncSafetyTimer) clearTimeout(syncSafetyTimer);
   });
 }
 
