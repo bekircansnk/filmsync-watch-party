@@ -2002,16 +2002,24 @@ function startDriftCorrection() {
       const drift = Math.abs(videoElement.currentTime - targetTime);
 
       const networkLatency = typeof navigator !== 'undefined' && navigator.connection && navigator.connection.rtt ? navigator.connection.rtt / 1000 : 0.5;
-      const dynamicThreshold = Math.max(1.5, Math.min(4.0, 2.5 + networkLatency)); // Default was approx 2.5s conceptually, now dynamic
 
-      if (drift > dynamicThreshold) {
-        console.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s`);
-        forceSync();
-      } else if (lastKnownState.isPlaying && videoElement.paused) {
-        // Play state mismatch
+      // Dynamic threshold logic:
+      // Base threshold is lower, but we scale based on network latency and if there's a play state mismatch.
+      let dynamicThreshold = Math.max(1.0, Math.min(4.0, 1.5 + networkLatency));
+
+      const playStateMismatch = (lastKnownState.isPlaying && videoElement.paused) || (!lastKnownState.isPlaying && !videoElement.paused);
+
+      // If there's a mismatch in play state, we want a much tighter threshold to quickly correct the drift
+      if (playStateMismatch) {
+        dynamicThreshold = Math.max(0.5, Math.min(2.0, 0.5 + networkLatency));
+      }
+
+      if (drift > dynamicThreshold || playStateMismatch) {
+        Logger.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s, Durum Uyumsuzluğu: ${playStateMismatch}`);
         forceSync();
       }
     } else if (lastKnownState && !lastKnownState.isPlaying && !videoElement.paused) {
+       Logger.log(`[FilmSync] Auto-Sync tetiklendi, oynatıcı durumu uyumsuz.`);
        forceSync();
     }
   }, 5000);
