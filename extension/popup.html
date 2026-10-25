@@ -192,6 +192,13 @@
       padding: 8px 11px;
       margin-bottom: 12px;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      transition: all 0.2s ease;
+    }
+
+    .user-input-wrapper:focus-within {
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.10);
+      box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.22);
     }
 
     .user-input-wrapper input {
@@ -806,7 +813,7 @@
     <div id="profileSection">
       <div class="user-input-wrapper">
         <span>👤</span>
-        <input type="text" id="usernameInput" placeholder="Adınızı girin (Örn: Bekir)" maxlength="24">
+        <input type="text" id="usernameInput" placeholder="Adınızı girin (Örn: Bekir)" maxlength="24" aria-label="Kullanıcı Adı">
       </div>
       <div class="avatar-list" id="avatarList">
         <button class="avatar-btn selected" data-avatar="🍿">🍿</button>
@@ -858,7 +865,7 @@
       <button id="btnStartParty" class="btn-start-party">🍿 Film Partisi Başlat</button>
 
       <div class="join-code-row">
-        <input type="text" id="joinRoomCodeInput" placeholder="ODA KODU (Örn: ABCD)" maxlength="12">
+        <input type="text" id="joinRoomCodeInput" placeholder="ODA KODU (Örn: ABCD)" maxlength="12" aria-label="Oda Kodu">
         <button id="btnJoinWithCode" class="btn-secondary">Katıl</button>
       </div>
     </div>
@@ -866,7 +873,7 @@
     <!-- 3. PLATFORM SEÇİCİ EKRAN -->
     <div id="platformSelectorContainer" class="platform-selector-panel hidden">
       <div class="join-code-row" style="margin-top: 0; margin-bottom: 8px;">
-        <input type="text" id="joinRoomCodeInputSelector" placeholder="ODA KODU İLE KATIL" maxlength="12">
+        <input type="text" id="joinRoomCodeInputSelector" placeholder="ODA KODU İLE KATIL" maxlength="12" aria-label="Oda Kodu">
         <button id="btnJoinWithCodeSelector" class="btn-secondary">Katıl</button>
       </div>
     </div>
