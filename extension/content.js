@@ -2861,6 +2861,8 @@ function createChatUI() {
       width: calc(100% - 390px) !important;
       max-width: calc(100% - 390px) !important;
       left: 0 !important;
+      contain: layout !important;
+      will-change: width, max-width !important;
       transition: none !important; /* DOM reflow performans kaybını engellemek için */
     }
 
