@@ -1,0 +1,3 @@
+## 2026-10-26 - Minimizing DOM Reflow Overhead on Video Resize
+**Learning:** Adding layout changes by manipulating widths for elements wrapping heavy video players (like Netflix, Disney+) can cause substantial DOM reflow overhead and result in dropped frames during playback.
+**Action:** When acting under the 'Bolt' persona, ensure the optimization actually reduces computation or execution overhead. To minimize DOM reflow overhead and dropped frames during video playback when resizing layouts, apply `contain: layout !important;` and `will-change: width, max-width !important;` to the targeted video player containers.
