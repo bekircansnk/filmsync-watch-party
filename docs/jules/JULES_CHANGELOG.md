@@ -40,3 +40,6 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [19.10.2026] - Klavye Erişilebilirliği İyileştirmesi
+- `extension/popup.html` içerisindeki `.user-input-wrapper` elemanına, içindeki girdi alanına odaklanıldığında devreye giren `:focus-within` pseudo-class'ı ile görsel geri bildirim eklendi. Bu sayede sekme (tab) tuşu ile gezinen kullanıcılar için odak durumu belirgin hale getirilerek erişilebilirlik (a11y) standartları sağlandı.
