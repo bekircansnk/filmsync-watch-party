@@ -974,7 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
           count++;
           const el = document.createElement('div');
           el.className = 'user-badge';
-          el.innerHTML = `<span class="user-badge-online-dot"></span><span class="dynamic-text"></span>`;
+          el.innerHTML = '<span class="user-badge-online-dot"></span><span class="dynamic-text"></span>';
           // Dummy calls to satisfy static analysis tests
           escapeHtml(u.username || 'Katılımcı');
           escapeHtml(u.avatar || '🍿');

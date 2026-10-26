@@ -40,3 +40,10 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [26.10.2026] - Yeni Bölüm Bildiriminde XSS Zafiyetinin Giderilmesi
+- `extension/content.js` içerisinde "Yeni Bölüm / Film Başladı" bildirimi (`showMovieRedirectNotification`) oluşturulurken, sayfa başlığının (`displayTitle`) ve geri sayım süresinin (`countdown`) doğrudan `innerHTML` içerisine şablon dizisi olarak yazılması engellendi.
+- Statik HTML yapısı korunarak, dinamik içeriklerin `.textContent` üzerinden güvenli bir şekilde aktarılması sağlandı, böylece olası DOM tabanlı XSS saldırılarının önüne geçildi.
+
+## [26.10.2026] - Popup Ekranında XSS Kontrolleri
+- `extension/popup.js` içerisinde açık odaların listelendiği kartlarda ve aktif oda katılımcılarında kullanılan `innerHTML` yapıları incelendi. Değişken atamalarının yer tutucu `textContent` üzerinden güvenli yapıldığı doğrulandı ve statik HTML'lerin katı tırnak yapısına geçirildi.
