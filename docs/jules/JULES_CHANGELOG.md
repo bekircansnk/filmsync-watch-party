@@ -40,3 +40,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [20.07.2026] - Video Oynatıcı DOM Reflow Performans Optimizasyonu
+- **Performans İyileştirmeleri:**
+  - `extension/content.js` içindeki Netflix, YouTube, Disney+ ve benzeri platformlar için uygulanan izole video oynatıcı stillerine (örn. `body.filmsync-sidebar-open .watch-video`) `contain: layout !important;` ve `will-change: width, max-width !important;` eklendi.
+  - Bu değişiklik, sohbet paneli açıldığında ve kapanırken meydana gelen width değişiklikleri sırasında DOM reflow yükünü ve olası kare düşmelerini (dropped frames) minimize ederek daha akıcı bir high-frame-rate video oynatımı sağlar.
