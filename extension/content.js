@@ -1524,12 +1524,21 @@ function applyRemoteState(state) {
     }
   }
 
+  isSyncing = true;
+  let applySafetyTimer = setTimeout(() => { isSyncing = false; }, 3000);
+
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+    if (!isReady || !videoElement) {
+      isSyncing = false;
+      clearTimeout(applySafetyTimer);
+      return;
+    }
 
     // Video buffering veya seeking halindeyse hard seek yapıp CDN buffer'ı tekrar çökertme
     if (videoElement.seeking || videoElement.readyState < 2) {
       Logger.log('[FilmSync] Video buffering/seeking durumunda, eşitleme sıraya alınıyor.');
+      isSyncing = false;
+      clearTimeout(applySafetyTimer);
       pendingState = state;
       let playableTimer = null;
       const onVideoPlayable = () => {
@@ -1548,6 +1557,8 @@ function applyRemoteState(state) {
       playableTimer = setTimeout(onVideoPlayable, 2000);
       return;
     }
+
+    clearTimeout(applySafetyTimer);
 
     const now = getEstimatedServerTime();
     const timeDiff = state.isPlaying ? Math.max(0, (now - (state.lastUpdated || now)) / 1000) : 0;
@@ -1616,6 +1627,7 @@ function applyRemoteState(state) {
         if (!PlayerAdapter.isNetflix() && videoElement.playbackRate !== 1.0) {
           try { videoElement.playbackRate = 1.0; } catch (e) {}
         }
+        isSyncing = false;
         return;
       }
 
@@ -1627,6 +1639,7 @@ function applyRemoteState(state) {
             : Math.max(0.95, 1.0 - rateFactor);
         } catch (e) {}
       }
+      isSyncing = false;
       return;
     }
 
@@ -1636,7 +1649,11 @@ function applyRemoteState(state) {
         executeProgrammaticSync(state.currentTime, () => {
           PlayerAdapter.seek(state.currentTime);
         });
+      } else {
+        isSyncing = false;
       }
+    } else {
+      isSyncing = false;
     }
   });
 }
