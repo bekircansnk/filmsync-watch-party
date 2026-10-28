@@ -1,0 +1,6 @@
+## 2026-03-10 - Missing Focus-Within Pseudo-Class for Wrapper Navigation
+**Learning:** When suppressing default focus outlines on input elements inside a custom designed wrapper (`.user-input-wrapper` containing an `outline: none` child `input`), keyboard accessibility is severely impacted unless the parent wrapper reacts to the focus state via the `:focus-within` pseudo-class. Users cannot visually track their tab position.
+**Action:** Always add a `:focus-within` styling block to custom input wrappers to ensure visual keyboard accessibility remains intact when default input outlines are stripped away.
+## 2024-10-19 - Missing Focus-Within Pseudo-Class for Wrapper Navigation
+**Learning:** When suppressing default focus outlines on input elements inside a custom designed wrapper (`.user-input-wrapper` containing an `outline: none` child `input`), keyboard accessibility is severely impacted unless the parent wrapper reacts to the focus state via the `:focus-within` pseudo-class. Users cannot visually track their tab position.
+**Action:** Always add a `:focus-within` styling block to custom input wrappers to ensure visual keyboard accessibility remains intact when default input outlines are stripped away.
