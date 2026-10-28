@@ -2002,16 +2002,18 @@ function startDriftCorrection() {
       const drift = Math.abs(videoElement.currentTime - targetTime);
 
       const networkLatency = typeof navigator !== 'undefined' && navigator.connection && navigator.connection.rtt ? navigator.connection.rtt / 1000 : 0.5;
-      const dynamicThreshold = Math.max(1.5, Math.min(4.0, 2.5 + networkLatency)); // Default was approx 2.5s conceptually, now dynamic
+      const baseThreshold = 2.5; // Default was approx 2.5s conceptually
+      const dynamicThreshold = Math.max(1.5, Math.min(4.0, baseThreshold + networkLatency));
 
       if (drift > dynamicThreshold) {
-        console.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s`);
+        Logger.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s`);
         forceSync();
-      } else if (lastKnownState.isPlaying && videoElement.paused) {
-        // Play state mismatch
+      } else if (videoElement.paused) {
+        Logger.log('[FilmSync] Auto-Sync tetiklendi: Oynatma durumu uyuşmazlığı (Host oynatıyor, lokal duraklatılmış)');
         forceSync();
       }
     } else if (lastKnownState && !lastKnownState.isPlaying && !videoElement.paused) {
+       Logger.log('[FilmSync] Auto-Sync tetiklendi: Oynatma durumu uyuşmazlığı (Host duraklatılmış, lokal oynatılıyor)');
        forceSync();
     }
   }, 5000);
