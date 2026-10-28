@@ -1,0 +1,4 @@
+## 2024-03-24 - Cross-Site Scripting (XSS) via targetTitle in UI Components
+**Vulnerability:** User-controlled values such as `targetTitle` were directly interpolated into HTML strings and passed to `innerHTML` in functions like `showMovieRedirectNotification` (specifically the inner `updateToastContent` function). This can allow arbitrary JavaScript execution (XSS) if the title comes from an untrusted source.
+**Learning:** Always use `textContent` to set dynamic text content instead of interpolating it directly into an HTML string assigned to `innerHTML`. This is crucial to prevent XSS vulnerabilities, especially in browser extensions where the impact can be significant.
+**Prevention:** Construct the base HTML with placeholder elements and then safely set their text using `textContent` or `innerText`.
