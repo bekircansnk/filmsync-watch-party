@@ -383,16 +383,38 @@ const PlayerAdapter = {
 
     const vid = videoElement || findBestVideoElement();
     if (PlayerAdapter.isNetflix()) {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
+      try {
+        window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
+      } catch (e) {
+        Logger.error('Netflix play message error', e);
+      }
     } else if (PlayerAdapter.isDisney()) {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
+      try { window.postMessage({ source: 'filmsync-content', action: 'play' }, '*'); } catch (e) { Logger.error('Disney play message error', e); }
+      if (vid && vid.paused) {
+        try {
+          vid.play().catch(e => Logger.error('Vid play error', e));
+        } catch (e) {
+          Logger.error('Vid play error', e);
+        }
+      }
     } else if (PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
+      try { window.postMessage({ source: 'filmsync-content', action: 'play' }, '*'); } catch (e) { Logger.error('YouTube play message error', e); }
+      if (vid && vid.paused) {
+        try {
+          vid.play().catch(e => Logger.error('Vid play error', e));
+        } catch (e) {
+          Logger.error('Vid play error', e);
+        }
+      }
     } else {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
+      try { window.postMessage({ source: 'filmsync-content', action: 'play' }, '*'); } catch (e) { Logger.error('Fallback play message error', e); }
+      if (vid && vid.paused) {
+        try {
+          vid.play().catch(e => Logger.error('Vid play error', e));
+        } catch (e) {
+          Logger.error('Vid play error', e);
+        }
+      }
     }
       } catch (err) {
       Logger.error('PlayerAdapter.play hatası:', err);
@@ -404,16 +426,38 @@ const PlayerAdapter = {
 
     const vid = videoElement || findBestVideoElement();
     if (PlayerAdapter.isNetflix()) {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
+      try {
+        window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
+      } catch (e) {
+        Logger.error('Netflix pause message error', e);
+      }
     } else if (PlayerAdapter.isDisney()) {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-      if (vid && !vid.paused) vid.pause();
+      try { window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*'); } catch (e) { Logger.error('Disney pause message error', e); }
+      if (vid && !vid.paused) {
+        try {
+          vid.pause();
+        } catch (e) {
+          Logger.error('Vid pause error', e);
+        }
+      }
     } else if (PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-      if (vid && !vid.paused) vid.pause();
+      try { window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*'); } catch (e) { Logger.error('YouTube pause message error', e); }
+      if (vid && !vid.paused) {
+        try {
+          vid.pause();
+        } catch (e) {
+          Logger.error('Vid pause error', e);
+        }
+      }
     } else {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-      if (vid && !vid.paused) vid.pause();
+      try { window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*'); } catch (e) { Logger.error('Fallback pause message error', e); }
+      if (vid && !vid.paused) {
+        try {
+          vid.pause();
+        } catch (e) {
+          Logger.error('Vid pause error', e);
+        }
+      }
     }
       } catch (err) {
       Logger.error('PlayerAdapter.pause hatası:', err);
@@ -2005,7 +2049,7 @@ function startDriftCorrection() {
       const dynamicThreshold = Math.max(1.5, Math.min(4.0, 2.5 + networkLatency)); // Default was approx 2.5s conceptually, now dynamic
 
       if (drift > dynamicThreshold) {
-        console.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s`);
+        Logger.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s`);
         forceSync();
       } else if (lastKnownState.isPlaying && videoElement.paused) {
         // Play state mismatch
