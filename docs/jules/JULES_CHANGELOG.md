@@ -40,3 +40,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [19.10.2026] - Dinamik Drift Eşiği İyileştirmesi
+- **İyileştirmeler:**
+  - `extension/content.js` içerisindeki `startDriftCorrection` fonksiyonunda, oynatıcı durumu (play/pause) uyumsuzluklarında senkronizasyon için dinamik eşik hesaplama mantığı daha da geliştirildi.
+  - Oynatma durumu uyumsuzluğu algılandığında eşik süresi ağ gecikmesine (networkLatency) bağlı olarak dinamik bir şekilde azaltılarak kesintisiz senkronizasyon (seamless synchronization) sağlandı.
+  - `console.log` kullanımı `Logger.log` olarak güncellendi.
