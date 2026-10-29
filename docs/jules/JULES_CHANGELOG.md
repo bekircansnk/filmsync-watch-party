@@ -40,3 +40,7 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [12.08.2026] - Güvenlik Taraması
+- **Güvenlik İncelemesi:**
+  - Firebase yapılandırmalarındaki API anahtarlarının incelenmesi sonucunda, bunların yalnızca istemci tarafı (client-side) genel anahtarlar olduğu (AIza...) ve herhangi bir yönetimsel/hassas yetkiye sahip olmadığı doğrulandı. API anahtarları korundu.
