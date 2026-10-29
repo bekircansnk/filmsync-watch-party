@@ -1,0 +1,3 @@
+## 2023-10-29 - Input Focus Accessibility in Wrapper Elements
+**Learning:** When using container wrappers (`.user-input-wrapper`) for custom styled inputs where the actual `<input>` element has its outline suppressed (`outline: none`, `background: transparent !important`), keyboard users lose focus visibility if the wrapper itself doesn't react to the child input being focused. This is a common accessibility issue for "glassmorphism" UI designs.
+**Action:** Always add a `:focus-within` pseudo-class to the parent wrapper of visually hidden/suppressed inputs to ensure focus state is visible to keyboard navigators, matching the original input's focus styling or the app's focus standards.
