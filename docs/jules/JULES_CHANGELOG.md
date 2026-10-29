@@ -40,3 +40,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [12.08.2026] - Logger Entegrasyonu ve Try-Catch Koruma
+- **Hata Düzeltmeleri ve Geliştirmeler:**
+  - `extension/content.js` içerisindeki düz `console.log` çıktıları temizlendi ve `Logger` ile değiştirildi.
+  - Netflix, Disney+, YouTube gibi API'lerle etkileşime giren `PlayerAdapter` metotları, eklentinin çökmesini engellemek için daha sağlam `try-catch` blokları ile koruma altına alındı ve hatalar `Logger.error` ile görünür kılındı.
