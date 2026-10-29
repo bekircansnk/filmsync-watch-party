@@ -1524,8 +1524,13 @@ function applyRemoteState(state) {
     }
   }
 
+  isSyncing = true;
+
   ensureVideoReady((isReady) => {
-    if (!isReady || !videoElement) return;
+    if (!isReady || !videoElement) {
+      isSyncing = false;
+      return;
+    }
 
     // Video buffering veya seeking halindeyse hard seek yapıp CDN buffer'ı tekrar çökertme
     if (videoElement.seeking || videoElement.readyState < 2) {
@@ -1546,6 +1551,7 @@ function applyRemoteState(state) {
       videoElement.addEventListener('canplay', onVideoPlayable, { once: true });
       videoElement.addEventListener('loadeddata', onVideoPlayable, { once: true });
       playableTimer = setTimeout(onVideoPlayable, 2000);
+      isSyncing = false;
       return;
     }
 
@@ -1564,7 +1570,7 @@ function applyRemoteState(state) {
         if (state.isPlaying && videoElement.paused) PlayerAdapter.play();
         else if (!state.isPlaying && !videoElement.paused) PlayerAdapter.pause();
       });
-      return;
+      return; // executeProgrammaticSync releases the lock
     }
 
     // 2. PLAY EMRİ GELDİ (DURAKLATILMIŞTI, BAŞLATILIYOR)
@@ -1574,12 +1580,12 @@ function applyRemoteState(state) {
           PlayerAdapter.seek(targetTime);
           PlayerAdapter.play();
         });
+        return; // executeProgrammaticSync releases the lock
       } else {
-        isSyncing = true;
         PlayerAdapter.play();
         setTimeout(() => { isSyncing = false; }, 800);
+        return; // lock is released after timeout
       }
-      return;
     }
 
     // 3. PAUSE EMRİ GELDİ (OYNATILIYORDU, DURDURULUYOR)
@@ -1589,12 +1595,12 @@ function applyRemoteState(state) {
           PlayerAdapter.seek(state.currentTime);
           PlayerAdapter.pause();
         });
+        return; // executeProgrammaticSync releases the lock
       } else {
-        isSyncing = true;
         PlayerAdapter.pause();
         setTimeout(() => { isSyncing = false; }, 800);
+        return; // lock is released after timeout
       }
-      return;
     }
 
     // 4. NORMAL OYNATMA SIRASINDA DURUM (Her iki taraf da oynatıyor)
@@ -1604,7 +1610,7 @@ function applyRemoteState(state) {
         executeProgrammaticSync(targetTime, () => {
           PlayerAdapter.seek(targetTime);
         });
-        return;
+        return; // executeProgrammaticSync releases the lock
       }
 
       // Dinamik sapma toleransı: Yüksek gecikmeli durumlarda toleransı artır (max 4.0s),
@@ -1616,6 +1622,7 @@ function applyRemoteState(state) {
         if (!PlayerAdapter.isNetflix() && videoElement.playbackRate !== 1.0) {
           try { videoElement.playbackRate = 1.0; } catch (e) {}
         }
+        isSyncing = false;
         return;
       }
 
@@ -1627,6 +1634,7 @@ function applyRemoteState(state) {
             : Math.max(0.95, 1.0 - rateFactor);
         } catch (e) {}
       }
+      isSyncing = false;
       return;
     }
 
@@ -1636,8 +1644,14 @@ function applyRemoteState(state) {
         executeProgrammaticSync(state.currentTime, () => {
           PlayerAdapter.seek(state.currentTime);
         });
+        return; // executeProgrammaticSync releases the lock
       }
+      isSyncing = false;
+      return;
     }
+
+    // Default catch-all release
+    isSyncing = false;
   });
 }
 
