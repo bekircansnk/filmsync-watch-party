@@ -40,3 +40,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [18.10.2026] - XSS Açıkları Giderildi (Bölüm 2)
+- **Güvenlik Düzeltmeleri:**
+  - `extension/content.js` içindeki `showMovieRedirectNotification` fonksiyonunda tespit edilen DOM tabanlı XSS (Cross-Site Scripting) zafiyeti düzeltildi.
+  - Kullanıcı girişlerinin (örneğin video başlıkları) doğrudan `innerHTML` şablon dizelerine yerleştirilmesi engellendi. Bu veriler özel `escapeHtml` fonksiyonuyla güvenli hale getirilerek XSS saldırıları önlendi.
