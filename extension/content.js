@@ -1325,8 +1325,10 @@ function setupFirebaseListeners() {
   db.ref(`rooms/${roomId}/hostId`).off();
   db.ref(`rooms/${roomId}/hostOnly`).off();
   db.ref(`rooms/${roomId}/lastState`).off();
+  db.ref(`rooms/${roomId}/messages`).limitToLast(50).off();
   db.ref(`rooms/${roomId}/messages`).off();
   db.ref(`rooms/${roomId}/users`).off();
+  db.ref(`rooms/${roomId}/reactions`).limitToLast(5).off();
   db.ref(`rooms/${roomId}/reactions`).off();
 
   db.ref(`rooms/${roomId}/hostId`).on('value', (snap) => {
@@ -1716,9 +1718,13 @@ function cleanupFirebase(isExplicitLeave = false) {
       });
     }
 
+    db.ref(`rooms/${roomId}/hostId`).off();
+    db.ref(`rooms/${roomId}/hostOnly`).off();
     db.ref(`rooms/${roomId}/lastState`).off();
+    db.ref(`rooms/${roomId}/messages`).limitToLast(50).off();
     db.ref(`rooms/${roomId}/messages`).off();
     db.ref(`rooms/${roomId}/users`).off();
+    db.ref(`rooms/${roomId}/reactions`).limitToLast(5).off();
     db.ref(`rooms/${roomId}/reactions`).off();
     db.ref('.info/serverTimeOffset').off();
     
