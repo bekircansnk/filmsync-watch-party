@@ -40,3 +40,9 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [19.10.2026] - Bellek Sızıntısı İyileştirmeleri
+- **Performans ve Hata Giderme:**
+  - `extension/content.js` dosyasında, oda değişimlerinde ve iframe yeniden yüklemelerinde eski Firebase olay dinleyicilerinin bellekte asılı kalarak "memory leak" oluşturmasını engellemek için `cleanupFirebase()` ve `setupFirebaseListeners()` fonksiyonları güncellendi.
+  - Sadece `.on('value')` veya `.on('child_added')` fonksiyonlarını temizlemek yerine, `limitToLast()` gibi sorgular içeren `.on()` kayıtlarını sonlandırmak için aynı sorgu zinciri (`.limitToLast(50).off()` vb.) ile `.off()` çağrıları eklendi.
+  - Ayrıca ana `.on()` kayıtlarında unutulan `.off()` (`hostId`, `hostOnly`, `serverTimeOffset`) işlemleri tamamlandı.
