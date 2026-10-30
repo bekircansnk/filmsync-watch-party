@@ -51,15 +51,15 @@ function clearStaleFirebaseCache() {
       }
     }
     keysToRemove.forEach(k => localStorage.removeItem(k));
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
   try {
     sessionStorage.removeItem('firebase:previous_websocket_failure');
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
   try {
     if (typeof firebase !== 'undefined' && firebase.database && typeof firebase.database.forceWebSockets === 'function') {
       firebase.database.forceWebSockets();
     }
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
 }
 
 function generate4LetterCode() {
@@ -153,7 +153,7 @@ function ensureTabContentScriptAndSync(tabId, callback, roomMeta = null) {
     }, () => {
       if (chrome.runtime.lastError) {}
     });
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
 
   // 2. Doğrudan ana pencereye (frameId: 0) ping/güncelleme gönder (Alt reklam/about:blank iframelerinin sahte yanıtını engelle!)
   chrome.tabs.sendMessage(tabId, syncPayload, { frameId: 0 }, (resp) => {
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
           chrome.storage.local.set({ dizipalCurrentUrl: detectedOrigin });
           if (dizipalLauncherCard) dizipalLauncherCard.setAttribute('data-url', detectedOrigin);
         }
-      } catch (e) {}
+      } catch (e) { Logger.error("Error:", e); }
     }
   });
 
@@ -508,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
               finalizePartyCreation();
             }).catch(() => {});
           }
-        } catch (e) {}
+        } catch (e) { Logger.error("Error:", e); }
 
         // 3. Maksimum 250ms içinde ağ yanıtı gelmese bile UI'ı ve sohbet penceresini derhal aç!
         setTimeout(() => {
@@ -771,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         db = firebase.database();
-      } catch (e) {}
+      } catch (e) { Logger.error("Error:", e); }
     }
     if (!db) return;
 
@@ -783,7 +783,7 @@ document.addEventListener('DOMContentLoaded', () => {
       publicRoomsRef.on('value', (snapshot) => {
         renderPublicRoomsFromData(snapshot.val());
       });
-    } catch (e) {}
+    } catch (e) { Logger.error("Error:", e); }
   }
 
   btnJoinWithCode.addEventListener('click', () => {
@@ -1088,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chrome.tabs.sendMessage(tab.id, msg, { frameId: 0 }, () => {
               if (chrome.runtime.lastError) return;
             });
-          } catch (e) {}
+          } catch (e) { Logger.error("Error:", e); }
           chrome.tabs.sendMessage(tab.id, msg, () => {
             if (chrome.runtime.lastError) return;
           });

@@ -153,7 +153,7 @@ class SoundEffects {
       gain.connect(this.ctx.destination);
       osc.start(now);
       osc.stop(now + 0.05);
-    } catch(e) {}
+    } catch (e) { Logger.error("Error:", e); }
   }
 
   // 2. Mesaj Alımı: Yumuşak su damlası / baloncuk tonu
@@ -174,7 +174,7 @@ class SoundEffects {
       gain.connect(this.ctx.destination);
       osc.start(now);
       osc.stop(now + 0.12);
-    } catch(e) {}
+    } catch (e) { Logger.error("Error:", e); }
   }
 
   // 3. Emoji Reaksiyon: Dingin ve tatlı 3-ses akoru (C5 Majör)
@@ -197,7 +197,7 @@ class SoundEffects {
         osc.start(now + idx * 0.04);
         osc.stop(now + 0.35);
       });
-    } catch(e) {}
+    } catch (e) { Logger.error("Error:", e); }
   }
 }
 const soundEffects = new SoundEffects();
@@ -282,7 +282,7 @@ function isIgnoredNonPlayerFrame() {
     if (window.innerWidth > 0 && window.innerHeight > 0 && window.innerWidth < 50 && window.innerHeight < 50) {
       return true;
     }
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
   return false;
 }
 
@@ -307,7 +307,7 @@ function injectPageHookScript() {
     script.id = 'filmsync-page-inject-script';
     script.src = chrome.runtime.getURL('inject.js');
     (document.head || document.documentElement).appendChild(script);
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
 }
 injectPageHookScript();
 
@@ -333,7 +333,7 @@ function findAllVideosDeep(rootNode = document, depth = 0) {
         }
       }
     }
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
   return found;
 }
 
@@ -360,7 +360,7 @@ function findBestVideoElement() {
       if (!v.paused) score += 80;
       if (v.readyState >= 2) score += 40;
       if (v.classList.contains('html5-main-video') || v.classList.contains('jw-video')) score += 200;
-    } catch (e) {}
+    } catch (e) { Logger.error("Error:", e); }
 
     if (score > bestScore) {
       bestScore = score;
@@ -429,17 +429,17 @@ const PlayerAdapter = {
     } else if (PlayerAdapter.isDisney()) {
       window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
       if (vid) {
-        try { vid.currentTime = seconds; } catch (e) {}
+        try { vid.currentTime = seconds; } catch (e) { Logger.error("Error:", e); }
       }
     } else if (PlayerAdapter.isYouTube()) {
       window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
       if (vid && Math.abs(vid.currentTime - seconds) > 0.5) {
-        try { vid.currentTime = seconds; } catch (e) {}
+        try { vid.currentTime = seconds; } catch (e) { Logger.error("Error:", e); }
       }
     } else {
       window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
       if (vid) {
-        try { vid.currentTime = seconds; } catch (e) {}
+        try { vid.currentTime = seconds; } catch (e) { Logger.error("Error:", e); }
       }
     }
       } catch (err) {
@@ -574,7 +574,7 @@ function areUrlsSameMovie(url1, url2) {
         return true; // Aynı filmin TR Dublaj / TR Altyazı / Kaynak 2 alternatifi!
       }
     }
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
 
   return false;
 }
@@ -685,7 +685,7 @@ function hasVideoOrPlayerFrame() {
         return true;
       }
     }
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
   return false;
 }
 
@@ -711,15 +711,15 @@ function clearStaleFirebaseCache() {
       }
     }
     keysToRemove.forEach(k => localStorage.removeItem(k));
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
   try {
     sessionStorage.removeItem('firebase:previous_websocket_failure');
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
   try {
     if (typeof firebase !== 'undefined' && firebase.database && typeof firebase.database.forceWebSockets === 'function') {
       firebase.database.forceWebSockets();
     }
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
 }
 
 // Dizipal Otomatik Arama Atlama & Güncel Domain Kaydedici (t.ly/dizipalgiris -> Google 1. Sonuç -> Doğrudan Dizipal)
@@ -767,7 +767,7 @@ function handleDizipalSearchBypass() {
       document.addEventListener('DOMContentLoaded', extractAndRedirect, { once: true });
       setTimeout(extractAndRedirect, 300);
     }
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
   return false;
 }
 
@@ -936,7 +936,7 @@ function handlePageExitNotification() {
         currentTime: currentT > 0 ? currentT : 0,
         isWatchPage: !!isWatchPage
       }));
-    } catch (e) {}
+    } catch (e) { Logger.error("Error:", e); }
 
     chrome.runtime.sendMessage({
       type: 'page-unload',
@@ -1162,7 +1162,7 @@ function isPageReloadNavigation() {
     if (performance.navigation && performance.navigation.type === 1) {
       return true;
     }
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
   return false;
 }
 
@@ -1202,7 +1202,7 @@ function initializeFirebase(config) {
           sessionStorage.removeItem(`filmsync_reloading_${roomId}`);
           reloadMeta = JSON.parse(rawReload);
         }
-      } catch (e) {}
+      } catch (e) { Logger.error("Error:", e); }
       const isReloadedInRoom = (window === window.top) && isWatchPage && (
         (reloadMeta && (Date.now() - reloadMeta.timestamp < 25000)) ||
         (wasAlreadyInRoom && isPageReloadNavigation())
@@ -1614,7 +1614,7 @@ function applyRemoteState(state) {
 
       if (drift <= dynamicThreshold) {
         if (!PlayerAdapter.isNetflix() && videoElement.playbackRate !== 1.0) {
-          try { videoElement.playbackRate = 1.0; } catch (e) {}
+          try { videoElement.playbackRate = 1.0; } catch (e) { Logger.error("Error:", e); }
         }
         return;
       }
@@ -1625,7 +1625,7 @@ function applyRemoteState(state) {
           videoElement.playbackRate = (videoElement.currentTime < targetTime)
             ? (1.0 + rateFactor)
             : Math.max(0.95, 1.0 - rateFactor);
-        } catch (e) {}
+        } catch (e) { Logger.error("Error:", e); }
       }
       return;
     }
@@ -1740,7 +1740,7 @@ function sendMediaEvent(isPlaying, currentTime, action = 'event') {
         currentTime,
         action
       }, '*');
-    } catch (e) {}
+    } catch (e) { Logger.error("Error:", e); }
     return;
   }
   if (!db || !roomId) return;
@@ -1803,7 +1803,7 @@ function sendMediaEvent(isPlaying, currentTime, action = 'event') {
     // ana pencereye sinyal göndererek ana sayfa URL'sinin ve başlığının Firebase'e yazılmasını sağla!
     try {
       window.top.postMessage({ type: 'filmsync-iframe-sync-top-url' }, '*');
-    } catch (e) {}
+    } catch (e) { Logger.error("Error:", e); }
   }
 
   const formattedTime = formatTime(currentTime);
@@ -1952,7 +1952,7 @@ function startVideoTracking() {
             frameUrl: window.location.href,
             currentTime: videoElement.currentTime || 0
           }, '*');
-        } catch (e) {}
+        } catch (e) { Logger.error("Error:", e); }
       }
 
       ensureVideoReady((ready) => {
@@ -2005,7 +2005,7 @@ function startDriftCorrection() {
       const dynamicThreshold = Math.max(1.5, Math.min(4.0, 2.5 + networkLatency)); // Default was approx 2.5s conceptually, now dynamic
 
       if (drift > dynamicThreshold) {
-        console.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s`);
+        Logger.log(`[FilmSync] Auto-Sync tetiklendi, sapma: ${drift.toFixed(1)}s, eşik: ${dynamicThreshold.toFixed(1)}s`);
         forceSync();
       } else if (lastKnownState.isPlaying && videoElement.paused) {
         // Play state mismatch
@@ -2142,7 +2142,7 @@ function handleTimeUpdateEvent() {
         type: 'filmsync-iframe-time-sync',
         currentTime: cur
       }, '*');
-    } catch (e) {}
+    } catch (e) { Logger.error("Error:", e); }
   }
 
   if (lastTrackedVideoTime >= 0 && lastTrackedVideoTimestamp > 0) {
@@ -3191,7 +3191,7 @@ function openChatPanelAndFocus(resetGrace = true) {
 
   if (messageInput) {
     setTimeout(() => {
-      try { messageInput.focus(); } catch (e) {}
+      try { messageInput.focus(); } catch (e) { Logger.error("Error:", e); }
     }, 50);
   }
   if (messageList) {
@@ -3245,12 +3245,12 @@ function broadcastToAllFrames(msg) {
   try {
     function postToWindowTree(win) {
       if (!win) return;
-      try { win.postMessage(msg, '*'); } catch (e) {}
+      try { win.postMessage(msg, '*'); } catch (e) { Logger.error("Error:", e); }
       try {
         for (let i = 0; i < win.frames.length; i++) {
-          try { postToWindowTree(win.frames[i]); } catch (e) {}
+          try { postToWindowTree(win.frames[i]); } catch (e) { Logger.error("Error:", e); }
         }
-      } catch (e) {}
+      } catch (e) { Logger.error("Error:", e); }
     }
     postToWindowTree(window.top);
   } catch (err) {}
@@ -3364,7 +3364,7 @@ function removeChatUI() {
     uiKeeperInterval = null;
   }
   if (navigator.keyboard && typeof navigator.keyboard.unlock === 'function') {
-    try { navigator.keyboard.unlock(); } catch (e) {}
+    try { navigator.keyboard.unlock(); } catch (e) { Logger.error("Error:", e); }
   }
   const root = document.getElementById('filmsync-root');
   if (root) root.remove();
@@ -4098,7 +4098,7 @@ function setupFullscreenListener() {
               type: 'filmsync-parent-iframe-fullscreen',
               isFullscreen: true
             }, '*');
-          } catch (e) {}
+          } catch (e) { Logger.error("Error:", e); }
           broadcastToAllFrames({
             type: 'filmsync-parent-iframe-fullscreen',
             isFullscreen: true
@@ -4210,7 +4210,7 @@ function showNamePromptModal(roomName, callback) {
         nameInput.select();
       }
     });
-  } catch(e) {}
+  } catch (e) { Logger.error("Error:", e); }
 
   const handleJoin = () => {
     const name = nameInput.value.trim();
@@ -4418,7 +4418,7 @@ function setupFullscreenIdleDetector() {
     if (window !== window.top) {
       try {
         window.top.postMessage({ type: 'filmsync-iframe-mousemove' }, '*');
-      } catch (e) {}
+      } catch (e) { Logger.error("Error:", e); }
     }
 
     showPanelAndToolbar();
@@ -4689,7 +4689,7 @@ function syncRoomAttributeToDOM() {
       document.documentElement.removeAttribute('data-filmsync-room');
       document.documentElement.setAttribute('data-filmsync-room-active', 'false');
     }
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
 }
 
 function ensureRootInFullscreenElement() {
@@ -4741,7 +4741,7 @@ window.addEventListener('message', (event) => {
         hostId: hostId,
         hostOnly: hostOnly
       }, '*');
-    } catch (e) {}
+    } catch (e) { Logger.error("Error:", e); }
   } else if (event.data.type === 'filmsync-chat-state') {
     isChatOpenInTop = !!event.data.isOpen;
     document.documentElement.setAttribute('data-filmsync-chat-open', isChatOpenInTop ? 'true' : 'false');
@@ -4836,7 +4836,7 @@ window.addEventListener('message', (event) => {
     lastForwardedKeyTime = now;
     lastForwardedKeyVal = event.data.key;
 
-    try { window.focus(); } catch (e) {}
+    try { window.focus(); } catch (e) { Logger.error("Error:", e); }
     if (!chatPanel) chatPanel = document.getElementById('filmsync-chat-panel');
     if (!messageInput) messageInput = document.getElementById('filmsyncMsgInput');
     if ((!chatPanel || !messageInput) && roomId) {
@@ -4864,7 +4864,7 @@ window.addEventListener('message', (event) => {
 if (window !== window.top) {
   try {
     window.top.postMessage({ type: 'filmsync-query-chat-state' }, '*');
-  } catch (e) {}
+  } catch (e) { Logger.error("Error:", e); }
 }
 
   if (typeof window !== 'undefined') {
