@@ -1,0 +1,4 @@
+
+## 2023-10-30 - Refactored Cache Check in setInterval Loops
+**Learning:** Refactoring an inline short-circuit cache check (e.g., `cachedElement || findElement()`) into a centralized, stricter cache validation inside the lookup function improves code correctness (by preventing stale references) but does not constitute a performance improvement, as the original short-circuit already bypassed the expensive operation. However, there were multiple unconditional invocations of `findBestVideoElement` inside intervals or frequent listeners that DID NOT have a short-circuit cache check, causing expensive DOM traversals every frame or interval tick.
+**Action:** Always verify if an optimization actually bypasses computation. Applying short-circuit caching natively or inline where it was missing provides measurable execution overhead reduction.

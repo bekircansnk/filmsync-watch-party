@@ -340,6 +340,9 @@ function findAllVideosDeep(rootNode = document, depth = 0) {
 // Sayfadaki en uygun (en büyük / aktif) <video> elementini bulan akıllı seçici
 // (Prime Video, YouTube ve film sitelerindeki gizli 0x0 reklam/önizleme videolarını eler)
 function findBestVideoElement() {
+  if (videoElement && videoElement.isConnected && (videoElement.readyState >= 1 || videoElement.src || videoElement.currentSrc)) {
+    return videoElement;
+  }
   const videos = findAllVideosDeep(document);
 
   if (videos.length === 0) return null;
@@ -645,6 +648,7 @@ function shouldShowChatUIInTop() {
 
 // Sayfada aktif bir video veya video oynatıcı iframe olup olmadığını kontrol eden evrensel yardımcı
 function hasVideoOrPlayerFrame() {
+  if (videoElement && videoElement.isConnected && (videoElement.readyState >= 1 || videoElement.src || videoElement.currentSrc)) return true;
   if (findBestVideoElement()) return true;
   if (hasChildFrameVideo) return true;
   try {
@@ -3207,7 +3211,7 @@ function startUIKeeper() {
       const isBrowseExclusion = window.location.href.includes('netflix.com/browse') || 
                                 window.location.href.includes('netflix.com/title') || 
                                 window.location.href.includes('youtube.com/feed');
-      const isWatchPage = !isBrowseExclusion && (isMovieWatchUrl(window.location.href) || hasKnownVideo || !!findBestVideoElement());
+      const isWatchPage = !isBrowseExclusion && (isMovieWatchUrl(window.location.href) || hasKnownVideo || !!(videoElement && videoElement.isConnected) || !!findBestVideoElement());
       if (!shouldShowChatUIInTop() && !isWatchPage) return;
 
       const root = document.getElementById('filmsync-root');
@@ -4570,7 +4574,7 @@ function startIframeFullscreenKeeper() {
                       document.msFullscreenElement;
                       
     const root = document.getElementById('filmsync-root');
-    const isEffectivelyFullscreen = !!(fsElement || (isParentIframeFullscreen && (videoElement || findBestVideoElement())));
+    const isEffectivelyFullscreen = !!(fsElement || (isParentIframeFullscreen && (videoElement && videoElement.isConnected ? videoElement : findBestVideoElement())));
     
     if (isEffectivelyFullscreen) {
       if (!root) {
