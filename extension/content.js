@@ -340,6 +340,14 @@ function findAllVideosDeep(rootNode = document, depth = 0) {
 // Sayfadaki en uygun (en büyük / aktif) <video> elementini bulan akıllı seçici
 // (Prime Video, YouTube ve film sitelerindeki gizli 0x0 reklam/önizleme videolarını eler)
 function findBestVideoElement() {
+  // ⚡ Bolt Performance Optimization:
+  // Return cached valid video early to avoid expensive full-document DOM and Shadow DOM traversals.
+  // This drastically reduces computation overhead for unprotected calls like !!findBestVideoElement()
+  // in frequent event handlers (e.g., sendMediaEvent) and intervals.
+  if (videoElement && videoElement.isConnected && (videoElement.readyState >= 1 || videoElement.src || videoElement.currentSrc)) {
+    return videoElement;
+  }
+
   const videos = findAllVideosDeep(document);
 
   if (videos.length === 0) return null;
@@ -1895,13 +1903,8 @@ function startVideoTracking() {
       }
     }
 
-    // Eğer videoElement zaten bulunduysa ve DOM içinde hala aktif/geçerliyse, her saniye tüm DOM/ShadowDOM ağacını yeniden tarama! (M4 CPU Optimizasyonu)
-    let bestVideo = null;
-    if (videoElement && videoElement.isConnected && (videoElement.readyState >= 1 || videoElement.src || videoElement.currentSrc)) {
-      bestVideo = videoElement;
-    } else {
-      bestVideo = findBestVideoElement();
-    }
+    // ⚡ Bolt: Cache check is now handled inside findBestVideoElement()
+    const bestVideo = findBestVideoElement();
 
     const hasActiveVideo = !!bestVideo;
     const isBrowseExclusion = window.location.href.includes('netflix.com/browse') || 
