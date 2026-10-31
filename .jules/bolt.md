@@ -1,0 +1,3 @@
+## 2026-10-18 - Firebase Realtime Database Listener Memory Leaks
+**Learning:** In Firebase Realtime Database (compat/v8 SDKs), calling `.off()` on a root reference (e.g., `db.ref('rooms/X/messages').off()`) does not automatically detach listeners that were assigned to queries on that reference (e.g., `db.ref('rooms/X/messages').limitToLast(50).on(...)`). This leads to memory and CPU leaks over time in single-page applications or long-lived tabs.
+**Action:** When tearing down Firebase listeners or cleaning up component state, ensure every active `.on()` registration has a corresponding `.off()` call, and specifically call `.off()` on the exact query chain for query-based listeners.
