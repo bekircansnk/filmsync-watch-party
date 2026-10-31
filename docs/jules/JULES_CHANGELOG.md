@@ -40,3 +40,7 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [19.10.2026] - XSS Açıkları Giderildi
+- `extension/content.js` içindeki `updateToastContent` fonksiyonunda bulunan DOM tabanlı XSS zafiyeti giderildi.
+- Bildirimlerde gösterilen film adı (`displayTitle`) ve dinamik değişkenler, doğrudan `innerHTML` kullanmak yerine `textContent` aracılığıyla güvenli yer tutuculara (placeholder) aktarıldı.
