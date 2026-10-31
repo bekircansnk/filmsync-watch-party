@@ -40,3 +40,8 @@ Bu dosya, Jules (Google AI Coding Agent) tarafından gerçekleştirilen tüm oto
 - **İyileştirmeler:**
   - `extension/content.js` dosyasındaki statik sapma eşiği (3.0s) `navigator.connection.rtt` tabanlı ağ gecikmesine göre (1.5s ile 4.0s arasında) dinamik olarak ayarlanacak şekilde güncellendi.
   - Oynatıcı durumu uyumsuzluklarında kesintisiz senkronizasyon için dinamik eşik hesaplama mantığı uygulandı.
+
+## [19.10.2026] - Senkronizasyon Kilit Döngüleri Düzeltmesi
+- **Hata Düzeltmeleri:**
+  - `extension/content.js` içindeki `applyRemoteState` metodunda `isSyncing` kilidi erken eklendi.
+  - Asenkron `ensureVideoReady` sonrasındaki erken çıkış (early return) senaryolarında oluşan ölü kilitleri engellemek için tüm return öncesi adımlarda kilit serbest bırakıldı.
