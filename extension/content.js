@@ -380,69 +380,39 @@ const PlayerAdapter = {
 
   play: () => {
     try {
-
-    const vid = videoElement || findBestVideoElement();
-    if (PlayerAdapter.isNetflix()) {
+      const vid = videoElement || findBestVideoElement();
       window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-    } else if (PlayerAdapter.isDisney()) {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
-    } else if (PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
-    } else {
-      window.postMessage({ source: 'filmsync-content', action: 'play' }, '*');
-      if (vid && vid.paused) vid.play().catch(() => {});
-    }
-      } catch (err) {
+      if (!PlayerAdapter.isNetflix() && vid && vid.paused) {
+        vid.play().catch(() => {});
+      }
+    } catch (err) {
       Logger.error('PlayerAdapter.play hatası:', err);
     }
   },
 
   pause: () => {
     try {
-
-    const vid = videoElement || findBestVideoElement();
-    if (PlayerAdapter.isNetflix()) {
+      const vid = videoElement || findBestVideoElement();
       window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-    } else if (PlayerAdapter.isDisney()) {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-      if (vid && !vid.paused) vid.pause();
-    } else if (PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-      if (vid && !vid.paused) vid.pause();
-    } else {
-      window.postMessage({ source: 'filmsync-content', action: 'pause' }, '*');
-      if (vid && !vid.paused) vid.pause();
-    }
-      } catch (err) {
+      if (!PlayerAdapter.isNetflix() && vid && !vid.paused) {
+        vid.pause();
+      }
+    } catch (err) {
       Logger.error('PlayerAdapter.pause hatası:', err);
     }
   },
 
   seek: (seconds) => {
     try {
-
-    const vid = videoElement || findBestVideoElement();
-    if (PlayerAdapter.isNetflix()) {
+      const vid = videoElement || findBestVideoElement();
       window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-    } else if (PlayerAdapter.isDisney()) {
-      window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-      if (vid) {
+      if (!PlayerAdapter.isNetflix() && vid) {
+        if (PlayerAdapter.isYouTube() && Math.abs(vid.currentTime - seconds) <= 0.5) {
+          return;
+        }
         try { vid.currentTime = seconds; } catch (e) {}
       }
-    } else if (PlayerAdapter.isYouTube()) {
-      window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-      if (vid && Math.abs(vid.currentTime - seconds) > 0.5) {
-        try { vid.currentTime = seconds; } catch (e) {}
-      }
-    } else {
-      window.postMessage({ source: 'filmsync-content', action: 'seek', value: seconds }, '*');
-      if (vid) {
-        try { vid.currentTime = seconds; } catch (e) {}
-      }
-    }
-      } catch (err) {
+    } catch (err) {
       Logger.error('PlayerAdapter.seek hatası:', err);
     }
   }
@@ -1488,7 +1458,7 @@ function finishProgrammaticSync() {
 }
 
 // Programatik Senkronizasyon Yürütücü (Kilit & Döngü Korumalı)
-function executeProgrammaticSync(targetSeconds, syncAction) {
+function executeProgrammaticSync(targetSeconds, syncAction, lockDuration = 2500) {
   isSyncing = true;
   isProgrammaticSeeking = true;
   lastProgrammaticSeekTime = targetSeconds;
@@ -1504,7 +1474,7 @@ function executeProgrammaticSync(targetSeconds, syncAction) {
 
   syncSafetyTimer = setTimeout(() => {
     finishProgrammaticSync();
-  }, 2500);
+  }, lockDuration);
 }
 
 // Uzak Durumu Videoya Uygula
@@ -1526,6 +1496,7 @@ function applyRemoteState(state) {
 
   ensureVideoReady((isReady) => {
     if (!isReady || !videoElement) return;
+    if (lastKnownState !== state) return;
 
     // Video buffering veya seeking halindeyse hard seek yapıp CDN buffer'ı tekrar çökertme
     if (videoElement.seeking || videoElement.readyState < 2) {
@@ -1575,9 +1546,9 @@ function applyRemoteState(state) {
           PlayerAdapter.play();
         });
       } else {
-        isSyncing = true;
-        PlayerAdapter.play();
-        setTimeout(() => { isSyncing = false; }, 800);
+        executeProgrammaticSync(targetTime, () => {
+          PlayerAdapter.play();
+        }, 800);
       }
       return;
     }
@@ -1590,9 +1561,9 @@ function applyRemoteState(state) {
           PlayerAdapter.pause();
         });
       } else {
-        isSyncing = true;
-        PlayerAdapter.pause();
-        setTimeout(() => { isSyncing = false; }, 800);
+        executeProgrammaticSync(state.currentTime, () => {
+          PlayerAdapter.pause();
+        }, 800);
       }
       return;
     }
